@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
 import { updateDecorationsForEditor } from "./decorations";
 import { getThrottledFunction } from "./utils";
+import { logMessage } from "./logger";
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext): void {
-  console.log(
+  logMessage(
     'Congratulations, your extension "react-compiler-marker" is now active!'
   );
 
@@ -37,12 +38,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }
 
-  console.log("React Compiler Marker ✨: Initialization complete.");
+  logMessage("React Compiler Marker ✨: Initialization complete.");
 }
 
 // This method is called when your extension is deactivated
 export function deactivate(): void {
-  console.log("React Compiler Marker ✨ deactivated.");
+  logMessage("React Compiler Marker ✨ deactivated.");
 }
 
 /**
@@ -130,7 +131,7 @@ export function registerCommands(
     deactivateCommand
   );
 
-  console.log("React Compiler Marker ✨: Commands registered.");
+  logMessage("React Compiler Marker ✨: Commands registered.");
 }
 
 /**
@@ -155,5 +156,5 @@ function registerListeners(
     }
   });
 
-  console.log("React Compiler Marker ✨: Event listeners registered.");
+  logMessage("React Compiler Marker ✨: Event listeners registered.");
 }

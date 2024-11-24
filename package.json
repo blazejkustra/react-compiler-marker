@@ -2,7 +2,7 @@
   "name": "react-compiler-marker",
   "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing ✨ visual cues ✨  to make the optimization process more transparent during development.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Błażej Kustra <kustrablazej@gmail.com>",
   "publisher": "blazejkustra",
   "license": "MIT",
@@ -84,6 +84,7 @@
   "dependencies": {
     "@babel/core": "^7.26.0",
     "@babel/parser": "^7.26.2",
-    "@babel/preset-typescript": "^7.26.0"
+    "@babel/preset-typescript": "^7.26.0",
+    "babel-plugin-react-compiler": "^19.0.0-beta-0dec889-20241115"
   }
 }
