@@ -13,9 +13,11 @@
 
 ### Screenshots 📸
 #### Example Optimized Marker ✨
+
 ![Optimized Marker Screenshot](images/optimized-marker.png)
 
 #### Example Failed Marker 🚫
+
 ![Failed Marker Screenshot](images/failed-marker.png)
 
 ## Commands 🛠️
