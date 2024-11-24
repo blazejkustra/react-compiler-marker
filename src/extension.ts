@@ -22,8 +22,8 @@ export function activate(context: vscode.ExtensionContext): void {
     throttledUpdateDecorations,
     isActivated,
     (value: boolean) => {
+      context.globalState.update("isActivated", value);
       isActivated = value;
-      context.globalState.update("isActivated", value); // Persist the state
     }
   );
 
@@ -113,7 +113,7 @@ export function registerCommands(
       vscode.window.visibleTextEditors.forEach((editor) => {
         editor.setDecorations(
           vscode.window.createTextEditorDecorationType({}),
-          [] // Clear existing decorations
+          []
         );
       });
 

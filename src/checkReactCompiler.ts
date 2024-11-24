@@ -2,13 +2,28 @@ import { transformFromAstSync } from "@babel/core";
 import * as BabelParser from "@babel/parser";
 import * as path from "path";
 import * as vscode from "vscode";
+import { getThrottledFunction } from "./utils";
+
+type EventLocation = {
+  start: { line: number; column: number; index: number };
+  end: { line: number; column: number; index: number };
+};
 
 export type LoggerEvent = {
   filename: string | null;
   kind?: string;
-  fnLoc: { start: { line: number; column: number; index: number } };
+  fnLoc: EventLocation;
   fnName?: string;
+  detail?: { reason: string; suggestions: string[]; loc: EventLocation };
 };
+
+const throttledError = getThrottledFunction(
+  (error) =>
+    vscode.window.showErrorMessage(
+      `Failed to compile the file. Please check the file content. ${error?.message}`
+    ),
+  1000 * 60 * 5 // 5 minutes
+);
 
 function runBabelPluginReactCompiler(
   BabelPluginReactCompiler: any,
@@ -93,7 +108,7 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
     ));
   } catch (error: any) {
     vscode.window.showErrorMessage(
-      `Failed to load react-compiler-healthcheck. Make sure it is installed in the workspace. Error: ${error.message}`
+      `Failed to load react-compiler-healthcheck. Make sure it is installed in the workspace. Error: ${error?.message}`
     );
     return { successfulCompilations: [], failedCompilations: [] };
   }
@@ -105,7 +120,8 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
       filename,
       "typescript"
     );
-  } catch {
+  } catch (error: any) {
+    throttledError(error);
     return { successfulCompilations: [], failedCompilations: [] };
   }
 }

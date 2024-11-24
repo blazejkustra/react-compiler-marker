@@ -5,7 +5,7 @@ function createDecorationType(
   contentText: string
 ): vscode.TextEditorDecorationType {
   return vscode.window.createTextEditorDecorationType({
-    after: {
+    before: {
       contentText,
     },
   });
@@ -30,11 +30,26 @@ async function updateDecorations(
         ? FUNCTION_LENGTH
         : CONST_LENGTH,
       line,
-      log.fnName || lineContent.includes("function")
-        ? FUNCTION_LENGTH
-        : CONST_LENGTH
+      lineContent.length
     );
-    return { range };
+
+    const hoverMessage = new vscode.MarkdownString();
+
+    if (log.kind === "CompileSuccess") {
+      // Use hoverMessage for displaying Markdown tooltips
+      hoverMessage.appendMarkdown(
+        "✨ This component has been auto-memoized by React Compiler."
+      );
+    } else {
+      hoverMessage.appendMarkdown(
+        "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
+      );
+      hoverMessage.appendMarkdown(
+        `Reason: ${log?.detail?.reason} **(line ${log.detail?.loc.start.line}-${log.detail?.loc.end.line})**`
+      );
+    }
+
+    return { range, hoverMessage };
   });
 
   // Apply decorations to the editor
