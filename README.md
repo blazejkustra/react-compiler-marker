@@ -59,8 +59,7 @@ This extension is fully self-contained and does not require external setup or de
 
 ## For More Information 🤝
 
-- Learn about [React Compiler](https://react.dev) and how it can improve your React app's performance.
-- Familiarize yourself with [VS Code Extensions API](https://code.visualstudio.com/api).
-- Submit issues or contribute via the [GitHub Repository](https://github.com/your-repo/react-compiler-marker).
+- Learn about [React Compiler](https://react.dev/learn/react-compiler) and how it can improve your React app's performance.
+- Submit issues or contribute via the [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker).
 
 **Enjoy Coding with React Compiler Marker ✨!**
