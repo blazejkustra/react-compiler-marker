@@ -7,6 +7,7 @@ export type LoggerEvent = {
   filename: string | null;
   kind?: string;
   fnLoc: { start: { line: number; column: number; index: number } };
+  fnName?: string;
 };
 
 function runBabelPluginReactCompiler(

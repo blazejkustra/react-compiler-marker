@@ -1,24 +1,19 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { detectFunctionComponents } from "./detectFunctionComponent";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
 
 // This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
   console.log(
     'Congratulations, your extension "react-compiler-marker" is now active!'
   );
 
+  // Decorations for successful and failed compilations
   const magicSparksDecoration = vscode.window.createTextEditorDecorationType({
     after: {
       contentText: " ✨",
     },
   });
-
   const blockIndicatorDecoration = vscode.window.createTextEditorDecorationType(
     {
       after: {
@@ -27,64 +22,86 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(
-    "react-compiler-marker.helloWorld",
-    async () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        const { successfulCompilations, failedCompilations } =
-          checkReactCompiler(
-            editor.document.getText(),
-            editor.document.fileName
-          );
-
-        await updateDecorations(
-          editor,
-          magicSparksDecoration,
-          successfulCompilations
-        );
-
-        await updateDecorations(
-          editor,
-          blockIndicatorDecoration,
-          failedCompilations
-        );
-      }
-
-      vscode.window.showInformationMessage("Hello World3 ✨!");
+  // Function to update decorations dynamically
+  async function updateDecorationsForEditor(editor: vscode.TextEditor) {
+    if (!editor) {
+      return;
     }
-  );
 
-  context.subscriptions.push(disposable);
+    // Run your checkReactCompiler logic on the current file content
+    const { successfulCompilations, failedCompilations } = checkReactCompiler(
+      editor.document.getText(),
+      editor.document.fileName
+    );
+
+    // Update decorations for successful and failed compilations
+    await updateDecorations(
+      editor,
+      magicSparksDecoration,
+      successfulCompilations
+    );
+    await updateDecorations(
+      editor,
+      blockIndicatorDecoration,
+      failedCompilations
+    );
+  }
+
+  // Listen for active text editor changes (e.g., user switches tabs)
+  vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (editor) {
+      updateDecorationsForEditor(editor);
+    }
+  });
+
+  // Listen for file system changes (e.g., user edits files)
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    const editor = vscode.window.activeTextEditor;
+
+    // If the editor contains the document that changed, update the decorations
+    if (editor && event.document === editor.document) {
+      updateDecorationsForEditor(editor);
+    }
+  });
+
+  // Run decorations when the extension starts with the currently active editor
+  const activeEditor = vscode.window.activeTextEditor;
+  if (activeEditor) {
+    updateDecorationsForEditor(activeEditor);
+  }
 }
 
+// Function to update text decorations
 async function updateDecorations(
   editor: vscode.TextEditor,
   decorationType: vscode.TextEditorDecorationType,
   logs: LoggerEvent[]
 ) {
-  // Create decorations for each detected line
+  const FUNCTION_LENGTH = 8;
+  const CONST_LENGTH = 5;
+
   const decorations: vscode.DecorationOptions[] = logs.map((log) => {
+    // Create a range for the line where the error or success decoration should appear
+    const line = log.fnLoc.start.line - 1;
+    const lineContent = editor.document.lineAt(line).text;
+
     const range = new vscode.Range(
-      log.fnLoc.start.line - 1,
-      8,
-      log.fnLoc.start.line - 1,
-      8
+      line,
+      log.fnName || lineContent.includes("function")
+        ? FUNCTION_LENGTH
+        : CONST_LENGTH,
+      line,
+      log.fnName || lineContent.includes("function")
+        ? FUNCTION_LENGTH
+        : CONST_LENGTH
     );
     return { range };
   });
 
   console.log(`%%% decorations`, JSON.stringify(logs, null, 2));
 
+  // Apply decorations to the editor
   editor.setDecorations(decorationType, decorations);
-
-  const fileUri = editor?.document.uri;
-  if (fileUri === undefined) {
-    return;
-  }
 }
 
 // This method is called when your extension is deactivated
