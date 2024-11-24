@@ -3,25 +3,50 @@
   "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing ✨ visual cues ✨  to make the optimization process more transparent during development.",
   "version": "0.0.1",
+  "author": "Blazej Kustra <kustrablazej@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "react-compiler",
+    "react-components",
+    "vscode-extension",
+    "optimization"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-user/react-compiler-marker"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Linters",
+    "Visualization"
   ],
   "activationEvents": [
     "onLanguage:javascript",
     "onLanguage:typescript",
     "onLanguage:javascriptreact",
-    "onLanguage:typescriptreact",
-    "workspaceContains:**/*"
+    "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "react-compiler-marker.helloWorld",
-        "title": "Hello World"
+        "command": "react-compiler-marker.activate",
+        "title": "Activate Extension",
+        "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.deactivate",
+        "title": "Deactivate Extension",
+        "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.checkOnce",
+        "title": "Check in the current file",
+        "category": "React Compiler Marker ✨"
       }
     ]
   },
@@ -57,8 +82,6 @@
   "dependencies": {
     "@babel/core": "^7.26.0",
     "@babel/parser": "^7.26.2",
-    "@babel/preset-typescript": "^7.26.0",
-    "@babel/traverse": "^7.25.9",
-    "@babel/types": "^7.26.0"
+    "@babel/preset-typescript": "^7.26.0"
   }
 }
