@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-user/react-compiler-marker"
+    "url": "https://github.com/blazejkustra/react-compiler-marker"
   },
   "engines": {
     "vscode": "^1.95.0"

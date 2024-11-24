@@ -12,11 +12,12 @@
   - Perform a one-time check of the current file using the `Check Once` command.
 
 ### Screenshots 📸
-#### Example Optimized Marker ✨
+
+✨ Example Optimized Marker 
 
 ![Optimized Marker Screenshot](images/optimized-marker.png)
 
-#### Example Failed Marker 🚫
+🚫 Example Failed Marker 
 
 ![Failed Marker Screenshot](images/failed-marker.png)
 
