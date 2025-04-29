@@ -20,6 +20,7 @@ async function updateDecorations(
   const EXPORT_FUNCTION_LENGTH = 7 + FUNCTION_LENGTH;
   const EXPORT_DEFAULT_FUNCTION_LENGTH = 15 + FUNCTION_LENGTH;
   const CONST_LENGTH = 5;
+  const EXPORT_CONST_LENGTH = 7 + CONST_LENGTH;
 
   const decorations: vscode.DecorationOptions[] = logs.map((log) => {
     // Create a range for the line where the error or success decoration should appear
@@ -34,6 +35,8 @@ async function updateDecorations(
       startPosition = EXPORT_FUNCTION_LENGTH;
     } else if (lineContent.includes("function")) {
       startPosition = FUNCTION_LENGTH;
+    } else if (lineContent.includes("export const")) {
+      startPosition = EXPORT_CONST_LENGTH;
     } else if (lineContent.includes("const")) {
       startPosition = CONST_LENGTH;
     }
