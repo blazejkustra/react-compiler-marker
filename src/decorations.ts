@@ -18,24 +18,26 @@ async function updateDecorations(
 ) {
   // patterns that come first will be used first if possible
   const patterns = [
-    'export default async function',
-    'export default function',
-    'export async function',
-    'export function',
-    'async function',
-    'function',
-    'export const',
-    'const'
-  ]
+    "export default async function",
+    "export default function",
+    "export async function",
+    "export function",
+    "async function",
+    "function",
+    "export const",
+    "const",
+  ];
 
   const decorations: vscode.DecorationOptions[] = logs.map((log) => {
     // Create a range for the line where the error or success decoration should appear
     const line = log.fnLoc.start.line - 1;
     const lineContent = editor.document.lineAt(line).text;
 
-    const matchingPattern = patterns.find(pattern => lineContent.includes(pattern))
+    const matchingPattern = patterns.find((pattern) =>
+      lineContent.includes(pattern)
+    );
     // if we encounter an unrecognized pattern, just use the beginning of the line
-    const startPosition = matchingPattern?.length ?? 0
+    const startPosition = matchingPattern?.length ?? 0;
 
     const range = new vscode.Range(
       line,
