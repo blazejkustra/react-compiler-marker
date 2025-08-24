@@ -37,7 +37,8 @@ async function updateDecorations(
       lineContent.includes(pattern)
     );
     // if we encounter an unrecognized pattern, just use the beginning of the line
-    const startPosition = matchingPattern?.length ?? 0;
+    const patternIndex = matchingPattern ? lineContent.indexOf(matchingPattern) : -1;
+    const startPosition = patternIndex !== -1 ? patternIndex + matchingPattern!.length : 0;
 
     const range = new vscode.Range(
       line,
