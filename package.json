@@ -71,6 +71,7 @@
     "@types/babel__traverse": "^7.20.6",
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
+    "@types/react": "^19.1.11",
     "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.7.0",

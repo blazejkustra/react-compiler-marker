@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
+import { logMessage } from "./logger";
 
 function createDecorationType(
   contentText: string
@@ -36,9 +37,15 @@ async function updateDecorations(
     const matchingPattern = patterns.find((pattern) =>
       lineContent.includes(pattern)
     );
-    // if we encounter an unrecognized pattern, just use the beginning of the line
-    const patternIndex = matchingPattern ? lineContent.indexOf(matchingPattern) : -1;
-    const startPosition = patternIndex !== -1 ? patternIndex + matchingPattern!.length : 0;
+
+    // Compute where to place the decoration within the line.
+    // If a known pattern is present, place it right after the pattern; otherwise at column 0.
+    const matchedIndex = matchingPattern
+      ? lineContent.indexOf(matchingPattern)
+      : -1;
+    const hasMatch = matchedIndex !== -1;
+    const patternLength = matchingPattern?.length ?? 0;
+    const startPosition = hasMatch ? matchedIndex + patternLength : 0;
 
     const range = new vscode.Range(
       line,
