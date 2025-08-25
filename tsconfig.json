@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+    "jsx": "react",
 		"module": "Node16",
 		"target": "ES2022",
 		"lib": [
