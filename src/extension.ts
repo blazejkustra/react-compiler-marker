@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { updateDecorationsForEditor } from "./decorations";
 import { getThrottledFunction } from "./utils";
 import { logMessage } from "./logger";
+import { getCompiledOutput } from "./checkReactCompiler";
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext): void {
@@ -12,6 +13,13 @@ export function activate(context: vscode.ExtensionContext): void {
   // Load the persisted `isActivated` state or default to `true`
   let isActivated = context.globalState.get<boolean>("isActivated", true);
 
+  // Create a getter function to always get the current state
+  const getIsActivated = () => isActivated;
+  const setIsActivated = (value: boolean) => {
+    context.globalState.update("isActivated", value);
+    isActivated = value;
+  };
+
   // Throttled function for performance
   const throttledUpdateDecorations = getThrottledFunction(
     updateDecorationsForEditor,
@@ -21,14 +29,11 @@ export function activate(context: vscode.ExtensionContext): void {
   registerCommands(
     context,
     throttledUpdateDecorations,
-    isActivated,
-    (value: boolean) => {
-      context.globalState.update("isActivated", value);
-      isActivated = value;
-    }
+    getIsActivated,
+    setIsActivated
   );
 
-  registerListeners(throttledUpdateDecorations, isActivated);
+  registerListeners(throttledUpdateDecorations, getIsActivated);
 
   // Apply decorations for the active editor on activation, if activated
   if (isActivated) {
@@ -52,7 +57,7 @@ export function deactivate(): void {
 export function registerCommands(
   context: vscode.ExtensionContext,
   throttledUpdateDecorations: (editor: vscode.TextEditor) => void,
-  isActivated: boolean,
+  getIsActivated: () => boolean,
   setIsActivated: (value: boolean) => void
 ): void {
   // Register the Refresh command
@@ -76,7 +81,7 @@ export function registerCommands(
   const activateCommand = vscode.commands.registerCommand(
     "react-compiler-marker.activate",
     () => {
-      if (isActivated) {
+      if (getIsActivated()) {
         vscode.window.showInformationMessage(
           "React Compiler Marker ✨ is already activated."
         );
@@ -101,7 +106,7 @@ export function registerCommands(
   const deactivateCommand = vscode.commands.registerCommand(
     "react-compiler-marker.deactivate",
     () => {
-      if (!isActivated) {
+      if (!getIsActivated()) {
         vscode.window.showInformationMessage(
           "React Compiler Marker ✨ is already deactivated."
         );
@@ -124,11 +129,63 @@ export function registerCommands(
     }
   );
 
+  // Register the Preview Compiled Output command
+  const previewCompiled = vscode.commands.registerCommand(
+    "react-compiler-marker.previewCompiled",
+    async () => {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage("No active editor to preview.");
+        return;
+      }
+
+      const document = activeEditor.document;
+      const source = document.getText();
+      const filename = document.fileName;
+
+      if (!filename || document.isUntitled) {
+        vscode.window.showErrorMessage(
+          "Please save the file before previewing compiled output."
+        );
+        return;
+      }
+
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "React Compiler: Compiling...",
+            cancellable: false,
+          },
+          async () => {
+            const compiled = await getCompiledOutput(source, filename);
+            const compiledDoc = await vscode.workspace.openTextDocument({
+              language: "typescript",
+              content: compiled,
+            });
+            await vscode.window.showTextDocument(compiledDoc, {
+              preview: true,
+              viewColumn: vscode.ViewColumn.Beside,
+            });
+            await vscode.commands.executeCommand(
+              "editor.action.formatDocument"
+            );
+          }
+        );
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Failed to compile the current file: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
   // Push all commands to the context's subscriptions
   context.subscriptions.push(
     refreshCommand,
     activateCommand,
-    deactivateCommand
+    deactivateCommand,
+    previewCompiled
   );
 
   logMessage("React Compiler Marker ✨: Commands registered.");
@@ -139,11 +196,11 @@ export function registerCommands(
  */
 function registerListeners(
   throttledUpdateDecorations: (editor: vscode.TextEditor) => void,
-  isActivated: boolean
+  getIsActivated: () => boolean
 ): void {
   // Listener for text editor changes (e.g., switching tabs)
   vscode.window.onDidChangeActiveTextEditor((editor) => {
-    if (isActivated && editor) {
+    if (getIsActivated() && editor) {
       throttledUpdateDecorations(editor);
     }
   });
@@ -151,7 +208,7 @@ function registerListeners(
   // Listener for document changes (e.g., typing in the editor)
   vscode.workspace.onDidChangeTextDocument((event) => {
     const editor = vscode.window.activeTextEditor;
-    if (isActivated && editor && event.document === editor.document) {
+    if (getIsActivated() && editor && event.document === editor.document) {
       throttledUpdateDecorations(editor);
     }
   });

@@ -111,10 +111,9 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
   try {
     const workspacePath = workspaceFolder.uri.fsPath;
     const nodeModulesPath = path.join(workspacePath, "node_modules");
-    BabelPluginReactCompiler = require(path.join(
-      nodeModulesPath,
-      "babel-plugin-react-compiler"
-    ));
+    BabelPluginReactCompiler = require(
+      path.join(nodeModulesPath, "babel-plugin-react-compiler")
+    );
   } catch (error: any) {
     failToLoadBabelPluginError(error);
     try {
@@ -135,5 +134,73 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
   } catch (error: any) {
     failToCompileError(error);
     return { successfulCompilations: [], failedCompilations: [] };
+  }
+}
+
+export async function getCompiledOutput(
+  sourceCode: string,
+  filename: string
+): Promise<string> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    throw new Error(
+      "No workspace folder is open. Please open a project first."
+    );
+  }
+
+  let BabelPluginReactCompiler: any;
+
+  try {
+    const workspacePath = workspaceFolder.uri.fsPath;
+    const nodeModulesPath = path.join(workspacePath, "node_modules");
+    BabelPluginReactCompiler = require(
+      path.join(nodeModulesPath, "babel-plugin-react-compiler")
+    );
+  } catch (error: any) {
+    failToLoadBabelPluginError(error);
+    try {
+      BabelPluginReactCompiler = require("babel-plugin-react-compiler");
+    } catch (e: any) {
+      throw new Error(
+        `Failed to load babel-plugin-react-compiler: ${e?.message}`
+      );
+    }
+  }
+
+  try {
+    const ast = BabelParser.parse(sourceCode, {
+      sourceFilename: filename,
+      plugins: ["typescript", "jsx"],
+      sourceType: "module",
+    });
+    const result = transformFromAstSync(ast, sourceCode, {
+      filename,
+      highlightCode: false,
+      retainLines: true,
+      plugins: [
+        [
+          BabelPluginReactCompiler,
+          {
+            noEmit: false,
+            compilationMode: "infer",
+            panicThreshold: "critical_errors",
+            environment: { enableTreatRefLikeIdentifiersAsRefs: true },
+          },
+        ],
+      ],
+      sourceType: "module",
+      configFile: false,
+      babelrc: false,
+    });
+    // eslint-disable-next-line eqeqeq
+    if (result?.code == null) {
+      throw new Error("Compilation produced no output");
+    }
+    return result.code;
+  } catch (error: any) {
+    failToCompileError(error);
+    throw new Error(
+      `Failed to compile the file. Please check the file content. ${error?.message}`
+    );
   }
 }
