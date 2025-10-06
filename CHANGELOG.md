@@ -18,6 +18,9 @@ This project follows [Semantic Versioning](https://semver.org).
 - Added preview compiled output command
 - New extension icon and readme
 
+### Fixed
+- Activation and deactivations commands
+
 ## [1.0.1-1.0.5] – 2025-10-06
 
 ### Fixed
