@@ -32,7 +32,7 @@
     "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.js",
-  "icon": "images/react-compiler-marker.jpg",
+  "icon": "images/logo.png",
   "contributes": {
     "commands": [
       {
@@ -48,6 +48,11 @@
       {
         "command": "react-compiler-marker.checkOnce",
         "title": "Check in the current file",
+        "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.previewCompiled",
+        "title": "Preview Compiled Output",
         "category": "React Compiler Marker ✨"
       }
     ]
@@ -86,6 +91,7 @@
     "@babel/core": "^7.26.0",
     "@babel/parser": "^7.26.2",
     "@babel/preset-typescript": "^7.26.0",
-    "babel-plugin-react-compiler": "^19.0.0-beta-0dec889-20241115"
+    "babel-plugin-react-compiler": "^19.0.0-beta-0dec889-20241115",
+    "prettier": "^3.0.0"
   }
 }

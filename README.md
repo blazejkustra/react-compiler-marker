@@ -1,28 +1,28 @@
 # React Compiler Marker ✨
 
-`react-compiler-marker` highlights React components optimized by the React Compiler. This tool provides clear, visual indicators ✨ for successfully optimized components and 🚫 for those that failed optimization. It makes the optimization process more transparent and helps developers achieve better performance in their React applications.
+`react-compiler-marker` is a VSCode/Cursor extension that shows which React components are optimized by the React Compiler
+- ✨ = optimized
+- 🚫 = failed (with tooltip explaining why)
 
 ## Features 🌟
 
-- **Highlight Optimized Components:** Receive visual markers ✨ for React functions or components successfully optimized by the React Compiler.
-- **Spot Failed Optimizations:** See clear indicators 🚫 for components that couldn't be optimized, with detailed hover tooltips explaining why.
-- **Hover for Details:** Hover over markers to display the reason for optimization success or failure.
-- **Manual Controls:**
-  - Activate or deactivate the extension as needed.
-  - Perform a one-time check of the current file using the `Check Once` command.
+- Markers for optimized and failed components ✨/🚫
+- Hover tooltips with details 
+- Commands to enable/disable markers or check a single file
+- Preview Compiled Output: Preview the compiled output of the current file
 
-### Screenshots 📸
-
-✨ Example Optimized Marker 
+✨ Optimized component
 
 ![Optimized Marker Screenshot](images/optimized-marker.png)
 
-🚫 Example Failed Marker 
+🚫 Failed component
 
 ![Failed Marker Screenshot](images/failed-marker.png)
 
-## Commands 🛠️
-The extension provides the following commands:
+## Available commands 🛠️
+
+Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and type:
+
 1. **Activate Decorations**: Activates the markers for all relevant files in the current session.
    ```bash
    React Compiler Marker: Activate Extension
@@ -35,28 +35,22 @@ The extension provides the following commands:
    ```bash
    React Compiler Marker: Check Once
    ```
-
-These commands can be accessed via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and are associated with customizable keyboard shortcuts in your VS Code settings.
+4. **Preview Compiled Output**: Preview the compiled output of the current file
+   ```bash
+   React Compiler Marker: Preview Compiled Output
+   ```
 
 ## Requirements ⚙️
 
-This extension is fully self-contained and does not require external setup or dependencies. However, to fully utilize React Compiler insights, ensure your project:
+This extension does not require external setup or dependencies. However, to fully utilize React Compiler insights, ensure your project:
 - Includes React codebases.
 - Uses standard JavaScript, TypeScript, or `jsx`/`tsx` file formats.
+- Has React Compiler installed
 
 ## Known Issues 🐛
 
 - Some rare edge cases of anonymous functions could fail to properly display tooltips.
 - For files with a large number of React components, performance may degrade slightly during real-time updates.
-
-## Release Notes 📜
-
-### 1.0.0
-- Initial release of React Compiler Marker ✨.
-- Added support for:
-  - Marking optimized (`✨`) and failed (`🚫`) components.
-  - Hoverable tooltips with optimization details.
-  - Commands for manual control (`Activate`, `Deactivate`, `Check Once`).
 
 ## For More Information 🤝
 
