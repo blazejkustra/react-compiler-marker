@@ -55,6 +55,7 @@ async function updateDecorations(
     );
 
     const hoverMessage = new vscode.MarkdownString();
+    hoverMessage.isTrusted = true; // Enable trusted content for command links
 
     if (log.kind === "CompileSuccess") {
       // Use hoverMessage for displaying Markdown tooltips
@@ -66,7 +67,12 @@ async function updateDecorations(
         "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
       );
       hoverMessage.appendMarkdown(
-        `Reason: ${log?.detail?.reason} **(line ${log.detail?.loc.start.line}-${log.detail?.loc.end.line})**`
+        `Reason: ${log?.detail?.reason} **(line ${log.detail?.loc.start.line}-${log.detail?.loc.end.line})**\n\n`
+      );
+      
+      // Add copy button for failed compilations
+      hoverMessage.appendMarkdown(
+        `[📋 Copy as Prompt](command:react-compiler-marker.copyError)`
       );
     }
 

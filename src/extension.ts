@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import { updateDecorationsForEditor } from "./decorations";
 import { getThrottledFunction } from "./utils";
 import { logMessage } from "./logger";
-import { getCompiledOutput } from "./checkReactCompiler";
+import { getCompiledOutput, checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
+import { copyErrorToClipboard } from "./errorPromptGenerator";
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext): void {
@@ -180,12 +181,74 @@ export function registerCommands(
     }
   );
 
+  // Register the Copy Error to Clipboard command
+  const copyErrorCommand = vscode.commands.registerCommand(
+    "react-compiler-marker.copyError",
+    async () => {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage("No active editor to check for errors.");
+        return;
+      }
+
+      const document = activeEditor.document;
+      const source = document.getText();
+      const filename = document.fileName;
+
+      if (!filename || document.isUntitled) {
+        vscode.window.showErrorMessage(
+          "Please save the file before copying error information."
+        );
+        return;
+      }
+
+      try {
+        const { failedCompilations } = checkReactCompiler(source, filename);
+        
+        if (failedCompilations.length === 0) {
+          vscode.window.showInformationMessage(
+            "No React Compiler errors found in this file. ✨"
+          );
+          return;
+        }
+
+        if (failedCompilations.length === 1) {
+          // If there's only one error, copy it directly
+          await copyErrorToClipboard(failedCompilations[0], source, filename);
+        } else {
+          // If there are multiple errors, show a quick pick to select which one
+          const items = failedCompilations.map((error, index) => ({
+            label: `${error.fnName ?? 'Unknown Component'} (line ${error.fnLoc.start.line})`,
+            description: error.detail?.reason ?? 'Unknown error',
+            error: error,
+            index: index
+          }));
+
+          const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: "Select error to copy:",
+            title: "React Compiler Errors"
+          });
+
+          if (selected) {
+            await copyErrorToClipboard(selected.error, source, filename);
+          }
+        }
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Failed to check for errors: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
+
   // Push all commands to the context's subscriptions
   context.subscriptions.push(
     refreshCommand,
     activateCommand,
     deactivateCommand,
-    previewCompiled
+    previewCompiled,
+    copyErrorCommand
   );
 
   logMessage("React Compiler Marker ✨: Commands registered.");
