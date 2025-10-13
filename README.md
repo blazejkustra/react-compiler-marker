@@ -57,4 +57,9 @@ This extension does not require external setup or dependencies. However, to full
 - Learn about [React Compiler](https://react.dev/learn/react-compiler) and how it can improve your React app's performance.
 - Submit issues or contribute via the [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker).
 
+## Links
+
+- [React Compiler Marker VSCode](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
+- [React Compiler Marker Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+
 **Enjoy Coding with React Compiler Marker ✨!**
