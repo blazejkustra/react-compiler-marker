@@ -54,8 +54,28 @@
         "command": "react-compiler-marker.previewCompiled",
         "title": "Preview Compiled Output",
         "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.copyError",
+        "title": "Copy Error as Prompt",
+        "category": "React Compiler Marker ✨"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "react-compiler-marker.copyError",
+          "when": "resourceExtname == '.tsx' || resourceExtname == '.jsx' || resourceExtname == '.ts' || resourceExtname == '.js'",
+          "group": "react-compiler-marker"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "react-compiler-marker.copyError",
+          "when": "resourceExtname == '.tsx' || resourceExtname == '.jsx' || resourceExtname == '.ts' || resourceExtname == '.js'"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
