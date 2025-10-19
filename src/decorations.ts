@@ -65,9 +65,23 @@ async function updateDecorations(
       hoverMessage.appendMarkdown(
         "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
       );
+      const startLine = Math.max(0, (log.detail?.loc.start.line ?? 1) - 1);
+      const startChar = Math.max(0, log.detail?.loc.start.column ?? 0);
+      const endLine = Math.max(0, (log.detail?.loc.end.line ?? 1) - 1);
+      const endChar = Math.max(0, log.detail?.loc.end.column ?? 0);
+      const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
+        JSON.stringify({
+          start: { line: startLine, character: startChar },
+          end: { line: endLine, character: endChar },
+        })
+      )}`;
+      hoverMessage.appendMarkdown(`Reason: ${log?.detail?.reason}\n\n`);
       hoverMessage.appendMarkdown(
-        `Reason: ${log?.detail?.reason} **(line ${log.detail?.loc.start.line}-${log.detail?.loc.end.line})**`
+        `**[What caused this?](${selectionCmd})** (line ${
+          startLine === endLine ? startLine : `${startLine}-${endLine}`
+        })`
       );
+      hoverMessage.isTrusted = true;
     }
 
     return { range, hoverMessage };

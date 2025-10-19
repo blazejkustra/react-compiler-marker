@@ -180,12 +180,40 @@ export function registerCommands(
     }
   );
 
+  // Register command to reveal and select a given range in the active editor
+  const revealSelection = vscode.commands.registerCommand(
+    "react-compiler-marker.revealSelection",
+    (args: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    }) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No active editor to reveal selection.");
+        return;
+      }
+
+      if (!args?.start || !args?.end) {
+        vscode.window.showErrorMessage("Invalid selection arguments.");
+        return;
+      }
+
+      const start = new vscode.Position(args.start.line, args.start.character);
+      const end = new vscode.Position(args.end.line, args.end.character);
+      const range = new vscode.Range(start, end);
+
+      editor.selection = new vscode.Selection(start, end);
+      editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+    }
+  );
+
   // Push all commands to the context's subscriptions
   context.subscriptions.push(
     refreshCommand,
     activateCommand,
     deactivateCommand,
-    previewCompiled
+    previewCompiled,
+    revealSelection
   );
 
   logMessage("React Compiler Marker ✨: Commands registered.");
