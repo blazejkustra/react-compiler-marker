@@ -61,7 +61,10 @@ async function updateDecorations(
     if (log.kind === "CompileSuccess") {
       // Use hoverMessage for displaying Markdown tooltips
       hoverMessage.appendMarkdown(
-        "✨ This component has been auto-memoized by React Compiler."
+        "✨ This component has been auto-memoized by React Compiler.\n\n"
+      );
+      hoverMessage.appendMarkdown(
+        `**[Preview compiled output 📄](command:react-compiler-marker.previewCompiled)**`
       );
     } else {
       hoverMessage.appendMarkdown(
@@ -100,10 +103,10 @@ async function updateDecorations(
         })
       )}`;
       hoverMessage.appendMarkdown(` **[Fix with AI 🤖💬](${fixWithAICmd})**`);
-
-      // Allow the hover link to be trusted
-      hoverMessage.isTrusted = true;
     }
+
+    // Allow the hover link to be trusted
+    hoverMessage.isTrusted = true;
 
     return { range, hoverMessage };
   });
