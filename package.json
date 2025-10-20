@@ -69,7 +69,9 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "publish:vscode": "vsce publish",
+    "publish:ovsx": "npx ovsx publish -p"
   },
   "devDependencies": {
     "@types/babel__core": "^7.20.5",
