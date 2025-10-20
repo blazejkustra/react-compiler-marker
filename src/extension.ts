@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { updateDecorationsForEditor } from "./decorations";
-import { getThrottledFunction } from "./utils";
+import { getThrottledFunction, isVSCode } from "./utils";
 import { logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
+import { generateAIPrompt } from "./prompt";
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext): void {
@@ -207,13 +208,71 @@ export function registerCommands(
     }
   );
 
+  const fixWithAICmd = vscode.commands.registerCommand(
+    "react-compiler-marker.fixWithAI",
+    async ({
+      reason,
+      filename,
+      startLine,
+      endLine,
+    }: {
+      reason: string;
+      filename: string;
+      startLine: number;
+      endLine: number;
+    }) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No active editor to reveal selection.");
+        return;
+      }
+
+      const errorStartLine = Math.max(0, startLine - 2);
+      const errorEndLine = Math.min(editor.document.lineCount - 1, endLine + 2);
+      const code = editor.document.getText(
+        new vscode.Range(
+          new vscode.Position(errorStartLine, 0),
+          new vscode.Position(
+            errorEndLine,
+            editor.document.lineAt(errorEndLine).text.length
+          )
+        )
+      );
+
+      const prompt = generateAIPrompt(
+        reason,
+        code,
+        filename,
+        startLine,
+        endLine
+      );
+
+      if (isVSCode()) {
+        await vscode.commands.executeCommand(
+          "workbench.action.chat.open",
+          prompt
+        );
+      } else {
+        await vscode.env.clipboard.writeText(prompt);
+        await vscode.commands.executeCommand(
+          "composer.startComposerPrompt",
+          prompt
+        );
+        await vscode.window.showInformationMessage(
+          "Prompt copied. Press CMD+V in the chat."
+        );
+      }
+    }
+  );
+
   // Push all commands to the context's subscriptions
   context.subscriptions.push(
     refreshCommand,
     activateCommand,
     deactivateCommand,
     previewCompiled,
-    revealSelection
+    revealSelection,
+    fixWithAICmd
   );
 
   logMessage("React Compiler Marker ✨: Commands registered.");

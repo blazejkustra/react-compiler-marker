@@ -5,6 +5,7 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
+- Added "Fix with AI" button for failed optimizations
 - Added command to reveal the selection that caused the failure
 
 ### Fixed

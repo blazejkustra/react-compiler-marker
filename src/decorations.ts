@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
 import { logMessage } from "./logger";
+import { isVSCode } from "./utils";
+import { generateAIPrompt } from "./prompt";
 
 function createDecorationType(
   contentText: string
@@ -65,6 +67,8 @@ async function updateDecorations(
       hoverMessage.appendMarkdown(
         "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
       );
+
+      // Get the relevant code snippet around the error location
       const startLine = Math.max(0, (log.detail?.loc.start.line ?? 1) - 1);
       const startChar = Math.max(0, log.detail?.loc.start.column ?? 0);
       const endLine = Math.max(0, (log.detail?.loc.end.line ?? 1) - 1);
@@ -77,10 +81,27 @@ async function updateDecorations(
       )}`;
       hoverMessage.appendMarkdown(`Reason: ${log?.detail?.reason}\n\n`);
       hoverMessage.appendMarkdown(
-        `**[What caused this?](${selectionCmd})** (line ${
-          startLine === endLine ? startLine : `${startLine}-${endLine}`
+        `**[What caused this?](${selectionCmd})** (${
+          startLine === endLine
+            ? `line ${startLine}`
+            : `lines ${startLine}-${endLine}`
         })`
       );
+
+      // Add Fix with AI button
+      const reason = log?.detail?.reason || "Unknown reason";
+      const filename = editor.document.fileName || "Unknown file";
+      const fixWithAICmd = `command:react-compiler-marker.fixWithAI?${encodeURIComponent(
+        JSON.stringify({
+          reason,
+          filename,
+          startLine,
+          endLine,
+        })
+      )}`;
+      hoverMessage.appendMarkdown(` **[Fix with AI 🤖💬](${fixWithAICmd})**`);
+
+      // Allow the hover link to be trusted
       hoverMessage.isTrusted = true;
     }
 
