@@ -5,14 +5,18 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
-- Added "Fix with AI" button for failed optimizations
-- Added command to reveal the selection that caused the failure
-- Added "Preview compiled output" link in hover tooltips for successfully optimized components
+- 
 
 ### Fixed
 -  
 
 ---
+
+## [1.2.0] – 2025-10-20
+### Added
+- Added "Fix with AI" button for failed optimizations
+- Added command to reveal the selection that caused the failure
+- Added "Preview compiled output" link in hover tooltips for successfully optimized components
 
 ## [1.1.0] – 2025-10-06
 
