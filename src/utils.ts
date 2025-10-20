@@ -22,4 +22,14 @@ function getThrottledFunction(
   };
 }
 
-export { getThrottledFunction };
+function isVSCode(): boolean {
+  const appName = vscode.env.appName;
+
+  return (
+    appName.includes("Visual Studio Code") ||
+    appName.includes("VSCode") ||
+    appName.includes("VS Code")
+  );
+}
+
+export { getThrottledFunction, isVSCode };
