@@ -87,17 +87,6 @@
           "default": true,
           "description": "Show the React Compiler status bar indicator"
         },
-        "reactCompilerMarker.statusBarClickAction": {
-          "type": "string",
-          "default": "report",
-          "enum": ["report", "problems", "both"],
-          "enumDescriptions": [
-            "Open detailed HTML report",
-            "Show in Problems panel",
-            "Show both report and problems"
-          ],
-          "description": "Action to perform when clicking the status bar item"
-        },
         "reactCompilerMarker.ignorePatterns": {
           "type": "array",
           "default": [
