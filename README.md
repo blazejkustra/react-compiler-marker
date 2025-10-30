@@ -7,9 +7,14 @@
 ## Features 🌟
 
 - Markers for optimized and failed components ✨/🚫
-- Hover tooltips with details 
+- Hover tooltips with details
 - Commands to enable/disable markers or check a single file
 - Preview Compiled Output: Preview the compiled output of the current file
+- Workspace scanning to find all unoptimized components across your project
+- Interactive HTML report with sortable/filterable table
+- Problems panel integration with inline warnings
+- Status bar indicator for quick workspace access
+- Ignore functionality via settings patterns or inline comments
 
 ✨ Optimized component
 
@@ -19,26 +24,77 @@
 
 ![Failed Marker Screenshot](images/failed-marker.png)
 
+⭕ Ignored component
+
+![Ignored Marker Screenshot](images/ignored-marker.png)
+
 ## Available commands 🛠️
 
 Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and type:
 
-1. **Activate Decorations**: Activates the markers for all relevant files in the current session.
+### Per-File Commands
+1. **Activate Extension**: Activates markers for all files in the current session
    ```bash
    React Compiler Marker: Activate Extension
    ```
-2. **Deactivate Decorations**: Deactivates the markers and clears them from the editor.
+2. **Deactivate Extension**: Deactivates markers and clears them from the editor
    ```bash
    React Compiler Marker: Deactivate Extension
    ```
-3. **Check Once (File-Specific Check)**: Analyzes a single file for one-time feedback without altering activation state.
+3. **Check in the current file**: Analyzes a single file for one-time feedback
    ```bash
-   React Compiler Marker: Check Once
+   React Compiler Marker: Check in the current file
    ```
 4. **Preview Compiled Output**: Preview the compiled output of the current file
    ```bash
    React Compiler Marker: Preview Compiled Output
    ```
+
+### Workspace Commands
+5. **Scan Workspace**: Scans entire workspace and shows interactive report
+   ```bash
+   React Compiler Marker: Scan Workspace
+   ```
+6. **Show Problems Panel**: Scans workspace and shows results in Problems panel
+   ```bash
+   React Compiler Marker: Show Problems Panel
+   ```
+7. **Clear Problems**: Clears all warnings from Problems panel
+   ```bash
+   React Compiler Marker: Clear Problems
+   ```
+
+**Tip**: Click the status bar item `✨ React Compiler` for quick access to workspace scanning.
+
+## Configuration ⚙️
+
+### Settings
+
+```json
+{
+  // Show/hide status bar indicator
+  "reactCompilerMarker.showStatusBar": true,
+
+  // File patterns to ignore during workspace scans
+  "reactCompilerMarker.ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.test.{ts,tsx,js,jsx}",
+    "**/__tests__/**"
+  ]
+}
+```
+
+### Ignore Specific Components
+
+Add a comment above any component to ignore it during workspace scans:
+
+```tsx
+// react-compiler-marker-disable
+function MyLegacyComponent() {
+  // This component will be ignored
+}
+```
 
 ## Requirements ⚙️
 

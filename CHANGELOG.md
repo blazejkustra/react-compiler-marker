@@ -4,11 +4,17 @@ All notable changes to **react-compiler-marker** will be documented in this file
 This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
-### Added
-- 
 
-### Fixed
--  
+---
+
+## [1.3.0] – 2025-01-30
+### Added
+- Workspace scanning to find all unoptimized components across the project
+- Interactive HTML report with sortable/filterable table
+- Problems panel integration with inline warnings
+- Status bar indicator for quick workspace access
+- Ignore functionality via settings patterns or inline comments (`// react-compiler-marker-disable`)
+- Visual distinction for ignored components (⭕ decoration)
 
 ---
 
