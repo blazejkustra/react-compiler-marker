@@ -128,7 +128,7 @@ async function updateDecorations(
 // Decorations for successful and failed compilations
 const magicSparksDecoration = createDecorationType(" ✨");
 const blockIndicatorDecoration = createDecorationType(" 🚫");
-const ignoredDecoration = createDecorationType(" ⊘");
+const ignoredDecoration = createDecorationType(" ⭕");
 
 // Function to update decorations dynamically
 async function updateDecorationsForEditor(editor: vscode.TextEditor) {
