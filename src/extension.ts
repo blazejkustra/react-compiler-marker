@@ -4,6 +4,14 @@ import { getThrottledFunction, isVSCode } from "./utils";
 import { logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
 import { generateAIPrompt } from "./prompt";
+import {
+  scanWorkspaceForUnoptimizedComponents,
+  getCachedResults,
+  clearCache,
+} from "./workspaceScan";
+import { showWebviewReport } from "./webviewPanel";
+import { showInProblemsPanel, clearProblemsPanel } from "./problemsReporter";
+import { StatusBarManager } from "./statusBar";
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext): void {
@@ -27,11 +35,17 @@ export function activate(context: vscode.ExtensionContext): void {
     300
   );
 
+  // Initialize status bar
+  const statusBar = new StatusBarManager();
+  statusBar.show();
+  context.subscriptions.push(statusBar);
+
   registerCommands(
     context,
     throttledUpdateDecorations,
     getIsActivated,
-    setIsActivated
+    setIsActivated,
+    statusBar
   );
 
   registerListeners(throttledUpdateDecorations, getIsActivated);
@@ -59,7 +73,8 @@ export function registerCommands(
   context: vscode.ExtensionContext,
   throttledUpdateDecorations: (editor: vscode.TextEditor) => void,
   getIsActivated: () => boolean,
-  setIsActivated: (value: boolean) => void
+  setIsActivated: (value: boolean) => void,
+  statusBar: StatusBarManager
 ): void {
   // Register the Refresh command
   const refreshCommand = vscode.commands.registerCommand(
@@ -265,6 +280,134 @@ export function registerCommands(
     }
   );
 
+  const showReportCmd = vscode.commands.registerCommand(
+    "react-compiler-marker.showReport",
+    async () => {
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "React Compiler: Scanning workspace...",
+            cancellable: false,
+          },
+          async (progress) => {
+            const unoptimizedComponents =
+              await scanWorkspaceForUnoptimizedComponents(progress);
+            statusBar.updateAfterScan(unoptimizedComponents.length);
+
+            // Auto-populate Problems panel
+            showInProblemsPanel(unoptimizedComponents);
+
+            // Show report
+            showWebviewReport(context, unoptimizedComponents);
+          }
+        );
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Failed to scan workspace: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
+  const showProblemsCmd = vscode.commands.registerCommand(
+    "react-compiler-marker.showProblems",
+    async () => {
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "React Compiler: Scanning workspace...",
+            cancellable: false,
+          },
+          async (progress) => {
+            const unoptimizedComponents =
+              await scanWorkspaceForUnoptimizedComponents(progress);
+            statusBar.updateAfterScan(unoptimizedComponents.length);
+            showInProblemsPanel(unoptimizedComponents);
+          }
+        );
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Failed to scan workspace: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
+  const clearProblemsCmd = vscode.commands.registerCommand(
+    "react-compiler-marker.clearProblems",
+    () => {
+      clearProblemsPanel();
+      clearCache();
+      statusBar.reset();
+      vscode.window.showInformationMessage("React Compiler problems cleared.");
+    }
+  );
+
+  const statusBarClickCmd = vscode.commands.registerCommand(
+    "react-compiler-marker.statusBarClick",
+    async () => {
+      const cached = getCachedResults();
+
+      // If no cached results, do full scan
+      if (!cached) {
+        await vscode.commands.executeCommand(
+          "react-compiler-marker.showReport"
+        );
+        return;
+      }
+
+      // If cached results exist, show quick pick with options
+      const options: vscode.QuickPickItem[] = [
+        {
+          label: "$(file) View Report",
+          description: "Open cached report",
+          detail: "Fast - shows last scan results",
+        },
+        {
+          label: "$(sync) Rescan Workspace",
+          description: "Scan and show fresh report",
+          detail: "Scans all files again for latest results",
+        },
+        {
+          label: "$(warning) Show in Problems Panel",
+          description: "View as warnings",
+          detail: "Shows unoptimized components in Problems panel",
+        },
+        {
+          label: "$(clear-all) Clear Problems",
+          description: "Clear all warnings",
+          detail: "Removes all problems and resets status",
+        },
+      ];
+
+      const selected = await vscode.window.showQuickPick(options, {
+        placeHolder: `Found ${cached.length} unoptimized component${
+          cached.length === 1 ? "" : "s"
+        } - Choose an action`,
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      if (selected.label.includes("View Report")) {
+        showWebviewReport(context, cached);
+      } else if (selected.label.includes("Rescan")) {
+        await vscode.commands.executeCommand(
+          "react-compiler-marker.showReport"
+        );
+      } else if (selected.label.includes("Problems Panel")) {
+        showInProblemsPanel(cached);
+      } else if (selected.label.includes("Clear")) {
+        await vscode.commands.executeCommand(
+          "react-compiler-marker.clearProblems"
+        );
+      }
+    }
+  );
+
   // Push all commands to the context's subscriptions
   context.subscriptions.push(
     refreshCommand,
@@ -272,7 +415,11 @@ export function registerCommands(
     deactivateCommand,
     previewCompiled,
     revealSelection,
-    fixWithAICmd
+    fixWithAICmd,
+    showReportCmd,
+    showProblemsCmd,
+    clearProblemsCmd,
+    statusBarClickCmd
   );
 
   logMessage("React Compiler Marker ✨: Commands registered.");

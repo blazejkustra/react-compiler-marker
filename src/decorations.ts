@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
-import { logMessage } from "./logger";
-import { isVSCode } from "./utils";
-import { generateAIPrompt } from "./prompt";
+import { isComponentDisabled } from "./utils/componentUtils";
 
 function createDecorationType(
   contentText: string
@@ -17,7 +15,8 @@ function createDecorationType(
 async function updateDecorations(
   editor: vscode.TextEditor,
   decorationType: vscode.TextEditorDecorationType,
-  logs: LoggerEvent[]
+  logs: LoggerEvent[],
+  isIgnored: boolean = false
 ) {
   // patterns that come first will be used first if possible
   const patterns = [
@@ -58,7 +57,18 @@ async function updateDecorations(
 
     const hoverMessage = new vscode.MarkdownString();
 
-    if (log.kind === "CompileSuccess") {
+    if (isIgnored) {
+      // Ignored component
+      hoverMessage.appendMarkdown(
+        "**⊘ This component is ignored by react-compiler-marker.**\n\n"
+      );
+      hoverMessage.appendMarkdown(
+        `Comment \`// react-compiler-marker-disable\` found above this component.\n\n`
+      );
+      hoverMessage.appendMarkdown(
+        `Remove the comment to check this component again.`
+      );
+    } else if (log.kind === "CompileSuccess") {
       // Use hoverMessage for displaying Markdown tooltips
       hoverMessage.appendMarkdown(
         "✨ This component has been auto-memoized by React Compiler.\n\n"
@@ -118,6 +128,7 @@ async function updateDecorations(
 // Decorations for successful and failed compilations
 const magicSparksDecoration = createDecorationType(" ✨");
 const blockIndicatorDecoration = createDecorationType(" 🚫");
+const ignoredDecoration = createDecorationType(" ⊘");
 
 // Function to update decorations dynamically
 async function updateDecorationsForEditor(editor: vscode.TextEditor) {
@@ -125,19 +136,34 @@ async function updateDecorationsForEditor(editor: vscode.TextEditor) {
     return;
   }
 
+  const sourceCode = editor.document.getText();
+
   // Run your checkReactCompiler logic on the current file content
   const { successfulCompilations, failedCompilations } = checkReactCompiler(
-    editor.document.getText(),
+    sourceCode,
     editor.document.fileName
   );
 
-  // Update decorations for successful and failed compilations
+  // Separate failed into truly failed vs intentionally ignored
+  const actuallyFailed: LoggerEvent[] = [];
+  const intentionallyIgnored: LoggerEvent[] = [];
+
+  for (const failed of failedCompilations) {
+    if (isComponentDisabled(sourceCode, failed.fnLoc.start.line)) {
+      intentionallyIgnored.push(failed);
+    } else {
+      actuallyFailed.push(failed);
+    }
+  }
+
+  // Update decorations
   await updateDecorations(
     editor,
     magicSparksDecoration,
     successfulCompilations
   );
-  await updateDecorations(editor, blockIndicatorDecoration, failedCompilations);
+  await updateDecorations(editor, blockIndicatorDecoration, actuallyFailed, false);
+  await updateDecorations(editor, ignoredDecoration, intentionallyIgnored, true);
 }
 
 export { createDecorationType, updateDecorations, updateDecorationsForEditor };
