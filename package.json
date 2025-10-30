@@ -54,8 +54,70 @@
         "command": "react-compiler-marker.previewCompiled",
         "title": "Preview Compiled Output",
         "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.showReport",
+        "title": "Scan Workspace",
+        "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.showProblems",
+        "title": "Show Problems Panel",
+        "category": "React Compiler Marker ✨"
+      },
+      {
+        "command": "react-compiler-marker.clearProblems",
+        "title": "Clear Problems",
+        "category": "React Compiler Marker ✨"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "react-compiler-marker.statusBarClick",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "React Compiler Marker",
+      "properties": {
+        "reactCompilerMarker.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the React Compiler status bar indicator"
+        },
+        "reactCompilerMarker.statusBarClickAction": {
+          "type": "string",
+          "default": "report",
+          "enum": ["report", "problems", "both"],
+          "enumDescriptions": [
+            "Open detailed HTML report",
+            "Show in Problems panel",
+            "Show both report and problems"
+          ],
+          "description": "Action to perform when clicking the status bar item"
+        },
+        "reactCompilerMarker.ignorePatterns": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.next/**",
+            "**/out/**",
+            "**/*.test.{ts,tsx,js,jsx}",
+            "**/*.spec.{ts,tsx,js,jsx}",
+            "**/__tests__/**",
+            "**/*.d.ts"
+          ],
+          "description": "File patterns to ignore when scanning for unoptimized components",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
