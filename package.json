@@ -55,7 +55,17 @@
         "title": "Preview Compiled Output",
         "category": "React Compiler Marker ✨"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "React Compiler Marker",
+      "properties": {
+        "reactCompilerMarker.babelPluginPath": {
+          "type": "string",
+          "default": "node_modules/babel-plugin-react-compiler",
+          "description": "Path to the babel-plugin-react-compiler in your project. By default it's 'node_modules/babel-plugin-react-compiler'"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
