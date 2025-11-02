@@ -40,12 +40,19 @@ Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and type:
    React Compiler Marker: Preview Compiled Output
    ```
 
-## Requirements ⚙️
+## Configuration ⚙️
 
-This extension does not require external setup or dependencies. However, to fully utilize React Compiler insights, ensure your project:
-- Includes React codebases.
-- Uses standard JavaScript, TypeScript, or `jsx`/`tsx` file formats.
-- Has React Compiler installed
+You can configure the extension via VSCode/Cursor settings:
+
+### `reactCompilerMarker.babelPluginPath`
+
+Path to the babel-plugin-react-compiler in your project. By default it's `node_modules/babel-plugin-react-compiler`.
+
+```json
+{
+  "reactCompilerMarker.babelPluginPath": "node_modules/babel-plugin-react-compiler"
+}
+```
 
 ## Known Issues 🐛
 
