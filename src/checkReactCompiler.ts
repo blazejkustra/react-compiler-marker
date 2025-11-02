@@ -110,10 +110,16 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
 
   try {
     const workspacePath = workspaceFolder.uri.fsPath;
-    const nodeModulesPath = path.join(workspacePath, "node_modules");
-    BabelPluginReactCompiler = require(
-      path.join(nodeModulesPath, "babel-plugin-react-compiler")
+    const config = vscode.workspace.getConfiguration("reactCompilerMarker");
+    const babelPluginPath = config.get<string>(
+      "babelPluginPath",
+      "node_modules/babel-plugin-react-compiler"
     );
+
+    BabelPluginReactCompiler = require(path.join(
+      workspacePath,
+      babelPluginPath
+    ));
   } catch (error: any) {
     failToLoadBabelPluginError(error);
     try {
@@ -153,9 +159,10 @@ export async function getCompiledOutput(
   try {
     const workspacePath = workspaceFolder.uri.fsPath;
     const nodeModulesPath = path.join(workspacePath, "node_modules");
-    BabelPluginReactCompiler = require(
-      path.join(nodeModulesPath, "babel-plugin-react-compiler")
-    );
+    BabelPluginReactCompiler = require(path.join(
+      nodeModulesPath,
+      "babel-plugin-react-compiler"
+    ));
   } catch (error: any) {
     failToLoadBabelPluginError(error);
     try {

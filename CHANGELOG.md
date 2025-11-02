@@ -5,7 +5,7 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
-- 
+- Added `babelPluginPath` configuration option to specify a directory where the babel-plugin-react-compiler is located. By default it's `node_modules/babel-plugin-react-compiler`.
 
 ### Fixed
 -  
