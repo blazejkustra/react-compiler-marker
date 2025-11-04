@@ -5,12 +5,19 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
+- 
+
+### Fixed
+- 
+
+---
+
+## [1.3.0] – 2025-11-04
+### Added
 - Added `babelPluginPath` configuration option to specify a directory where the babel-plugin-react-compiler is located. By default it's `node_modules/babel-plugin-react-compiler`.
 
 ### Fixed
--  
-
----
+- Fixes an issue where critical errors in the Babel plugin were not properly reported in the extension.
 
 ## [1.2.0] – 2025-10-20
 ### Added
