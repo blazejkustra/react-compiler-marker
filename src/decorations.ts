@@ -1,8 +1,5 @@
 import * as vscode from "vscode";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
-import { logMessage } from "./logger";
-import { isVSCode } from "./utils";
-import { generateAIPrompt } from "./prompt";
 
 function createDecorationType(
   contentText: string
@@ -33,7 +30,7 @@ async function updateDecorations(
 
   const decorations: vscode.DecorationOptions[] = logs.map((log) => {
     // Create a range for the line where the error or success decoration should appear
-    const line = log.fnLoc.start.line - 1;
+    const line = log.fnLoc?.start.line - 1;
     const lineContent = editor.document.lineAt(line).text;
 
     const matchingPattern = patterns.find((pattern) =>
@@ -72,10 +69,10 @@ async function updateDecorations(
       );
 
       // Get the relevant code snippet around the error location
-      const startLine = Math.max(0, (log.detail?.loc.start.line ?? 1) - 1);
-      const startChar = Math.max(0, log.detail?.loc.start.column ?? 0);
-      const endLine = Math.max(0, (log.detail?.loc.end.line ?? 1) - 1);
-      const endChar = Math.max(0, log.detail?.loc.end.column ?? 0);
+      const startLine = Math.max(0, (log.detail?.loc?.start.line ?? 1) - 1);
+      const startChar = Math.max(0, log.detail?.loc?.start.column ?? 0);
+      const endLine = Math.max(0, (log.detail?.loc?.end.line ?? 1) - 1);
+      const endChar = Math.max(0, log.detail?.loc?.end.column ?? 0);
       const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
         JSON.stringify({
           start: { line: startLine, character: startChar },
@@ -83,13 +80,16 @@ async function updateDecorations(
         })
       )}`;
       hoverMessage.appendMarkdown(`Reason: ${log?.detail?.reason}\n\n`);
-      hoverMessage.appendMarkdown(
-        `**[What caused this?](${selectionCmd})** (${
-          startLine === endLine
-            ? `line ${startLine}`
-            : `lines ${startLine}-${endLine}`
-        })`
-      );
+
+      if (startLine || endLine) {
+        hoverMessage.appendMarkdown(
+          `**[What caused this?](${selectionCmd})** (${
+            startLine === endLine
+              ? `line ${startLine}`
+              : `lines ${startLine}-${endLine}`
+          })`
+        );
+      }
 
       // Add Fix with AI button
       const reason = log?.detail?.reason || "Unknown reason";

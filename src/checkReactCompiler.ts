@@ -34,6 +34,15 @@ const failToLoadBabelPluginError = getThrottledFunction(
   1000 * 60 * 5 // 5 minutes
 );
 
+const DEFAULT_COMPILER_OPTIONS = {
+  noEmit: true,
+  compilationMode: "infer",
+  panicThreshold: "none",
+  environment: {
+    enableTreatRefLikeIdentifiersAsRefs: true,
+  },
+};
+
 function runBabelPluginReactCompiler(
   BabelPluginReactCompiler: any,
   text: string,
@@ -61,12 +70,7 @@ function runBabelPluginReactCompiler(
   };
 
   const COMPILER_OPTIONS = {
-    noEmit: true,
-    compilationMode: "infer",
-    panicThreshold: "critical_errors",
-    environment: {
-      enableTreatRefLikeIdentifiersAsRefs: true,
-    },
+    ...DEFAULT_COMPILER_OPTIONS,
     logger,
   };
 
@@ -184,17 +188,7 @@ export async function getCompiledOutput(
       filename,
       highlightCode: false,
       retainLines: true,
-      plugins: [
-        [
-          BabelPluginReactCompiler,
-          {
-            noEmit: false,
-            compilationMode: "infer",
-            panicThreshold: "critical_errors",
-            environment: { enableTreatRefLikeIdentifiersAsRefs: true },
-          },
-        ],
-      ],
+      plugins: [[BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS]],
       sourceType: "module",
       configFile: false,
       babelrc: false,
