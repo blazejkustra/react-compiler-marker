@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { updateDecorationsForEditor } from "./decorations";
 import { getThrottledFunction, isVSCode } from "./utils";
-import { logMessage } from "./logger";
+import { logError, logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
 import { generateAIPrompt } from "./prompt";
 
@@ -40,7 +40,11 @@ export function activate(context: vscode.ExtensionContext): void {
   if (isActivated) {
     const activeEditor = vscode.window.activeTextEditor;
     if (activeEditor) {
-      updateDecorationsForEditor(activeEditor);
+      try {
+        updateDecorationsForEditor(activeEditor);
+      } catch (error: any) {
+        logError(`Critical error updating decorations: ${error?.message}`);
+      }
     }
   }
 
