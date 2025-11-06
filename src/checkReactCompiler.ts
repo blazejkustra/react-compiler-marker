@@ -1,4 +1,4 @@
-import { transformFromAstSync } from "@babel/core";
+import { PluginObj, transformFromAstSync } from "@babel/core";
 import * as BabelParser from "@babel/parser";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -35,7 +35,7 @@ const failToLoadBabelPluginError = getThrottledFunction(
 );
 
 const DEFAULT_COMPILER_OPTIONS = {
-  noEmit: true,
+  noEmit: false,
   compilationMode: "infer",
   panicThreshold: "none",
   environment: {
@@ -44,7 +44,7 @@ const DEFAULT_COMPILER_OPTIONS = {
 };
 
 function runBabelPluginReactCompiler(
-  BabelPluginReactCompiler: any,
+  BabelPluginReactCompiler: PluginObj | undefined,
   text: string,
   file: string,
   language: "flow" | "typescript"
@@ -72,6 +72,7 @@ function runBabelPluginReactCompiler(
   const COMPILER_OPTIONS = {
     ...DEFAULT_COMPILER_OPTIONS,
     logger,
+    noEmit: true,
   };
 
   const ast = BabelParser.parse(text, {
@@ -101,16 +102,16 @@ function runBabelPluginReactCompiler(
   };
 }
 
-export function checkReactCompiler(sourceCode: string, filename: string) {
+function importBabelPluginReactCompiler(): PluginObj | undefined {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     vscode.window.showErrorMessage(
       "No workspace folder is open. Please open a project first."
     );
-    return { successfulCompilations: [], failedCompilations: [] };
+    return;
   }
 
-  let BabelPluginReactCompiler: any;
+  let BabelPluginReactCompiler: PluginObj | undefined;
 
   try {
     const workspacePath = workspaceFolder.uri.fsPath;
@@ -130,9 +131,15 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
       BabelPluginReactCompiler = require("babel-plugin-react-compiler");
     } catch (error: any) {
       console.error(error);
-      return { successfulCompilations: [], failedCompilations: [] };
+      return;
     }
   }
+
+  return BabelPluginReactCompiler;
+}
+
+export function checkReactCompiler(sourceCode: string, filename: string) {
+  const BabelPluginReactCompiler = importBabelPluginReactCompiler();
 
   try {
     return runBabelPluginReactCompiler(
@@ -151,32 +158,7 @@ export async function getCompiledOutput(
   sourceCode: string,
   filename: string
 ): Promise<string> {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-  if (!workspaceFolder) {
-    throw new Error(
-      "No workspace folder is open. Please open a project first."
-    );
-  }
-
-  let BabelPluginReactCompiler: any;
-
-  try {
-    const workspacePath = workspaceFolder.uri.fsPath;
-    const nodeModulesPath = path.join(workspacePath, "node_modules");
-    BabelPluginReactCompiler = require(path.join(
-      nodeModulesPath,
-      "babel-plugin-react-compiler"
-    ));
-  } catch (error: any) {
-    failToLoadBabelPluginError(error);
-    try {
-      BabelPluginReactCompiler = require("babel-plugin-react-compiler");
-    } catch (e: any) {
-      throw new Error(
-        `Failed to load babel-plugin-react-compiler: ${e?.message}`
-      );
-    }
-  }
+  const BabelPluginReactCompiler = importBabelPluginReactCompiler();
 
   try {
     const ast = BabelParser.parse(sourceCode, {
