@@ -2,7 +2,7 @@
   "name": "react-compiler-marker",
   "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing ✨ visual cues ✨  to make the optimization process more transparent during development.",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": "Błażej Kustra <kustrablazej@gmail.com>",
   "publisher": "blazejkustra",
   "license": "MIT",
