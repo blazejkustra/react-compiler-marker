@@ -11,6 +11,39 @@ function createDecorationType(
   });
 }
 
+function parseLog(log: LoggerEvent) {
+  // Helper function to get a value from multiple possible nested paths
+  const getLocValue = (
+    property: "start" | "end",
+    field: "line" | "column",
+    defaultValue: number
+  ) => {
+    return (
+      log.detail?.options?.details?.at(0)?.loc?.[property]?.[field] ??
+      log.detail?.options?.loc?.[property]?.[field] ??
+      log.detail?.loc?.[property]?.[field] ??
+      defaultValue
+    );
+  };
+
+  const startLine = getLocValue("start", "line", 1);
+  const endLine = getLocValue("end", "line", 1);
+  const startChar = getLocValue("start", "column", 0);
+  const endChar = getLocValue("end", "column", 0);
+
+  const reason = log?.detail?.options?.reason || "Unknown reason";
+  const description = log?.detail?.options?.description || "";
+
+  return {
+    startLine: Math.max(0, startLine - 1),
+    endLine: Math.max(0, endLine - 1),
+    startChar: Math.max(0, startChar),
+    endChar: Math.max(0, endChar),
+    reason,
+    description,
+  };
+}
+
 async function updateDecorations(
   editor: vscode.TextEditor,
   decorationType: vscode.TextEditorDecorationType,
@@ -30,8 +63,8 @@ async function updateDecorations(
 
   const decorations: vscode.DecorationOptions[] = logs.map((log) => {
     // Create a range for the line where the error or success decoration should appear
-    const line = log.fnLoc?.start.line - 1;
-    const lineContent = editor.document.lineAt(line).text;
+    const functionLine = (log.fnLoc?.start?.line ?? 1) - 1;
+    const lineContent = editor.document.lineAt(functionLine).text;
 
     const matchingPattern = patterns.find((pattern) =>
       lineContent.includes(pattern)
@@ -47,9 +80,9 @@ async function updateDecorations(
     const startPosition = hasMatch ? matchedIndex + patternLength : 0;
 
     const range = new vscode.Range(
-      line,
+      functionLine,
       startPosition,
-      line,
+      functionLine,
       lineContent.length
     );
 
@@ -68,20 +101,21 @@ async function updateDecorations(
         "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
       );
 
-      // Get the relevant code snippet around the error location
-      const startLine = Math.max(0, (log.detail?.loc?.start.line ?? 1) - 1);
-      const startChar = Math.max(0, log.detail?.loc?.start.column ?? 0);
-      const endLine = Math.max(0, (log.detail?.loc?.end.line ?? 1) - 1);
-      const endChar = Math.max(0, log.detail?.loc?.end.column ?? 0);
-      const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
-        JSON.stringify({
-          start: { line: startLine, character: startChar },
-          end: { line: endLine, character: endChar },
-        })
-      )}`;
-      hoverMessage.appendMarkdown(`Reason: ${log?.detail?.reason}\n\n`);
+      const { startLine, endLine, startChar, endChar, reason, description } =
+        parseLog(log);
+
+      hoverMessage.appendMarkdown(
+        `Reason: ${reason}\n\n${description ? `${description}\n\n` : ""}`
+      );
 
       if (startLine || endLine) {
+        const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
+          JSON.stringify({
+            start: { line: startLine, character: startChar },
+            end: { line: endLine, character: endChar },
+          })
+        )}`;
+
         hoverMessage.appendMarkdown(
           `**[What caused this?](${selectionCmd})** (${
             startLine === endLine
@@ -92,7 +126,6 @@ async function updateDecorations(
       }
 
       // Add Fix with AI button
-      const reason = log?.detail?.reason || "Unknown reason";
       const filename = editor.document.fileName || "Unknown file";
       const fixWithAICmd = `command:react-compiler-marker.fixWithAI?${encodeURIComponent(
         JSON.stringify({

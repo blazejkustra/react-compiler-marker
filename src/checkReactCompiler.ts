@@ -6,8 +6,22 @@ import { getThrottledFunction } from "./utils";
 import { logError } from "./logger";
 
 type EventLocation = {
-  start: { line: number; column: number; index: number };
-  end: { line: number; column: number; index: number };
+  start?: { line?: number; column?: number; index?: number };
+  end?: { line?: number; column?: number; index?: number };
+};
+
+type Detail = {
+  kind?: string;
+  loc?: EventLocation;
+  message?: string;
+};
+
+type Details = {
+  reason?: string;
+  description?: string;
+  suggestions?: string[];
+  loc?: EventLocation;
+  details?: Array<Detail>;
 };
 
 export type LoggerEvent = {
@@ -15,7 +29,9 @@ export type LoggerEvent = {
   kind?: string;
   fnLoc: EventLocation;
   fnName?: string;
-  detail?: { reason: string; suggestions: string[]; loc: EventLocation };
+  detail?: Details & {
+    options: Details;
+  };
 };
 
 const failToCompileError = getThrottledFunction(
