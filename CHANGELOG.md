@@ -8,9 +8,13 @@ This project follows [Semantic Versioning](https://semver.org).
 - 
 
 ### Fixed
-- 
+-
 
 ---
+
+## [1.3.2] – 2025-11-16
+### Fixed
+- Fixed issue where error locations were not being precisely indicated, causing generic error messages without specific code locations (Issue #27, PR #28)
 
 ## [1.3.1] – 2025-11-06
 ### Fixed
