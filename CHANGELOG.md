@@ -12,7 +12,7 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ---
 
-## [1.3.3]
+## [1.3.3] - 2025-11-20
 ### Fixed
 - Updated the preview compiled output to use the TypeScript React language for proper syntax highlighting and IntelliSense (Issue #29, PR #30).
 
