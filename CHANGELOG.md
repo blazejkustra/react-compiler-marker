@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ---
 
+## [1.3.3]
+### Fixed
+- Updated the preview compiled output to use the TypeScript React language for proper syntax highlighting and IntelliSense (Issue #29, PR #30).
+
 ## [1.3.2] – 2025-11-16
 ### Fixed
 - Fixed issue where error locations were not being precisely indicated, causing generic error messages without specific code locations (Issue #27, PR #28)
