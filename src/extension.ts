@@ -165,7 +165,7 @@ export function registerCommands(
           async () => {
             const compiled = await getCompiledOutput(source, filename);
             const compiledDoc = await vscode.workspace.openTextDocument({
-              language: "typescript",
+              language: "typescriptreact",
               content: compiled,
             });
             await vscode.window.showTextDocument(compiledDoc, {
