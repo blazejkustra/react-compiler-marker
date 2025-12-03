@@ -32,4 +32,12 @@ function isVSCode(): boolean {
   );
 }
 
-export { getThrottledFunction, isVSCode };
+function isAntigravity(): boolean {
+  const appName = vscode.env.appName;
+
+  return (
+    appName.includes("Antigravity")
+  );
+}
+
+export { getThrottledFunction, isVSCode, isAntigravity };
