@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { updateDecorationsForEditor } from "./decorations";
+import { updateDecorationsForEditor, loadDecorations } from "./decorations";
 import { getThrottledFunction, isVSCode } from "./utils";
 import { logError, logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
@@ -301,6 +301,17 @@ function registerListeners(
     const editor = vscode.window.activeTextEditor;
     if (getIsActivated() && editor && event.document === editor.document) {
       throttledUpdateDecorations(editor);
+    }
+  });
+
+  // Listener for emoji config changes
+  vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration("reactCompilerMarker")) {
+      loadDecorations();
+      const editor = vscode.window.activeTextEditor;
+      if (getIsActivated() && editor) {
+        throttledUpdateDecorations(editor);
+      }
     }
   });
 
