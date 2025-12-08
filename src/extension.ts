@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { updateDecorationsForEditor } from "./decorations";
 import { getThrottledFunction, isVSCode, isAntigravity } from "./utils";
+import { updateDecorationsForEditor, loadDecorations } from "./decorations";
 import { logError, logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
 import { generateAIPrompt } from "./prompt";
@@ -260,13 +260,12 @@ export function registerCommands(
         await vscode.env.clipboard.writeText(prompt);
         await vscode.commands.executeCommand(
           "antigravity.prioritized.chat.openNewConversation",
-          prompt,
+          prompt
         );
         await vscode.window.showInformationMessage(
           "Prompt copied. Press CMD+V in the chat."
         );
-      }
-      else {
+      } else {
         await vscode.env.clipboard.writeText(prompt);
         await vscode.commands.executeCommand(
           "composer.startComposerPrompt",
@@ -311,6 +310,17 @@ function registerListeners(
     const editor = vscode.window.activeTextEditor;
     if (getIsActivated() && editor && event.document === editor.document) {
       throttledUpdateDecorations(editor);
+    }
+  });
+
+  // Listener for emoji config changes
+  vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration("reactCompilerMarker")) {
+      loadDecorations();
+      const editor = vscode.window.activeTextEditor;
+      if (getIsActivated() && editor) {
+        throttledUpdateDecorations(editor);
+      }
     }
   });
 

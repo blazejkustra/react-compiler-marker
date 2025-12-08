@@ -63,6 +63,18 @@
           "type": "string",
           "default": "node_modules/babel-plugin-react-compiler",
           "description": "Path to the babel-plugin-react-compiler in your project. By default it's 'node_modules/babel-plugin-react-compiler'"
+        },
+        "reactCompilerMarker.errorEmoji": {
+          "type": "string",
+          "nullable": true,
+          "default": "🚫",
+          "description": "Emoji marker to display next to components that failed to be memoized"
+        },
+        "reactCompilerMarker.successEmoji": {
+          "type": "string",
+          "nullable": true,
+          "default": "✨",
+          "description": "Emoji marker to display next to components that were successfully memoized"
         }
       }
     }
