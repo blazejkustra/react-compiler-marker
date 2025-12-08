@@ -5,7 +5,7 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
-- 
+- User customizable emoji markers
 
 ### Fixed
 -

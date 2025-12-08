@@ -1,13 +1,11 @@
 # React Compiler Marker ✨
 
 `react-compiler-marker` is a VSCode/Cursor extension that shows which React components are optimized by the React Compiler
-- ✨ = optimized
-- 🚫 = failed (with tooltip explaining why)
 
 ## Features 🌟
 
-- Markers for optimized and failed components ✨/🚫
-- Hover tooltips with details 
+- Customizable emoji markers for optimized and failed components
+- Hover tooltips with details
 - Commands to enable/disable markers or check a single file
 - Preview Compiled Output: Preview the compiled output of the current file
 
@@ -43,6 +41,26 @@ Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and type:
 ## Configuration ⚙️
 
 You can configure the extension via VSCode/Cursor settings:
+
+### `reactCompilerMarker.successEmoji`
+
+Emoji marker to display next to components that were successfully memoized (Default: ✨, can be null)
+
+```json
+{
+  "reactCompilerMarker.successEmoji": "✨"
+}
+```
+
+### `reactCompilerMarker.errorEmoji`
+
+Emoji marker to display next to components that failed to be memoized (Default 🚫, can be null)
+
+```json
+{
+  "reactCompilerMarker.errorEmoji": "🚫"
+}
+```
 
 ### `reactCompilerMarker.babelPluginPath`
 

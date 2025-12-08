@@ -68,13 +68,13 @@
           "type": "string",
           "nullable": true,
           "default": "🚫",
-          "description": "Emoji to display next to components that failed to be memoized"
+          "description": "Emoji marker to display next to components that failed to be memoized"
         },
         "reactCompilerMarker.successEmoji": {
           "type": "string",
           "nullable": true,
           "default": "✨",
-          "description": "Emoji to display next to components that were successfully memoized"
+          "description": "Emoji marker to display next to components that were successfully memoized"
         }
       }
     }
