@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
 
+let successDecoration: vscode.TextEditorDecorationType;
+let errorDecoration: vscode.TextEditorDecorationType;
+let currentSuccessEmoji: string | null | undefined;
+let currentErrorEmoji: string | null | undefined;
+
 function createDecorationType(
   contentText: string
 ): vscode.TextEditorDecorationType {
@@ -91,14 +96,14 @@ async function updateDecorations(
     if (log.kind === "CompileSuccess") {
       // Use hoverMessage for displaying Markdown tooltips
       hoverMessage.appendMarkdown(
-        "✨ This component has been auto-memoized by React Compiler.\n\n"
+        `${currentSuccessEmoji} This component has been auto-memoized by React Compiler.\n\n`
       );
       hoverMessage.appendMarkdown(
         `**[Preview compiled output 📄](command:react-compiler-marker.previewCompiled)**`
       );
     } else {
       hoverMessage.appendMarkdown(
-        "**🚫 This component hasn't been memoized by React Compiler.**\n\n"
+        `**${currentErrorEmoji} This component hasn't been memoized by React Compiler.**\n\n`
       );
 
       const { startLine, endLine, startChar, endChar, reason, description } =
@@ -148,9 +153,28 @@ async function updateDecorations(
   editor.setDecorations(decorationType, decorations);
 }
 
-// Decorations for successful and failed compilations
-const magicSparksDecoration = createDecorationType(" ✨");
-const blockIndicatorDecoration = createDecorationType(" 🚫");
+// Function to load initial decorations
+export function loadDecorations() {
+  const config = vscode.workspace.getConfiguration("reactCompilerMarker");
+  currentSuccessEmoji = config.get<string | null>("successEmoji");
+  currentErrorEmoji = config.get<string | null>("errorEmoji");
+
+  if (successDecoration) {
+    successDecoration.dispose();
+  }
+  if (errorDecoration) {
+    errorDecoration.dispose();
+  }
+
+  successDecoration = createDecorationType(
+    currentSuccessEmoji ? " " + currentSuccessEmoji : ""
+  );
+  errorDecoration = createDecorationType(
+    currentErrorEmoji ? " " + currentErrorEmoji : ""
+  );
+}
+
+loadDecorations();
 
 // Function to update decorations dynamically
 async function updateDecorationsForEditor(editor: vscode.TextEditor) {
@@ -165,12 +189,8 @@ async function updateDecorationsForEditor(editor: vscode.TextEditor) {
   );
 
   // Update decorations for successful and failed compilations
-  await updateDecorations(
-    editor,
-    magicSparksDecoration,
-    successfulCompilations
-  );
-  await updateDecorations(editor, blockIndicatorDecoration, failedCompilations);
+  await updateDecorations(editor, successDecoration, successfulCompilations);
+  await updateDecorations(editor, errorDecoration, failedCompilations);
 }
 
 export { createDecorationType, updateDecorations, updateDecorationsForEditor };
