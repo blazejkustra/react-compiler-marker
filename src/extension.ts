@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
+import { getThrottledFunction, isVSCode, isAntigravity } from "./utils";
 import { updateDecorationsForEditor, loadDecorations } from "./decorations";
-import { getThrottledFunction, isVSCode } from "./utils";
 import { logError, logMessage } from "./logger";
 import { getCompiledOutput } from "./checkReactCompiler";
 import { generateAIPrompt } from "./prompt";
@@ -255,6 +255,15 @@ export function registerCommands(
         await vscode.commands.executeCommand(
           "workbench.action.chat.open",
           prompt
+        );
+      } else if (isAntigravity()) {
+        await vscode.env.clipboard.writeText(prompt);
+        await vscode.commands.executeCommand(
+          "antigravity.prioritized.chat.openNewConversation",
+          prompt
+        );
+        await vscode.window.showInformationMessage(
+          "Prompt copied. Press CMD+V in the chat."
         );
       } else {
         await vscode.env.clipboard.writeText(prompt);
