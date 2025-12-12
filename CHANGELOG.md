@@ -5,13 +5,17 @@ This project follows [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Added
-- Support for Google's Antigravity IDE
-- User customizable emoji markers
+- 
 
 ### Fixed
 -
 
 ---
+
+## [1.3.4] - 2025-12-12
+### Added
+- Support for Google's Antigravity IDE
+- User customizable emoji markers
 
 ## [1.3.3] - 2025-11-20
 ### Fixed
