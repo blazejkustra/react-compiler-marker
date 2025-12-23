@@ -1,6 +1,6 @@
 # React Compiler Marker ✨
 
-`react-compiler-marker` is a VSCode/Cursor extension that shows which React components are optimized by the React Compiler
+`react-compiler-marker` is an IDE extension that shows which React components are optimized by the React Compiler. Available for VSCode/Cursor and WebStorm/IntelliJ IDEA.
 
 ## Features 🌟
 
@@ -82,9 +82,43 @@ Path to the babel-plugin-react-compiler in your project. By default it's `node_m
 - Learn about [React Compiler](https://react.dev/learn/react-compiler) and how it can improve your React app's performance.
 - Submit issues or contribute via the [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker).
 
+## Installation
+
+### VS Code / Cursor
+
+Install from:
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
+- [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+
+Or search for "React Compiler Marker" in the Extensions panel.
+
+### WebStorm / IntelliJ IDEA
+
+The WebStorm/IntelliJ plugin is available in the `packages/webstorm-plugin` directory.
+
+**Building from source:**
+
+```bash
+cd packages/webstorm-plugin
+gradle wrapper --gradle-version 8.5
+./gradlew buildPlugin
+```
+
+The plugin will be at `build/distributions/react-compiler-marker-*.zip`
+
+**Installation:**
+1. Open WebStorm/IntelliJ IDEA
+2. Go to **Settings/Preferences** → **Plugins**
+3. Click ⚙️ → **Install Plugin from Disk...**
+4. Select the built `.zip` file
+5. Restart the IDE
+
+For more details, see [WebStorm Plugin Documentation](packages/webstorm-plugin/README.md)
+
 ## Links
 
-- [React Compiler Marker VSCode](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
-- [React Compiler Marker Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+- [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker)
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
+- [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
 
 **Enjoy Coding with React Compiler Marker ✨!**
