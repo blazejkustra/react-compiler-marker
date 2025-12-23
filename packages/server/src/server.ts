@@ -68,9 +68,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 
   // Log client info for debugging
   logMessage(
-    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${
-      params.clientInfo?.version ?? ""
-    }`
+    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""}`
   );
 
   return {
@@ -104,8 +102,7 @@ connection.onDidChangeConfiguration((change) => {
     globalSettings = {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
-      babelPluginPath:
-        settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
+      babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
     };
   }
   // Refresh inlay hints on all documents
@@ -113,57 +110,48 @@ connection.onDidChangeConfiguration((change) => {
 });
 
 // Handle inlay hints request
-connection.languages.inlayHint.on(
-  (params: InlayHintParams): InlayHint[] | null => {
-    if (!isActivated) {
-      return null;
-    }
-
-    const document = documents.get(params.textDocument.uri);
-    if (!document) {
-      return null;
-    }
-
-    const fileName = params.textDocument.uri;
-    const fileNameForCompiler = fileName.startsWith("file://")
-      ? fileName.slice(7)
-      : fileName;
-
-    // Only process JS/TS/JSX/TSX files
-    const languageId = document.languageId;
-    if (
-      ![
-        "javascript",
-        "typescript",
-        "javascriptreact",
-        "typescriptreact",
-      ].includes(languageId)
-    ) {
-      return null;
-    }
-
-    try {
-      const sourceCode = document.getText();
-      const { successfulCompilations, failedCompilations } = checkReactCompiler(
-        sourceCode,
-        fileNameForCompiler,
-        workspaceFolder,
-        globalSettings.babelPluginPath
-      );
-
-      return generateInlayHints(
-        document,
-        successfulCompilations,
-        failedCompilations,
-        globalSettings.successEmoji,
-        globalSettings.errorEmoji
-      );
-    } catch (error: any) {
-      logError(`Error checking React Compiler: ${error?.message}`);
-      return null;
-    }
+connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] | null => {
+  if (!isActivated) {
+    return null;
   }
-);
+
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  const fileName = params.textDocument.uri;
+  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+
+  // Only process JS/TS/JSX/TSX files
+  const languageId = document.languageId;
+  if (!["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(languageId)) {
+    return null;
+  }
+
+  logMessage(`Process inline hints for ${params.textDocument.uri}`);
+
+  try {
+    const sourceCode = document.getText();
+    const { successfulCompilations, failedCompilations } = checkReactCompiler(
+      sourceCode,
+      fileNameForCompiler,
+      workspaceFolder,
+      globalSettings.babelPluginPath
+    );
+
+    return generateInlayHints(
+      document,
+      successfulCompilations,
+      failedCompilations,
+      globalSettings.successEmoji,
+      globalSettings.errorEmoji
+    );
+  } catch (error: any) {
+    logError(`Error checking React Compiler: ${error?.message}`);
+    return null;
+  }
+});
 
 // Handle execute command
 connection.onExecuteCommand(async (params: ExecuteCommandParams) => {

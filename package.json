@@ -96,6 +96,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc -b --noEmit",
     "lint": "eslint packages/*/src",
+    "format": "prettier --write \"packages/*/src/**/*.ts\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "test": "vscode-test",
     "publish:vscode": "vsce publish",
     "publish:ovsx": "npx ovsx publish -p"
@@ -114,6 +116,7 @@
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
     "npm-run-all2": "^8.0.4",
+    "prettier": "3.7.4",
     "typescript": "^5.6.3"
   },
   "dependencies": {

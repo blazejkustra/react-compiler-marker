@@ -59,27 +59,23 @@ function getInlayHintPosition(
 
   const startOfLine = { line: functionLine, character: 0 };
   const endOfLine = { line: functionLine + 1, character: 0 };
-  const lineContent = document.getText({
-    start: startOfLine,
-    end: endOfLine,
-  }).trimEnd();
+  const lineContent = document
+    .getText({
+      start: startOfLine,
+      end: endOfLine,
+    })
+    .trimEnd();
 
   // Find the matching pattern
-  const matchingPattern = FUNCTION_PATTERNS.find((pattern) =>
-    lineContent.includes(pattern)
-  );
+  const matchingPattern = FUNCTION_PATTERNS.find((pattern) => lineContent.includes(pattern));
 
   // Compute where to place the hint
-  const matchedIndex = matchingPattern
-    ? lineContent.indexOf(matchingPattern)
-    : -1;
+  const matchedIndex = matchingPattern ? lineContent.indexOf(matchingPattern) : -1;
   const hasMatch = matchedIndex !== -1;
   const patternLength = matchingPattern?.length ?? 0;
 
   // Position after the pattern, or at end of line
-  const hintPosition = hasMatch
-    ? matchedIndex + patternLength
-    : lineContent.length;
+  const hintPosition = hasMatch ? matchedIndex + patternLength : lineContent.length;
 
   // Try to extract function name for the label
   const functionName = log.fnName || "Component";
@@ -122,18 +118,15 @@ export function generateInlayHints(
     }
   }
 
-  // Generate hints for failed compilations
-  if (errorEmoji) {
-    for (const log of failedCompilations) {
-      const positionInfo = getInlayHintPosition(document, log);
-      if (!positionInfo) {
-        continue;
-      }
+  // Generate hint for failed compilations (one hint with all errors)
+  if (errorEmoji && failedCompilations.length > 0) {
+    let tooltipContent = `${errorEmoji} This component hasn't been memoized by React Compiler.`;
+    tooltipContent += "\n\n---\n\n";
 
-      const { reason, description, startLine, endLine } = parseLog(log);
+    for (let i = 0; i < failedCompilations.length; i++) {
+      const { reason, description, startLine, endLine } = parseLog(failedCompilations[i]);
 
-      let tooltipContent = `${errorEmoji} **${positionInfo.functionName}** hasn't been memoized by React Compiler.\n\n`;
-      tooltipContent += `**Reason:** ${reason}\n\n`;
+      tooltipContent += `**Error ${i + 1}:** ${reason}\n\n`;
       if (description) {
         tooltipContent += `${description}\n\n`;
       }
@@ -144,19 +137,29 @@ export function generateInlayHints(
             : `📍 Lines ${startLine + 1}-${endLine + 1}`;
       }
 
-      const hint: InlayHint = {
-        position: positionInfo.position,
-        label: ` ${errorEmoji}`,
-        kind: InlayHintKind.Type,
-        paddingLeft: true,
-        tooltip: {
-          kind: "markdown",
-          value: tooltipContent,
-        },
-      };
-
-      hints.push(hint);
+      if (i < failedCompilations.length - 1) {
+        tooltipContent += "\n\n---\n\n";
+      }
     }
+
+    const firstLog = failedCompilations[0];
+    const positionInfo = getInlayHintPosition(document, firstLog);
+    if (!positionInfo) {
+      return [];
+    }
+
+    const hint: InlayHint = {
+      position: positionInfo.position,
+      label: ` ${errorEmoji}`,
+      kind: InlayHintKind.Type,
+      paddingLeft: true,
+      tooltip: {
+        kind: "markdown",
+        value: tooltipContent,
+      },
+    };
+
+    hints.push(hint);
   }
 
   return hints;

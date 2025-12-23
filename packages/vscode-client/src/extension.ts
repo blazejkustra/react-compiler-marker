@@ -10,9 +10,7 @@ import {
 let client: LanguageClient;
 
 // Output channel for logging
-const outputChannel = vscode.window.createOutputChannel(
-  "React Compiler Marker ✨"
-);
+const outputChannel = vscode.window.createOutputChannel("React Compiler Marker ✨");
 
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
@@ -45,10 +43,7 @@ function generateAIPrompt(
   startLine: number,
   endLine: number
 ): string {
-  const lineRange =
-    startLine === endLine
-      ? `line ${startLine}`
-      : `lines ${startLine}-${endLine}`;
+  const lineRange = startLine === endLine ? `line ${startLine}` : `lines ${startLine}-${endLine}`;
 
   return `I have a React component that the React Compiler couldn't optimize. Here's the issue:
 
@@ -150,9 +145,7 @@ function registerCommands(
         command: "react-compiler-marker/checkOnce",
       });
 
-      vscode.window.showInformationMessage(
-        "React Compiler Markers refreshed ✨"
-      );
+      vscode.window.showInformationMessage("React Compiler Markers refreshed ✨");
     }
   );
 
@@ -161,9 +154,7 @@ function registerCommands(
     "react-compiler-marker.activate",
     async () => {
       if (isActivated) {
-        vscode.window.showInformationMessage(
-          "React Compiler Marker ✨ is already activated."
-        );
+        vscode.window.showInformationMessage("React Compiler Marker ✨ is already activated.");
         return;
       }
 
@@ -174,9 +165,7 @@ function registerCommands(
       isActivated = true;
       setIsActivated(true);
 
-      vscode.window.showInformationMessage(
-        "React Compiler Marker ✨ activated!"
-      );
+      vscode.window.showInformationMessage("React Compiler Marker ✨ activated!");
     }
   );
 
@@ -185,9 +174,7 @@ function registerCommands(
     "react-compiler-marker.deactivate",
     async () => {
       if (!isActivated) {
-        vscode.window.showInformationMessage(
-          "React Compiler Marker ✨ is already deactivated."
-        );
+        vscode.window.showInformationMessage("React Compiler Marker ✨ is already deactivated.");
         return;
       }
 
@@ -198,9 +185,7 @@ function registerCommands(
       isActivated = false;
       setIsActivated(false);
 
-      vscode.window.showInformationMessage(
-        "React Compiler Marker ✨ deactivated!"
-      );
+      vscode.window.showInformationMessage("React Compiler Marker ✨ deactivated!");
     }
   );
 
@@ -218,9 +203,7 @@ function registerCommands(
       const filename = document.fileName;
 
       if (!filename || document.isUntitled) {
-        vscode.window.showErrorMessage(
-          "Please save the file before previewing compiled output."
-        );
+        vscode.window.showErrorMessage("Please save the file before previewing compiled output.");
         return;
       }
 
@@ -232,13 +215,10 @@ function registerCommands(
             cancellable: false,
           },
           async () => {
-            const result = (await client.sendRequest(
-              "workspace/executeCommand",
-              {
-                command: "react-compiler-marker/getCompiledOutput",
-                arguments: [document.uri.toString()],
-              }
-            )) as { success: boolean; code?: string; error?: string };
+            const result = (await client.sendRequest("workspace/executeCommand", {
+              command: "react-compiler-marker/getCompiledOutput",
+              arguments: [document.uri.toString()],
+            })) as { success: boolean; code?: string; error?: string };
 
             if (!result.success || !result.code) {
               throw new Error(result.error || "Compilation failed");
@@ -252,9 +232,7 @@ function registerCommands(
               preview: true,
               viewColumn: vscode.ViewColumn.Beside,
             });
-            await vscode.commands.executeCommand(
-              "editor.action.formatDocument"
-            );
+            await vscode.commands.executeCommand("editor.action.formatDocument");
           }
         );
       } catch (error: any) {
@@ -290,44 +268,25 @@ function registerCommands(
       const code = editor.document.getText(
         new vscode.Range(
           new vscode.Position(errorStartLine, 0),
-          new vscode.Position(
-            errorEndLine,
-            editor.document.lineAt(errorEndLine).text.length
-          )
+          new vscode.Position(errorEndLine, editor.document.lineAt(errorEndLine).text.length)
         )
       );
 
-      const prompt = generateAIPrompt(
-        reason,
-        code,
-        filename,
-        startLine,
-        endLine
-      );
+      const prompt = generateAIPrompt(reason, code, filename, startLine, endLine);
 
       if (isVSCode()) {
-        await vscode.commands.executeCommand(
-          "workbench.action.chat.open",
-          prompt
-        );
+        await vscode.commands.executeCommand("workbench.action.chat.open", prompt);
       } else if (isAntigravity()) {
         await vscode.env.clipboard.writeText(prompt);
         await vscode.commands.executeCommand(
           "antigravity.prioritized.chat.openNewConversation",
           prompt
         );
-        await vscode.window.showInformationMessage(
-          "Prompt copied. Press CMD+V in the chat."
-        );
+        await vscode.window.showInformationMessage("Prompt copied. Press CMD+V in the chat.");
       } else {
         await vscode.env.clipboard.writeText(prompt);
-        await vscode.commands.executeCommand(
-          "composer.startComposerPrompt",
-          prompt
-        );
-        await vscode.window.showInformationMessage(
-          "Prompt copied. Press CMD+V in the chat."
-        );
+        await vscode.commands.executeCommand("composer.startComposerPrompt", prompt);
+        await vscode.window.showInformationMessage("Prompt copied. Press CMD+V in the chat.");
       }
     }
   );
