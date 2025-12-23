@@ -50,6 +50,16 @@ let isActivated = true;
 // Store workspace folder
 let workspaceFolder: string | undefined;
 
+function logMessage(message: string): void {
+  const timestamp = new Date().toISOString();
+  connection.console.log(`[${timestamp}] SERVER LOG: ${message}`);
+}
+
+function logError(error: string): void {
+  const timestamp = new Date().toISOString();
+  connection.console.error(`[${timestamp}] SERVER ERROR: ${error}`);
+}
+
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   workspaceFolder = params.workspaceFolders?.[0]?.uri;
   if (workspaceFolder?.startsWith("file://")) {
@@ -57,8 +67,10 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
   }
 
   // Log client info for debugging
-  connection.console.log(
-    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""}`
+  logMessage(
+    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${
+      params.clientInfo?.version ?? ""
+    }`
   );
 
   return {
@@ -82,7 +94,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 });
 
 connection.onInitialized(() => {
-  connection.console.log("React Compiler Marker LSP Server initialized");
+  logMessage("React Compiler Marker LSP Server initialized");
 });
 
 // Handle configuration changes
@@ -120,9 +132,12 @@ connection.languages.inlayHint.on(
     // Only process JS/TS/JSX/TSX files
     const languageId = document.languageId;
     if (
-      !["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(
-        languageId
-      )
+      ![
+        "javascript",
+        "typescript",
+        "javascriptreact",
+        "typescriptreact",
+      ].includes(languageId)
     ) {
       return null;
     }
@@ -144,9 +159,7 @@ connection.languages.inlayHint.on(
         globalSettings.errorEmoji
       );
     } catch (error: any) {
-      connection.console.error(
-        `Error checking React Compiler: ${error?.message}`
-      );
+      logError(`Error checking React Compiler: ${error?.message}`);
       return null;
     }
   }
