@@ -2,9 +2,15 @@
 
 This document summarizes the WebStorm/IntelliJ IDEA plugin implementation for React Compiler Marker.
 
-## What Was Implemented
+## What should be implemented
 
-A complete WebStorm/IntelliJ IDEA plugin that provides the same functionality as the VS Code extension by connecting to the existing LSP server.
+A complete WebStorm/IntelliJ IDEA plugin that provides the same functionality as the VS Code extension by connecting to the existing LSP server. It should be able to:
+- Show visual markers (✨ and 🚫) next to React components to indicate whether they were successfully optimized by the React Compiler.
+- Provide commands to activate/deactivate the extension, check the current file, and preview the compiled output.
+- Provide settings to configure the emoji markers and the babel plugin path.
+- Provide a startup activity to initialize the plugin on IDE start.
+- Provide documentation to help users understand the plugin and how to use it.
+- Provide a build and distribution system to build the plugin and distribute it to the users.
 
 ## Architecture
 
@@ -76,7 +82,6 @@ The plugin uses a **client-server architecture**:
 
 ### 8. Documentation
 - **`README.md`** - User documentation
-- **`OVERVIEW.md`** - Quick overview
 - **`CHANGELOG.md`** - Version history
 - **`quick-start.sh`** - Automated setup script
 
@@ -246,16 +251,11 @@ The plugin uses the **same LSP server** as the VS Code extension:
 - [ ] Settings changes are persisted
 - [ ] Settings changes update server
 
-### Automated Testing
-- Unit tests can be added in `src/test/kotlin/`
-- Run with: `./gradlew test`
-
 ## Known Limitations
 
 1. **Server Discovery**: Looks for server at:
    - `$PROJECT/dist/server.js`
    - `$PROJECT/packages/server/out/server.js`
-   - `$PROJECT/node_modules/react-compiler-marker/dist/server.js`
 
 2. **Error Handling**: Silent failures when server unavailable
 
@@ -289,38 +289,3 @@ The plugin uses the **same LSP server** as the VS Code extension:
 - [LSP Specification](https://microsoft.github.io/language-server-protocol/)
 - [Kotlin](https://kotlinlang.org/docs/)
 - [React Compiler](https://react.dev/learn/react-compiler)
-
-## Support
-
-- **GitHub**: https://github.com/blazejkustra/react-compiler-marker
-- **Issues**: https://github.com/blazejkustra/react-compiler-marker/issues
-- **Email**: kustrablazej@gmail.com
-
-## License
-
-MIT License - Same as the main project
-
-## Author
-
-Błażej Kustra - kustrablazej@gmail.com
-
----
-
-## Summary
-
-The WebStorm plugin is now **fully implemented** and provides feature parity with the VS Code extension. It:
-
-1. ✅ Uses the existing LSP server (no server changes needed)
-2. ✅ Provides all the same features
-3. ✅ Has comprehensive documentation
-4. ✅ Includes build and setup scripts
-5. ✅ Is ready for testing and distribution
-
-**Next Steps:**
-1. Test the plugin thoroughly
-2. Fix any issues found during testing
-3. Add automated tests
-4. Publish to JetBrains Marketplace
-
-**Enjoy coding with React Compiler Marker ✨!**
-
