@@ -93,6 +93,9 @@ export function activate(context: vscode.ExtensionContext): void {
       configurationSection: "reactCompilerMarker",
     },
     outputChannel,
+    markdown: {
+      isTrusted: true,
+    },
   };
 
   // Create the language client and start it
@@ -243,6 +246,33 @@ function registerCommands(
     }
   );
 
+  // Register the Reveal Selection command
+  const revealSelectionCmd = vscode.commands.registerCommand(
+    "react-compiler-marker.revealSelection",
+    (args: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    }) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No active editor to reveal selection.");
+        return;
+      }
+
+      if (!args?.start || !args?.end) {
+        vscode.window.showErrorMessage("Invalid selection arguments.");
+        return;
+      }
+
+      const start = new vscode.Position(args.start.line, args.start.character);
+      const end = new vscode.Position(args.end.line, args.end.character);
+      const range = new vscode.Range(start, end);
+
+      editor.selection = new vscode.Selection(start, end);
+      editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+    }
+  );
+
   // Register the Fix with AI command
   const fixWithAICmd = vscode.commands.registerCommand(
     "react-compiler-marker.fixWithAI",
@@ -297,6 +327,7 @@ function registerCommands(
     activateCommand,
     deactivateCommand,
     previewCompiled,
+    revealSelectionCmd,
     fixWithAICmd
   );
 

@@ -145,7 +145,8 @@ connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] | null 
       successfulCompilations,
       failedCompilations,
       globalSettings.successEmoji,
-      globalSettings.errorEmoji
+      globalSettings.errorEmoji,
+      params.textDocument.uri
     );
   } catch (error: any) {
     logError(`Error checking React Compiler: ${error?.message}`);

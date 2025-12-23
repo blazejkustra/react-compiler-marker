@@ -91,7 +91,8 @@ export function generateInlayHints(
   successfulCompilations: LoggerEvent[],
   failedCompilations: LoggerEvent[],
   successEmoji: string | null,
-  errorEmoji: string | null
+  errorEmoji: string | null,
+  documentUri: string
 ): InlayHint[] {
   const hints: InlayHint[] = [];
 
@@ -110,7 +111,7 @@ export function generateInlayHints(
         paddingLeft: true,
         tooltip: {
           kind: "markdown",
-          value: `${successEmoji} **${positionInfo.functionName}** has been auto-memoized by React Compiler.`,
+          value: `${successEmoji} **${positionInfo.functionName}** has been auto-memoized by React Compiler.\n\n**[📄 Preview compiled output](command:react-compiler-marker.previewCompiled)**`,
         },
       };
 
@@ -120,22 +121,45 @@ export function generateInlayHints(
 
   // Generate hint for failed compilations (one hint with all errors)
   if (errorEmoji && failedCompilations.length > 0) {
-    let tooltipContent = `${errorEmoji} This component hasn't been memoized by React Compiler.`;
+    let tooltipContent = `${errorEmoji} **This component hasn't been memoized by React Compiler.**`;
     tooltipContent += "\n\n---\n\n";
 
     for (let i = 0; i < failedCompilations.length; i++) {
-      const { reason, description, startLine, endLine } = parseLog(failedCompilations[i]);
+      const { reason, description, startLine, endLine, startChar, endChar } = parseLog(
+        failedCompilations[i]
+      );
 
       tooltipContent += `**Error ${i + 1}:** ${reason}\n\n`;
       if (description) {
         tooltipContent += `${description}\n\n`;
       }
-      if (startLine || endLine) {
-        tooltipContent +=
-          startLine === endLine
-            ? `📍 Line ${startLine + 1}`
-            : `📍 Lines ${startLine + 1}-${endLine + 1}`;
+
+      if (startLine !== undefined || endLine !== undefined) {
+        const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
+          JSON.stringify({
+            uri: documentUri,
+            start: { line: startLine, character: startChar },
+            end: { line: endLine, character: endChar },
+          })
+        )}`;
+
+        const lineText =
+          startLine === endLine ? `Line ${startLine + 1}` : `Lines ${startLine + 1}–${endLine + 1}`;
+
+        tooltipContent += `**[📍 ${lineText}](${selectionCmd})**`;
       }
+
+      // Add Fix with AI button for this error
+      const filename = documentUri.startsWith("file://") ? documentUri.slice(7) : documentUri;
+      const fixWithAICmd = `command:react-compiler-marker.fixWithAI?${encodeURIComponent(
+        JSON.stringify({
+          reason,
+          filename,
+          startLine,
+          endLine,
+        })
+      )}`;
+      tooltipContent += ` **[🤖 Fix with AI](${fixWithAICmd})**`;
 
       if (i < failedCompilations.length - 1) {
         tooltipContent += "\n\n---\n\n";
