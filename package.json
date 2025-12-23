@@ -95,7 +95,7 @@
     "watch-tests": "tsc -b -w",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc -b --noEmit",
-    "lint": "eslint packages/*/src",
+    "lint": "eslint \"packages/*/src/**/*.ts\"",
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
     "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "test": "vscode-test",
