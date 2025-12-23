@@ -1,81 +1,155 @@
+import * as path from "path";
 import * as vscode from "vscode";
-import { getThrottledFunction, isVSCode, isAntigravity } from "./utils";
-import { updateDecorationsForEditor, loadDecorations } from "./decorations";
-import { logError, logMessage } from "./logger";
-import { getCompiledOutput } from "./checkReactCompiler";
-import { generateAIPrompt } from "./prompt";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind,
+} from "vscode-languageclient/node";
 
-// This method is called when your extension is activated
-export function activate(context: vscode.ExtensionContext): void {
-  logMessage(
-    'Congratulations, your extension "react-compiler-marker" is now active!'
+let client: LanguageClient;
+
+// Output channel for logging
+const outputChannel = vscode.window.createOutputChannel(
+  "React Compiler Marker ✨"
+);
+
+function logMessage(message: string): void {
+  const timestamp = new Date().toISOString();
+  outputChannel.appendLine(`[${timestamp}] LOG: ${message}`);
+}
+
+function logError(error: string): void {
+  const timestamp = new Date().toISOString();
+  outputChannel.appendLine(`[${timestamp}] ERROR: ${error}`);
+}
+
+function isVSCode(): boolean {
+  const appName = vscode.env.appName;
+  return (
+    appName.includes("Visual Studio Code") ||
+    appName.includes("VSCode") ||
+    appName.includes("VS Code")
   );
+}
+
+function isAntigravity(): boolean {
+  const appName = vscode.env.appName;
+  return appName.includes("Antigravity");
+}
+
+function generateAIPrompt(
+  reason: string,
+  code: string,
+  filename: string,
+  startLine: number,
+  endLine: number
+): string {
+  const lineRange =
+    startLine === endLine
+      ? `line ${startLine}`
+      : `lines ${startLine}-${endLine}`;
+
+  return `I have a React component that the React Compiler couldn't optimize. Here's the issue:
+
+**File:** ${filename}
+**Location:** ${lineRange}
+**Reason:** ${reason}
+
+**Code:**
+\`\`\`ts
+${code}
+\`\`\`
+
+Please help me fix this code so that the React Compiler can optimize it. The React Compiler automatically memoizes components and their dependencies, but it needs the code to follow certain patterns. Please provide the corrected code and explain what changes you made and why they help the React Compiler optimize the component.`;
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  logMessage("react-compiler-marker is being activated!");
 
   // Load the persisted `isActivated` state or default to `true`
   let isActivated = context.globalState.get<boolean>("isActivated", true);
 
-  // Create a getter function to always get the current state
-  const getIsActivated = () => isActivated;
-  const setIsActivated = (value: boolean) => {
-    context.globalState.update("isActivated", value);
-    isActivated = value;
+  // The server is located in the dist folder after bundling
+  const serverModule = context.asAbsolutePath(path.join("dist", "server.js"));
+
+  // Debug options for the server
+  const debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
+
+  // Server options
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: debugOptions,
+    },
   };
 
-  // Throttled function for performance
-  const throttledUpdateDecorations = getThrottledFunction(
-    updateDecorationsForEditor,
-    300
+  // Client options
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [
+      { scheme: "file", language: "javascript" },
+      { scheme: "file", language: "typescript" },
+      { scheme: "file", language: "javascriptreact" },
+      { scheme: "file", language: "typescriptreact" },
+    ],
+    synchronize: {
+      configurationSection: "reactCompilerMarker",
+    },
+    outputChannel,
+  };
+
+  // Create the language client and start it
+  client = new LanguageClient(
+    "reactCompilerMarker",
+    "React Compiler Marker",
+    serverOptions,
+    clientOptions
   );
 
-  registerCommands(
-    context,
-    throttledUpdateDecorations,
-    getIsActivated,
-    setIsActivated
-  );
+  // Start the client (this also starts the server)
+  client.start().then(() => {
+    logMessage("React Compiler Marker LSP client started");
 
-  registerListeners(throttledUpdateDecorations, getIsActivated);
-
-  // Apply decorations for the active editor on activation, if activated
-  if (isActivated) {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor) {
-      try {
-        updateDecorationsForEditor(activeEditor);
-      } catch (error: any) {
-        logError(`Critical error updating decorations: ${error?.message}`);
-      }
+    // Send initial activation state to server
+    if (!isActivated) {
+      client.sendRequest("workspace/executeCommand", {
+        command: "react-compiler-marker/deactivate",
+      });
     }
-  }
+  });
+
+  // Register commands
+  registerCommands(context, isActivated, (value: boolean) => {
+    isActivated = value;
+    context.globalState.update("isActivated", value);
+  });
 
   logMessage("React Compiler Marker ✨: Initialization complete.");
 }
 
-// This method is called when your extension is deactivated
-export function deactivate(): void {
-  logMessage("React Compiler Marker ✨ deactivated.");
-}
-
-/**
- * Registers all commands for the React Compiler Marker ✨ extension.
- */
-export function registerCommands(
+function registerCommands(
   context: vscode.ExtensionContext,
-  throttledUpdateDecorations: (editor: vscode.TextEditor) => void,
-  getIsActivated: () => boolean,
+  initialIsActivated: boolean,
   setIsActivated: (value: boolean) => void
 ): void {
+  let isActivated = initialIsActivated;
+
   // Register the Refresh command
   const refreshCommand = vscode.commands.registerCommand(
     "react-compiler-marker.checkOnce",
-    () => {
+    async () => {
       const activeEditor = vscode.window.activeTextEditor;
       if (!activeEditor) {
         vscode.window.showErrorMessage("No active editor to check.");
         return;
       }
 
-      updateDecorationsForEditor(activeEditor);
+      await client.sendRequest("workspace/executeCommand", {
+        command: "react-compiler-marker/checkOnce",
+      });
+
       vscode.window.showInformationMessage(
         "React Compiler Markers refreshed ✨"
       );
@@ -85,21 +159,20 @@ export function registerCommands(
   // Register the Activate command
   const activateCommand = vscode.commands.registerCommand(
     "react-compiler-marker.activate",
-    () => {
-      if (getIsActivated()) {
+    async () => {
+      if (isActivated) {
         vscode.window.showInformationMessage(
           "React Compiler Marker ✨ is already activated."
         );
         return;
       }
 
-      setIsActivated(true);
+      await client.sendRequest("workspace/executeCommand", {
+        command: "react-compiler-marker/activate",
+      });
 
-      // Apply decorations for the current active editor
-      const activeEditor = vscode.window.activeTextEditor;
-      if (activeEditor) {
-        throttledUpdateDecorations(activeEditor);
-      }
+      isActivated = true;
+      setIsActivated(true);
 
       vscode.window.showInformationMessage(
         "React Compiler Marker ✨ activated!"
@@ -110,23 +183,20 @@ export function registerCommands(
   // Register the Deactivate command
   const deactivateCommand = vscode.commands.registerCommand(
     "react-compiler-marker.deactivate",
-    () => {
-      if (!getIsActivated()) {
+    async () => {
+      if (!isActivated) {
         vscode.window.showInformationMessage(
           "React Compiler Marker ✨ is already deactivated."
         );
         return;
       }
 
-      setIsActivated(false);
-
-      // Clear all decorations in all open editors
-      vscode.window.visibleTextEditors.forEach((editor) => {
-        editor.setDecorations(
-          vscode.window.createTextEditorDecorationType({}),
-          []
-        );
+      await client.sendRequest("workspace/executeCommand", {
+        command: "react-compiler-marker/deactivate",
       });
+
+      isActivated = false;
+      setIsActivated(false);
 
       vscode.window.showInformationMessage(
         "React Compiler Marker ✨ deactivated!"
@@ -145,7 +215,6 @@ export function registerCommands(
       }
 
       const document = activeEditor.document;
-      const source = document.getText();
       const filename = document.fileName;
 
       if (!filename || document.isUntitled) {
@@ -163,10 +232,21 @@ export function registerCommands(
             cancellable: false,
           },
           async () => {
-            const compiled = await getCompiledOutput(source, filename);
+            const result = (await client.sendRequest(
+              "workspace/executeCommand",
+              {
+                command: "react-compiler-marker/getCompiledOutput",
+                arguments: [document.uri.toString()],
+              }
+            )) as { success: boolean; code?: string; error?: string };
+
+            if (!result.success || !result.code) {
+              throw new Error(result.error || "Compilation failed");
+            }
+
             const compiledDoc = await vscode.workspace.openTextDocument({
               language: "typescriptreact",
-              content: compiled,
+              content: result.code,
             });
             await vscode.window.showTextDocument(compiledDoc, {
               preview: true,
@@ -212,6 +292,7 @@ export function registerCommands(
     }
   );
 
+  // Register the Fix with AI command
   const fixWithAICmd = vscode.commands.registerCommand(
     "react-compiler-marker.fixWithAI",
     async ({
@@ -291,38 +372,10 @@ export function registerCommands(
   logMessage("React Compiler Marker ✨: Commands registered.");
 }
 
-/**
- * Helper to register event listeners
- */
-function registerListeners(
-  throttledUpdateDecorations: (editor: vscode.TextEditor) => void,
-  getIsActivated: () => boolean
-): void {
-  // Listener for text editor changes (e.g., switching tabs)
-  vscode.window.onDidChangeActiveTextEditor((editor) => {
-    if (getIsActivated() && editor) {
-      throttledUpdateDecorations(editor);
-    }
-  });
-
-  // Listener for document changes (e.g., typing in the editor)
-  vscode.workspace.onDidChangeTextDocument((event) => {
-    const editor = vscode.window.activeTextEditor;
-    if (getIsActivated() && editor && event.document === editor.document) {
-      throttledUpdateDecorations(editor);
-    }
-  });
-
-  // Listener for emoji config changes
-  vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration("reactCompilerMarker")) {
-      loadDecorations();
-      const editor = vscode.window.activeTextEditor;
-      if (getIsActivated() && editor) {
-        throttledUpdateDecorations(editor);
-      }
-    }
-  });
-
-  logMessage("React Compiler Marker ✨: Event listeners registered.");
+export function deactivate(): Thenable<void> | undefined {
+  logMessage("React Compiler Marker ✨ deactivating...");
+  if (!client) {
+    return undefined;
+  }
+  return client.stop();
 }

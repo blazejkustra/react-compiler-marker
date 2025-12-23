@@ -1,0 +1,17 @@
+{
+  "name": "@react-compiler-marker/vscode-client",
+  "version": "1.3.4",
+  "description": "VS Code Language Client for React Compiler Marker",
+  "main": "./out/extension.js",
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.95.0",
+    "@types/node": "20.x"
+  }
+}

@@ -1,9 +1,6 @@
 import { PluginObj, transformFromAstSync } from "@babel/core";
 import * as BabelParser from "@babel/parser";
 import * as path from "path";
-import * as vscode from "vscode";
-import { getThrottledFunction } from "./utils";
-import { logError } from "./logger";
 
 type EventLocation = {
   start?: { line?: number; column?: number; index?: number };
@@ -34,22 +31,6 @@ export type LoggerEvent = {
   };
 };
 
-const failToCompileError = getThrottledFunction(
-  (error) =>
-    logError(
-      `Failed to compile the file. Please check the file content. ${error?.message}`
-    ),
-  1000 * 60 * 5 // 5 minutes
-);
-
-const failToLoadBabelPluginError = getThrottledFunction(
-  (error) =>
-    logError(
-      `Failed to load babel-plugin-react-compiler. Make sure it is installed in your workspace (defaults to the compiler bundled with this extension). Error: ${error?.message}`
-    ),
-  1000 * 60 * 5 // 5 minutes
-);
-
 const DEFAULT_COMPILER_OPTIONS = {
   noEmit: false,
   compilationMode: "infer",
@@ -58,6 +39,18 @@ const DEFAULT_COMPILER_OPTIONS = {
     enableTreatRefLikeIdentifiersAsRefs: true,
   },
 };
+
+// Throttle error logging
+let lastErrorTime = 0;
+const ERROR_THROTTLE_MS = 1000 * 60 * 5; // 5 minutes
+
+function throttledError(message: string): void {
+  const now = Date.now();
+  if (now - lastErrorTime >= ERROR_THROTTLE_MS) {
+    console.error(message);
+    lastErrorTime = now;
+  }
+}
 
 function runBabelPluginReactCompiler(
   BabelPluginReactCompiler: PluginObj | undefined,
@@ -105,6 +98,7 @@ function runBabelPluginReactCompiler(
     configFile: false,
     babelrc: false,
   });
+
   // eslint-disable-next-line eqeqeq
   if (result?.code == null) {
     throw new Error(
@@ -118,44 +112,53 @@ function runBabelPluginReactCompiler(
   };
 }
 
-function importBabelPluginReactCompiler(): PluginObj | undefined {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-  if (!workspaceFolder) {
-    vscode.window.showErrorMessage(
-      "No workspace folder is open. Please open a project first."
-    );
-    return;
-  }
-
+function importBabelPluginReactCompiler(
+  workspaceFolder: string | undefined,
+  babelPluginPath: string
+): PluginObj | undefined {
   let BabelPluginReactCompiler: PluginObj | undefined;
 
-  try {
-    const workspacePath = workspaceFolder.uri.fsPath;
-    const config = vscode.workspace.getConfiguration("reactCompilerMarker");
-    const babelPluginPath = config.get<string>(
-      "babelPluginPath",
-      "node_modules/babel-plugin-react-compiler"
-    );
-
-    BabelPluginReactCompiler = require(path.join(
-      workspacePath,
-      babelPluginPath
-    ));
-  } catch (error: any) {
-    failToLoadBabelPluginError(error);
+  if (workspaceFolder) {
     try {
-      BabelPluginReactCompiler = require("babel-plugin-react-compiler");
+      BabelPluginReactCompiler = require(path.join(
+        workspaceFolder,
+        babelPluginPath
+      ));
+      return BabelPluginReactCompiler;
     } catch (error: any) {
-      console.error(error);
-      return;
+      throttledError(
+        `Failed to load babel-plugin-react-compiler from workspace: ${error?.message}`
+      );
     }
+  }
+
+  // Fallback to bundled version
+  try {
+    BabelPluginReactCompiler = require("babel-plugin-react-compiler");
+  } catch (error: any) {
+    throttledError(
+      `Failed to load babel-plugin-react-compiler: ${error?.message}`
+    );
+    return undefined;
   }
 
   return BabelPluginReactCompiler;
 }
 
-export function checkReactCompiler(sourceCode: string, filename: string) {
-  const BabelPluginReactCompiler = importBabelPluginReactCompiler();
+export function checkReactCompiler(
+  sourceCode: string,
+  filename: string,
+  workspaceFolder: string | undefined,
+  babelPluginPath: string
+) {
+  const BabelPluginReactCompiler = importBabelPluginReactCompiler(
+    workspaceFolder,
+    babelPluginPath
+  );
+
+  if (!BabelPluginReactCompiler) {
+    return { successfulCompilations: [], failedCompilations: [] };
+  }
 
   try {
     return runBabelPluginReactCompiler(
@@ -165,16 +168,27 @@ export function checkReactCompiler(sourceCode: string, filename: string) {
       "typescript"
     );
   } catch (error: any) {
-    failToCompileError(error);
+    throttledError(
+      `Failed to compile the file. Please check the file content. ${error?.message}`
+    );
     return { successfulCompilations: [], failedCompilations: [] };
   }
 }
 
 export async function getCompiledOutput(
   sourceCode: string,
-  filename: string
+  filename: string,
+  workspaceFolder: string | undefined,
+  babelPluginPath: string
 ): Promise<string> {
-  const BabelPluginReactCompiler = importBabelPluginReactCompiler();
+  const BabelPluginReactCompiler = importBabelPluginReactCompiler(
+    workspaceFolder,
+    babelPluginPath
+  );
+
+  if (!BabelPluginReactCompiler) {
+    throw new Error("babel-plugin-react-compiler is not available");
+  }
 
   try {
     const ast = BabelParser.parse(sourceCode, {
@@ -191,13 +205,13 @@ export async function getCompiledOutput(
       configFile: false,
       babelrc: false,
     });
+
     // eslint-disable-next-line eqeqeq
     if (result?.code == null) {
       throw new Error("Compilation produced no output");
     }
     return result.code;
   } catch (error: any) {
-    failToCompileError(error);
     throw new Error(
       `Failed to compile the file. Please check the file content. ${error?.message}`
     );

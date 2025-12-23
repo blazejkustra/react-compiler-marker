@@ -1,0 +1,25 @@
+{
+  "name": "@react-compiler-marker/server",
+  "version": "1.3.4",
+  "description": "Language Server for React Compiler Marker - works with VS Code, WebStorm, Neovim, and other LSP-compatible editors",
+  "main": "./out/server.js",
+  "bin": {
+    "react-compiler-marker-lsp": "./bin/server.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/parser": "^7.26.2",
+    "@babel/preset-typescript": "^7.26.0",
+    "babel-plugin-react-compiler": "1.0.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "20.x"
+  }
+}
