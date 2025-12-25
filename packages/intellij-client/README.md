@@ -39,7 +39,7 @@ A WebStorm/IntelliJ IDEA plugin that highlights components optimized by the Reac
 ## Building from Source
 
 ```bash
-cd packages/webstorm-plugin
+cd packages/intellij-client
 ./gradlew buildPlugin
 ```
 

@@ -116,7 +116,7 @@ The plugin uses a **client-server architecture**:
 ## File Structure
 
 ```
-packages/webstorm-plugin/
+packages/intellij-client/
 ├── build.gradle.kts                      # Gradle build config
 ├── settings.gradle.kts                   # Gradle settings
 ├── gradle.properties                     # Gradle properties
@@ -161,7 +161,7 @@ packages/webstorm-plugin/
 
 ### Quick Start
 ```bash
-cd packages/webstorm-plugin
+cd packages/intellij-client
 ./quick-start.sh
 ```
 

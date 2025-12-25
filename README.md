@@ -94,12 +94,12 @@ Or search for "React Compiler Marker" in the Extensions panel.
 
 ### WebStorm / IntelliJ IDEA
 
-The WebStorm/IntelliJ plugin is available in the `packages/webstorm-plugin` directory.
+The WebStorm/IntelliJ plugin is available in the `packages/intellij-client` directory.
 
 **Building from source:**
 
 ```bash
-cd packages/webstorm-plugin
+cd packages/intellij-client
 gradle wrapper --gradle-version 8.5
 ./gradlew buildPlugin
 ```
@@ -113,7 +113,7 @@ The plugin will be at `build/distributions/react-compiler-marker-*.zip`
 4. Select the built `.zip` file
 5. Restart the IDE
 
-For more details, see [WebStorm Plugin Documentation](packages/webstorm-plugin/README.md)
+For more details, see [WebStorm Plugin Documentation](packages/intellij-client/README.md)
 
 ## Links
 
