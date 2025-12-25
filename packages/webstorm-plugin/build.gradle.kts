@@ -30,6 +30,10 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/version_catalogs.html
 dependencies {
+    implementation(libs.lsp4j)
+    implementation(libs.lsp4j.jsonrpc)
+    implementation(libs.gson)
+
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
 
@@ -127,6 +131,27 @@ kover {
     }
 }
 
+// Task to bundle the LSP server using esbuild
+val bundleServer = tasks.register<Exec>("bundleServer") {
+    val serverDir = file("../server")
+    val outputDir = file("src/main/resources/server")
+
+    workingDir = serverDir
+    commandLine("npx", "esbuild", "out/server.js",
+        "--bundle",
+        "--platform=node",
+        "--target=node18",
+        "--outfile=${outputDir.absolutePath}/server.bundle.js"
+    )
+
+    inputs.dir(serverDir.resolve("out"))
+    outputs.file(outputDir.resolve("server.bundle.js"))
+
+    doFirst {
+        outputDir.mkdirs()
+    }
+}
+
 tasks {
     wrapper {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
@@ -134,6 +159,11 @@ tasks {
 
     publishPlugin {
         dependsOn(patchChangelog)
+    }
+
+    // Make processResources depend on bundleServer
+    processResources {
+        dependsOn(bundleServer)
     }
 }
 

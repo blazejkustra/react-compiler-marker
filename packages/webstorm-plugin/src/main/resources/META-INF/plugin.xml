@@ -5,21 +5,21 @@
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>React Compiler Marker ✨</name>
+    <name>React Compiler Marker</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="kustrablazej@gmail.com" url="https://github.com/blazejkustra">Błażej Kustra</vendor>
+    <vendor email="kustrablazej@gmail.com" url="https://github.com/blazejkustra">Blazej Kustra</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
-    Highlights components optimized by the React Compiler, providing ✨ visual cues ✨ to make the optimization process more transparent during development.
+    Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.
     <br><br>
     <b>Features:</b>
     <ul>
-      <li>Visual markers (✨) for successfully optimized React components</li>
-      <li>Error markers (🚫) for components that failed optimization</li>
+      <li>Visual markers for successfully optimized React components</li>
+      <li>Error markers for components that failed optimization</li>
       <li>Detailed error messages with suggestions</li>
       <li>Preview compiled output</li>
       <li>Customizable emoji markers</li>
@@ -35,48 +35,28 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Project Service (sample) -->
-        <projectService
-                serviceImplementation="com.blazejkustra.reactcompilermarker.services.MyProjectService"/>
-        
         <!-- Startup Activity -->
         <postStartupActivity
                 implementation="com.blazejkustra.reactcompilermarker.ReactCompilerMarkerStartupActivity"/>
-        
-        <!-- TODO: Uncomment when implementing these components -->
+
         <!-- Settings -->
-        <!--
         <projectConfigurable
                 parentId="language"
                 instance="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerConfigurable"
                 id="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerConfigurable"
                 displayName="React Compiler Marker"/>
-        
+
         <projectService
                 serviceImplementation="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerSettings"/>
-        -->
-        
+
         <!-- LSP Server Support -->
-        <!--
         <projectService
                 serviceImplementation="com.blazejkustra.reactcompilermarker.lsp.ReactCompilerLspServerManager"/>
-        -->
-        
-        <!-- Inlay Hints Provider -->
-        <!--
-        <codeInsight.inlayProvider
-                language="JavaScript"
-                implementationClass="com.blazejkustra.reactcompilermarker.hints.ReactCompilerInlayHintsProvider"/>
-        <codeInsight.inlayProvider
-                language="TypeScript"
-                implementationClass="com.blazejkustra.reactcompilermarker.hints.ReactCompilerInlayHintsProvider"/>
-        <codeInsight.inlayProvider
-                language="JSX Harmony"
-                implementationClass="com.blazejkustra.reactcompilermarker.hints.ReactCompilerInlayHintsProvider"/>
+
+        <!-- Inlay Hints Provider - one per file type to avoid duplicates -->
         <codeInsight.inlayProvider
                 language="TypeScript JSX"
                 implementationClass="com.blazejkustra.reactcompilermarker.hints.ReactCompilerInlayHintsProvider"/>
-        -->
     </extensions>
 
     <actions>
@@ -85,22 +65,22 @@
                description="React Compiler Marker actions"
                popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            
+
             <action id="ReactCompilerMarker.Activate"
                     class="com.blazejkustra.reactcompilermarker.actions.ActivateAction"
                     text="Activate Extension"
                     description="Activate React Compiler Marker extension"/>
-            
+
             <action id="ReactCompilerMarker.Deactivate"
                     class="com.blazejkustra.reactcompilermarker.actions.DeactivateAction"
                     text="Deactivate Extension"
                     description="Deactivate React Compiler Marker extension"/>
-            
+
             <action id="ReactCompilerMarker.CheckOnce"
                     class="com.blazejkustra.reactcompilermarker.actions.CheckOnceAction"
                     text="Check Current File"
                     description="Check current file for React Compiler markers"/>
-            
+
             <action id="ReactCompilerMarker.PreviewCompiled"
                     class="com.blazejkustra.reactcompilermarker.actions.PreviewCompiledAction"
                     text="Preview Compiled Output"
@@ -108,4 +88,3 @@
         </group>
     </actions>
 </idea-plugin>
-
