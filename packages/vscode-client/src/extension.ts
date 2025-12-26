@@ -22,6 +22,7 @@ function logError(error: string): void {
   outputChannel.appendLine(`[${timestamp}] CLIENT ERROR: ${error}`);
 }
 
+// IDE detection helpers for "Fix with AI" command routing
 function isVSCode(): boolean {
   const appName = vscode.env.appName;
   return (
@@ -31,6 +32,7 @@ function isVSCode(): boolean {
   );
 }
 
+// Antigravity is an AI-focused VS Code fork (https://antigravity.dev)
 function isAntigravity(): boolean {
   const appName = vscode.env.appName;
   return appName.includes("Antigravity");

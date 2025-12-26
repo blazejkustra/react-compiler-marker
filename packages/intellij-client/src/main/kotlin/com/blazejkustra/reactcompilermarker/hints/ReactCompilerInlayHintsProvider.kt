@@ -5,6 +5,7 @@ import com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerSettings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
@@ -113,8 +114,10 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
                     return true
                 }
 
-                // Get hints synchronously (with timeout to avoid blocking too long)
-                val hints = hintsFuture.get(5, java.util.concurrent.TimeUnit.SECONDS)
+                // Use a shorter timeout to avoid blocking the UI thread
+                // The InlayHintsCollector runs on a background thread, but we still
+                // want to be responsive
+                val hints = hintsFuture.get(2, java.util.concurrent.TimeUnit.SECONDS)
 
                 if (hints.isNullOrEmpty()) {
                     thisLogger().debug("No inlay hints returned from LSP server")
