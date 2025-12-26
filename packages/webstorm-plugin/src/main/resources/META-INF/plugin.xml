@@ -1,0 +1,90 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.blazejkustra.react-compiler-marker</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>React Compiler Marker</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="kustrablazej@gmail.com" url="https://github.com/blazejkustra">Blazej Kustra</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.
+    <br><br>
+    <b>Features:</b>
+    <ul>
+      <li>Visual markers for successfully optimized React components</li>
+      <li>Error markers for components that failed optimization</li>
+      <li>Detailed error messages with suggestions</li>
+      <li>Preview compiled output</li>
+      <li>Customizable emoji markers</li>
+      <li>Enable/disable the extension on demand</li>
+    </ul>
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>JavaScript</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Startup Activity -->
+        <postStartupActivity
+                implementation="com.blazejkustra.reactcompilermarker.ReactCompilerMarkerStartupActivity"/>
+
+        <!-- Settings -->
+        <projectConfigurable
+                parentId="language"
+                instance="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerConfigurable"
+                id="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerConfigurable"
+                displayName="React Compiler Marker"/>
+
+        <projectService
+                serviceImplementation="com.blazejkustra.reactcompilermarker.settings.ReactCompilerMarkerSettings"/>
+
+        <!-- LSP Server Support -->
+        <projectService
+                serviceImplementation="com.blazejkustra.reactcompilermarker.lsp.ReactCompilerLspServerManager"/>
+
+        <!-- Inlay Hints Provider - one per file type to avoid duplicates -->
+        <codeInsight.inlayProvider
+                language="TypeScript JSX"
+                implementationClass="com.blazejkustra.reactcompilermarker.hints.ReactCompilerInlayHintsProvider"/>
+    </extensions>
+
+    <actions>
+        <group id="ReactCompilerMarker.ActionGroup"
+               text="React Compiler Marker"
+               description="React Compiler Marker actions"
+               popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="ReactCompilerMarker.Activate"
+                    class="com.blazejkustra.reactcompilermarker.actions.ActivateAction"
+                    text="Activate Extension"
+                    description="Activate React Compiler Marker extension"/>
+
+            <action id="ReactCompilerMarker.Deactivate"
+                    class="com.blazejkustra.reactcompilermarker.actions.DeactivateAction"
+                    text="Deactivate Extension"
+                    description="Deactivate React Compiler Marker extension"/>
+
+            <action id="ReactCompilerMarker.CheckOnce"
+                    class="com.blazejkustra.reactcompilermarker.actions.CheckOnceAction"
+                    text="Check Current File"
+                    description="Check current file for React Compiler markers"/>
+
+            <action id="ReactCompilerMarker.PreviewCompiled"
+                    class="com.blazejkustra.reactcompilermarker.actions.PreviewCompiledAction"
+                    text="Preview Compiled Output"
+                    description="Preview the compiled output of current file"/>
+        </group>
+    </actions>
+</idea-plugin>
