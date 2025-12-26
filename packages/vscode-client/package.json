@@ -1,17 +1,113 @@
 {
-  "name": "@react-compiler-marker/vscode-client",
+  "name": "react-compiler-marker",
+  "displayName": "React Compiler Marker",
+  "description": "Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.",
   "version": "1.3.4",
-  "description": "VS Code Language Client for React Compiler Marker",
-  "main": "./out/extension.js",
+  "author": "Blazej Kustra <kustrablazej@gmail.com>",
+  "publisher": "blazejkustra",
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "react-compiler",
+    "react-components",
+    "vscode-extension",
+    "optimization",
+    "lsp",
+    "language-server"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blazejkustra/react-compiler-marker"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Visualization"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "../../images/logo.jpeg",
+  "contributes": {
+    "commands": [
+      {
+        "command": "react-compiler-marker.activate",
+        "title": "Activate Extension",
+        "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.deactivate",
+        "title": "Deactivate Extension",
+        "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.checkOnce",
+        "title": "Check in the current file",
+        "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.previewCompiled",
+        "title": "Preview Compiled Output",
+        "category": "React Compiler Marker"
+      }
+    ],
+    "configuration": {
+      "title": "React Compiler Marker",
+      "properties": {
+        "reactCompilerMarker.babelPluginPath": {
+          "type": "string",
+          "default": "node_modules/babel-plugin-react-compiler",
+          "description": "Path to the babel-plugin-react-compiler in your project. By default it's 'node_modules/babel-plugin-react-compiler'"
+        },
+        "reactCompilerMarker.errorEmoji": {
+          "type": "string",
+          "nullable": true,
+          "default": "🚫",
+          "description": "Emoji marker to display next to components that failed to be memoized"
+        },
+        "reactCompilerMarker.successEmoji": {
+          "type": "string",
+          "nullable": true,
+          "default": "✨",
+          "description": "Emoji marker to display next to components that were successfully memoized"
+        }
+      }
+    }
+  },
   "scripts": {
-    "build": "tsc -b",
-    "watch": "tsc -b -w"
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run typecheck && npm run lint && node ../../esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node ../../esbuild.js --watch",
+    "watch:tsc": "tsc -b --watch",
+    "package": "npm run typecheck && npm run lint && node ../../esbuild.js --production",
+    "compile-tests": "tsc -b",
+    "watch-tests": "tsc -b -w",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"../../packages/server/src/**/*.ts\"",
+    "test": "vscode-test",
+    "publish:vscode": "vsce publish",
+    "publish:ovsx": "npx ovsx publish -p"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.9",
     "@types/vscode": "^1.95.0",
-    "@types/node": "20.x"
+    "@types/node": "20.x",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "npm-run-all2": "^8.0.4"
   }
 }

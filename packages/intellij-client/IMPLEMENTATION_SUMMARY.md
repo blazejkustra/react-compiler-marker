@@ -115,7 +115,7 @@ All actions are accessible via **Tools** → **React Compiler Marker** menu.
 ## File Structure
 
 ```
-webstorm-plugin/
+intellij-client/
 ├── build.gradle.kts                          # Gradle build configuration
 ├── settings.gradle.kts                       # Gradle settings
 ├── gradle.properties                         # Gradle properties

@@ -71,7 +71,7 @@ else
     echo "✅ LSP server found"
 fi
 
-cd packages/webstorm-plugin
+cd packages/intellij-client
 
 # Build the plugin
 echo ""

@@ -39,7 +39,7 @@ A WebStorm/IntelliJ IDEA plugin that highlights components optimized by the Reac
 ## Building from Source
 
 ```bash
-cd packages/webstorm-plugin
+cd packages/intellij-client
 ./gradlew buildPlugin
 ```
 
@@ -104,9 +104,20 @@ Błażej Kustra - [kustrablazej@gmail.com](mailto:kustrablazej@gmail.com)
 - [React Compiler Documentation](https://react.dev/learn/react-compiler)
 
 <!-- Plugin description -->
-**IntelliJ Platform Plugin Template** is a repository that provides a pure template to make it easier to create a new plugin project (check the [Creating a repository from a template][gh:template] article).
+**React Compiler Marker** highlights React components optimized by the [React Compiler](https://react.dev/learn/react-compiler).
 
-The main goal of this template is to speed up the setup phase of plugin development for both new and experienced developers by preconfiguring the project scaffold and CI, linking to the proper documentation pages, and keeping everything organized.
+See at a glance which components are automatically memoized with ✨ markers, identify optimization failures with 🚫 indicators and detailed error messages, and preview the compiled output.
 
-[gh:template]: https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template
+**Features:**
+- ✨ Visual markers next to successfully optimized React components
+- 🚫 Error indicators for components that failed optimization
+- Hover tooltips with optimization details and suggestions
+- Preview compiled output of your React components
+- Easy activation/deactivation via Tools menu
+
+**Configuration** (Settings → Languages & Frameworks → React Compiler Marker):
+- **Success Emoji**: Customize the marker for optimized components (default: ✨)
+- **Error Emoji**: Customize the marker for failed components (default: 🚫)
+- **Babel Plugin Path**: Set custom path to babel-plugin-react-compiler
+
 <!-- Plugin description end -->

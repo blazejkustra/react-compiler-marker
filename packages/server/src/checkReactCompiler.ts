@@ -137,6 +137,11 @@ function importBabelPluginReactCompiler(
   return BabelPluginReactCompiler;
 }
 
+function getLanguageFromFilename(filename: string): "flow" | "typescript" {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  return ["js", "jsx", "mjs"].includes(ext ?? "") ? "flow" : "typescript";
+}
+
 export function checkReactCompiler(
   sourceCode: string,
   filename: string,
@@ -150,11 +155,12 @@ export function checkReactCompiler(
   }
 
   try {
+    const language = getLanguageFromFilename(filename);
     return runBabelPluginReactCompiler(
       BabelPluginReactCompiler,
       sourceCode,
       filename,
-      "typescript"
+      language
     );
   } catch (error: any) {
     throttledError(`Failed to compile the file. Please check the file content. ${error?.message}`);
@@ -175,9 +181,10 @@ export async function getCompiledOutput(
   }
 
   try {
+    const language = getLanguageFromFilename(filename);
     const ast = BabelParser.parse(sourceCode, {
       sourceFilename: filename,
-      plugins: ["typescript", "jsx"],
+      plugins: [language, "jsx"],
       sourceType: "module",
     });
     const result = transformFromAstSync(ast, sourceCode, {

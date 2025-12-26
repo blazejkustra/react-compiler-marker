@@ -78,7 +78,7 @@ The plugin:
 ## File Structure
 
 ```
-webstorm-plugin/
+intellij-client/
 ├── build.gradle.kts              # Build configuration
 ├── src/main/
 │   ├── kotlin/                   # Source code
