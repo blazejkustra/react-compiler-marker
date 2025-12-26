@@ -11,7 +11,12 @@
     "react-compiler",
     "react-components",
     "vscode-extension",
-    "optimization"
+    "optimization",
+    "lsp",
+    "language-server"
+  ],
+  "workspaces": [
+    "packages/*"
   ],
   "repository": {
     "type": "git",
@@ -84,13 +89,15 @@
     "compile": "npm run check-types && npm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "watch:tsc": "tsc -b --watch",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
+    "compile-tests": "tsc -b",
+    "watch-tests": "tsc -b -w",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
+    "check-types": "tsc -b --noEmit",
+    "lint": "eslint \"packages/*/src/**/*.ts\"",
+    "format": "prettier --write \"packages/*/src/**/*.ts\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "test": "vscode-test",
     "publish:vscode": "vsce publish",
     "publish:ovsx": "npx ovsx publish -p"
@@ -106,15 +113,20 @@
     "@typescript-eslint/parser": "^8.7.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
     "npm-run-all2": "^8.0.4",
+    "prettier": "3.7.4",
     "typescript": "^5.6.3"
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
     "@babel/parser": "^7.26.2",
     "@babel/preset-typescript": "^7.26.0",
-    "babel-plugin-react-compiler": "1.0.0"
+    "babel-plugin-react-compiler": "1.0.0",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
   }
 }
