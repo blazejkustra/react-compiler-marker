@@ -56,7 +56,6 @@ let isActivated = true;
 // Store workspace folder
 let workspaceFolder: string | undefined;
 
-
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
   connection.console.log(`[${timestamp}] SERVER LOG: ${message}`);
