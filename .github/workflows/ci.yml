@@ -35,6 +35,10 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Build server
+        working-directory: packages/server
+        run: npm run build
+
       - name: Build VS Code extension
         working-directory: packages/vscode-client
         run: npm run compile
