@@ -1,6 +1,7 @@
 import { PluginObj, transformFromAstSync } from "@babel/core";
 import * as BabelParser from "@babel/parser";
 import * as path from "path";
+import { LRUCache } from "./cache";
 
 type EventLocation = {
   start?: { line?: number; column?: number; index?: number };
@@ -39,6 +40,25 @@ const DEFAULT_COMPILER_OPTIONS = {
     enableTreatRefLikeIdentifiersAsRefs: true,
   },
 };
+
+// Module-level cache for the Babel plugin
+let cachedPlugin: PluginObj | undefined;
+
+export function clearPluginCache(): void {
+  cachedPlugin = undefined;
+}
+
+// Compilation result cache (50 entries max)
+interface CompilationResult {
+  successfulCompilations: Array<LoggerEvent>;
+  failedCompilations: Array<LoggerEvent>;
+}
+
+const compilationCache = new LRUCache<CompilationResult>(100);
+
+export function clearCompilationCache(): void {
+  compilationCache.clear();
+}
 
 let lastErrorTime = 0;
 const ERROR_THROTTLE_MS = 1000 * 60 * 5; // 5 minutes
@@ -113,12 +133,15 @@ function importBabelPluginReactCompiler(
   workspaceFolder: string | undefined,
   babelPluginPath: string
 ): PluginObj | undefined {
-  let BabelPluginReactCompiler: PluginObj | undefined;
+  // Return cached plugin if available
+  if (cachedPlugin) {
+    return cachedPlugin;
+  }
 
   if (workspaceFolder) {
     try {
-      BabelPluginReactCompiler = require(path.join(workspaceFolder, babelPluginPath));
-      return BabelPluginReactCompiler;
+      cachedPlugin = require(path.join(workspaceFolder, babelPluginPath));
+      return cachedPlugin;
     } catch (error: any) {
       throttledError(
         `Failed to load babel-plugin-react-compiler from workspace: ${error?.message}`
@@ -128,13 +151,13 @@ function importBabelPluginReactCompiler(
 
   // Fallback to bundled version
   try {
-    BabelPluginReactCompiler = require("babel-plugin-react-compiler");
+    cachedPlugin = require("babel-plugin-react-compiler");
   } catch (error: any) {
     throttledError(`Failed to load babel-plugin-react-compiler: ${error?.message}`);
     return undefined;
   }
 
-  return BabelPluginReactCompiler;
+  return cachedPlugin;
 }
 
 function getLanguageFromFilename(filename: string): "flow" | "typescript" {
@@ -147,7 +170,13 @@ export function checkReactCompiler(
   filename: string,
   workspaceFolder: string | undefined,
   babelPluginPath: string
-) {
+): CompilationResult {
+  // Check cache first
+  const cached = compilationCache.get(sourceCode, filename);
+  if (cached) {
+    return cached;
+  }
+
   const BabelPluginReactCompiler = importBabelPluginReactCompiler(workspaceFolder, babelPluginPath);
 
   if (!BabelPluginReactCompiler) {
@@ -156,10 +185,22 @@ export function checkReactCompiler(
 
   try {
     const language = getLanguageFromFilename(filename);
-    return runBabelPluginReactCompiler(BabelPluginReactCompiler, sourceCode, filename, language);
+    const result = runBabelPluginReactCompiler(
+      BabelPluginReactCompiler,
+      sourceCode,
+      filename,
+      language
+    );
+
+    // Cache the result
+    compilationCache.set(sourceCode, filename, result);
+
+    return result;
   } catch (error: any) {
     throttledError(`Failed to compile the file. Please check the file content. ${error?.message}`);
-    return { successfulCompilations: [], failedCompilations: [] };
+    const emptyResult: CompilationResult = { successfulCompilations: [], failedCompilations: [] };
+    compilationCache.set(sourceCode, filename, emptyResult);
+    return emptyResult;
   }
 }
 

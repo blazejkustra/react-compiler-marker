@@ -11,8 +11,14 @@ import {
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { checkReactCompiler, getCompiledOutput } from "./checkReactCompiler";
+import {
+  checkReactCompiler,
+  getCompiledOutput,
+  clearPluginCache,
+  clearCompilationCache,
+} from "./checkReactCompiler";
 import { generateInlayHints } from "./inlayHints";
+import { debounce } from "./debounce";
 
 import packageJson from "../package.json";
 const { version } = packageJson;
@@ -49,6 +55,7 @@ let isActivated = true;
 
 // Store workspace folder
 let workspaceFolder: string | undefined;
+
 
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
@@ -99,18 +106,25 @@ connection.onInitialized(() => {
 connection.onDidChangeConfiguration((change) => {
   const settings = change.settings?.reactCompilerMarker;
   if (settings) {
+    const oldBabelPluginPath = globalSettings.babelPluginPath;
     globalSettings = {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
     };
+
+    // Clear caches if babel plugin path changed
+    if (oldBabelPluginPath !== globalSettings.babelPluginPath) {
+      clearPluginCache();
+      clearCompilationCache();
+    }
   }
   // Refresh inlay hints on all documents
   connection.languages.inlayHint.refresh();
 });
 
-// Handle inlay hints request
-connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] | null => {
+// Handle inlay hints request with debouncing
+connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<InlayHint[] | null> => {
   if (!isActivated) {
     return null;
   }
@@ -120,38 +134,41 @@ connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] | null 
     return null;
   }
 
-  const fileName = params.textDocument.uri;
-  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
-
   // Only process JS/TS/JSX/TSX files
   const languageId = document.languageId;
   if (!["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(languageId)) {
     return null;
   }
 
-  logMessage(`Process inline hints for ${params.textDocument.uri}`);
+  // Use document URI as the debounce key
+  return debounce(params.textDocument.uri, () => {
+    const fileName = params.textDocument.uri;
+    const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
 
-  try {
-    const sourceCode = document.getText();
-    const { successfulCompilations, failedCompilations } = checkReactCompiler(
-      sourceCode,
-      fileNameForCompiler,
-      workspaceFolder,
-      globalSettings.babelPluginPath
-    );
+    logMessage(`Process inlay hints for ${params.textDocument.uri}`);
 
-    return generateInlayHints(
-      document,
-      successfulCompilations,
-      failedCompilations,
-      globalSettings.successEmoji,
-      globalSettings.errorEmoji,
-      params.textDocument.uri
-    );
-  } catch (error: any) {
-    logError(`Error checking React Compiler: ${error?.message}`);
-    return null;
-  }
+    try {
+      const sourceCode = document.getText();
+      const { successfulCompilations, failedCompilations } = checkReactCompiler(
+        sourceCode,
+        fileNameForCompiler,
+        workspaceFolder,
+        globalSettings.babelPluginPath
+      );
+
+      return generateInlayHints(
+        document,
+        successfulCompilations,
+        failedCompilations,
+        globalSettings.successEmoji,
+        globalSettings.errorEmoji,
+        params.textDocument.uri
+      );
+    } catch (error: any) {
+      logError(`Error checking React Compiler: ${error?.message}`);
+      return null;
+    }
+  });
 });
 
 // Handle execute command
