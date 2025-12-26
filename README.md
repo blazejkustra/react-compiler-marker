@@ -1,124 +1,90 @@
-# React Compiler Marker ✨
+# React Compiler Marker
 
-`react-compiler-marker` is an IDE extension that shows which React components are optimized by the React Compiler. Available for VSCode/Cursor and WebStorm/IntelliJ IDEA.
+**Universal IDE extension that shows which React components are optimized by the [React Compiler](https://react.dev/learn/react-compiler)**. See at a glance which components get automatically memoized ✨ and which ones have issues preventing optimization 🚫
 
-## Features 🌟
+## Features
 
-- Customizable emoji markers for optimized and failed components
-- Hover tooltips with details
-- Commands to enable/disable markers or check a single file
-- Preview Compiled Output: Preview the compiled output of the current file
+- Visual emoji markers next to React components (customizable)
+- Hover tooltips with optimization details and error messages
+- Preview compiled output to see what the React Compiler generates
+- Commands to activate/deactivate markers or check individual files
+- Configurable babel plugin path for custom setups
 
-✨ Optimized component
+## Supported IDEs
+
+| IDE | Status | Installation |
+|-----|--------|--------------|
+| VS Code / Cursor | Published | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
+| WebStorm / IntelliJ IDEA | In Development | [Build from source](packages/intellij-client/README.md) |
+
+## Screenshots
+
+**Optimized component**
 
 ![Optimized Marker Screenshot](images/optimized-marker.png)
 
-🚫 Failed component
+**Failed component**
 
 ![Failed Marker Screenshot](images/failed-marker.png)
 
-## Available commands 🛠️
+## Project Structure
 
-Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and type:
+This is a monorepo containing:
 
-1. **Activate Decorations**: Activates the markers for all relevant files in the current session.
-   ```bash
-   React Compiler Marker: Activate Extension
-   ```
-2. **Deactivate Decorations**: Deactivates the markers and clears them from the editor.
-   ```bash
-   React Compiler Marker: Deactivate Extension
-   ```
-3. **Check Once (File-Specific Check)**: Analyzes a single file for one-time feedback without altering activation state.
-   ```bash
-   React Compiler Marker: Check Once
-   ```
-4. **Preview Compiled Output**: Preview the compiled output of the current file
-   ```bash
-   React Compiler Marker: Preview Compiled Output
-   ```
-
-## Configuration ⚙️
-
-You can configure the extension via VSCode/Cursor settings:
-
-### `reactCompilerMarker.successEmoji`
-
-Emoji marker to display next to components that were successfully memoized (Default: ✨, can be null)
-
-```json
-{
-  "reactCompilerMarker.successEmoji": "✨"
-}
+```
+packages/
+  server/           # LSP server (shared by all clients)
+  vscode-client/    # VS Code extension
+  intellij-client/  # WebStorm/IntelliJ plugin
 ```
 
-### `reactCompilerMarker.errorEmoji`
+Each client has its own version and release cycle. See individual READMEs for client-specific documentation:
 
-Emoji marker to display next to components that failed to be memoized (Default 🚫, can be null)
+- [VS Code Client](packages/vscode-client/README.md)
+- [IntelliJ Client](packages/intellij-client/README.md)
+- [LSP Server](packages/server/README.md)
 
-```json
-{
-  "reactCompilerMarker.errorEmoji": "🚫"
-}
-```
-
-### `reactCompilerMarker.babelPluginPath`
-
-Path to the babel-plugin-react-compiler in your project. By default it's `node_modules/babel-plugin-react-compiler`.
-
-```json
-{
-  "reactCompilerMarker.babelPluginPath": "node_modules/babel-plugin-react-compiler"
-}
-```
-
-## Known Issues 🐛
-
-- Some rare edge cases of anonymous functions could fail to properly display tooltips.
-- For files with a large number of React components, performance may degrade slightly during real-time updates.
-
-## For More Information 🤝
-
-- Learn about [React Compiler](https://react.dev/learn/react-compiler) and how it can improve your React app's performance.
-- Submit issues or contribute via the [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker).
-
-## Installation
+## Quick Start
 
 ### VS Code / Cursor
 
-Install from:
-- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
-- [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) or search "React Compiler Marker" in Extensions
+3. Open a React component file - markers appear automatically
 
-Or search for "React Compiler Marker" in the Extensions panel.
+### WebStorm / IntelliJ IDEA (beta)
 
-### WebStorm / IntelliJ IDEA
+1. Build the plugin: `cd packages/intellij-client && ./gradlew buildPlugin`
+2. Install from disk: Settings > Plugins > Install Plugin from Disk
+3. Select `build/distributions/react-compiler-marker-*.zip`
 
-The WebStorm/IntelliJ plugin is available in the `packages/intellij-client` directory.
+## Configuration
 
-**Building from source:**
+All clients support these settings:
 
-```bash
-cd packages/intellij-client
-gradle wrapper --gradle-version 8.5
-./gradlew buildPlugin
-```
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Success Emoji | `✨` | Marker for optimized components |
+| Error Emoji | `🚫` | Marker for failed components |
+| Babel Plugin Path | `node_modules/babel-plugin-react-compiler` | Path to the compiler plugin |
 
-The plugin will be at `build/distributions/react-compiler-marker-*.zip`
+## Commands
 
-**Installation:**
-1. Open WebStorm/IntelliJ IDEA
-2. Go to **Settings/Preferences** → **Plugins**
-3. Click ⚙️ → **Install Plugin from Disk...**
-4. Select the built `.zip` file
-5. Restart the IDE
-
-For more details, see [WebStorm Plugin Documentation](packages/intellij-client/README.md)
+- **Activate Extension** - Enable markers
+- **Deactivate Extension** - Disable markers
+- **Check Current File** - Refresh markers in the active file
+- **Preview Compiled Output** - View the compiled code
 
 ## Links
 
 - [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker)
 - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
-- [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+- [Open VSX Registry](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+- [React Compiler Documentation](https://react.dev/learn/react-compiler)
 
-**Enjoy Coding with React Compiler Marker ✨!**
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+## License
+
+MIT

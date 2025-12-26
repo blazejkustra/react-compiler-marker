@@ -5,7 +5,9 @@ on:
     types: [created]
 
 jobs:
-  publish:
+  # VS Code extension release (triggered by vscode-v* tags)
+  publish-vscode:
+    if: startsWith(github.event.release.tag_name, 'vscode-v')
     runs-on: ubuntu-latest
 
     steps:
@@ -35,3 +37,46 @@ jobs:
         run: npm run publish:ovsx
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+  # IntelliJ plugin release (triggered by intellij-v* tags)
+  build-intellij:
+    if: startsWith(github.event.release.tag_name, 'intellij-v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build server
+        run: npm run compile
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build IntelliJ plugin
+        working-directory: packages/intellij-client
+        run: ./gradlew buildPlugin
+        env:
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+
+      - name: Upload plugin to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/intellij-client/build/distributions/*.zip
