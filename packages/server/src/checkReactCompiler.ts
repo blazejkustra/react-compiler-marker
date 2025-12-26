@@ -156,12 +156,7 @@ export function checkReactCompiler(
 
   try {
     const language = getLanguageFromFilename(filename);
-    return runBabelPluginReactCompiler(
-      BabelPluginReactCompiler,
-      sourceCode,
-      filename,
-      language
-    );
+    return runBabelPluginReactCompiler(BabelPluginReactCompiler, sourceCode, filename, language);
   } catch (error: any) {
     throttledError(`Failed to compile the file. Please check the file content. ${error?.message}`);
     return { successfulCompilations: [], failedCompilations: [] };
