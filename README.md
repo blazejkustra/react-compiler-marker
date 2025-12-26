@@ -17,15 +17,7 @@
 | VS Code / Cursor | Published | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
 | WebStorm / IntelliJ IDEA | In Development | [Build from source](packages/intellij-client/README.md) |
 
-## Screenshots
-
-**Optimized component**
-
-![Optimized Marker Screenshot](images/optimized-marker.png)
-
-**Failed component**
-
-![Failed Marker Screenshot](images/failed-marker.png)
+![Showcase](images/showcase.png)
 
 ## Project Structure
 
