@@ -15,9 +15,6 @@ cd react-compiler-marker
 
 # Install dependencies
 npm install
-
-# Build all packages
-npm run compile
 ```
 
 ## Project Structure
@@ -34,21 +31,20 @@ packages/
 The LSP server is shared by all clients. It handles React Compiler analysis and provides language server protocol support.
 
 ```bash
-# Build server
 cd packages/server
 npm run build
-
-# Watch mode
 npm run watch
 ```
 
 ### VS Code Client
 
 ```bash
+cd packages/vscode-client
+
 # Build extension
 npm run compile
 
-# Watch mode (from root)
+# Watch mode
 npm run watch
 
 # Run tests
@@ -68,7 +64,7 @@ To debug the extension:
 cd packages/intellij-client
 
 # Build plugin
-./gradlew buildPlugin # or ./gradlew compileKotlin
+./gradlew buildPlugin
 
 # Run in development IDE
 ./gradlew runIde
@@ -78,20 +74,20 @@ cd packages/intellij-client
 
 ## Code Style
 
-- TypeScript: ESLint + Prettier (run `npm run format`)
+- TypeScript: ESLint + Prettier (run `npm run format` from root)
 - Kotlin: Default IntelliJ formatter
 
 ## Testing
 
 ```bash
-# Run VS Code extension tests
-npm run test
-
-# Run type checking
+# From root - shared checks
 npm run typecheck
-
-# Run linting
 npm run lint
+npm run format:check
+
+# From packages/vscode-client - extension tests
+cd packages/vscode-client
+npm run test
 ```
 
 ## Versioning

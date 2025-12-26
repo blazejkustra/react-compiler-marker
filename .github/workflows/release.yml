@@ -24,16 +24,19 @@ jobs:
         run: npm ci
 
       - name: Build extension
+        working-directory: packages/vscode-client
         run: npm run package
 
       - name: Publish to VS Code Marketplace
         if: success()
+        working-directory: packages/vscode-client
         run: npm run publish:vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX Registry
         if: success()
+        working-directory: packages/vscode-client
         run: npm run publish:ovsx
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
@@ -63,6 +66,7 @@ jobs:
         run: npm ci
 
       - name: Build server
+        working-directory: packages/vscode-client
         run: npm run compile
 
       - name: Setup Gradle

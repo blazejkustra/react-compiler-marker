@@ -1,7 +1,11 @@
 const esbuild = require("esbuild");
+const path = require("path");
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
+
+// Resolve paths relative to this file's location (repo root)
+const rootDir = __dirname;
 
 /**
  * @type {import('esbuild').Plugin}
@@ -45,16 +49,16 @@ async function main() {
   // Build the LSP server
   const serverCtx = await esbuild.context({
     ...sharedOptions,
-    entryPoints: ["packages/server/src/server.ts"],
-    outfile: "dist/server.js",
+    entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
+    outfile: path.join(rootDir, "packages/vscode-client/dist/server.js"),
     external: [],
   });
 
   // Build the VS Code client extension
   const clientCtx = await esbuild.context({
     ...sharedOptions,
-    entryPoints: ["packages/vscode-client/src/extension.ts"],
-    outfile: "dist/extension.js",
+    entryPoints: [path.join(rootDir, "packages/vscode-client/src/extension.ts")],
+    outfile: path.join(rootDir, "packages/vscode-client/dist/extension.js"),
     external: ["vscode"],
   });
 
