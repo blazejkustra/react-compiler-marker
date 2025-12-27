@@ -11,6 +11,11 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ---
 
+## [0.0.3] - 2025-12-27
+### Fixed
+- Reduced JS bundle size
+
+
 ## [0.0.1] - 2025-12-27
 
 ### Added
