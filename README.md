@@ -15,7 +15,7 @@
 | IDE  | Installation |
 |------|--------------|
 | VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
-| WebStorm / IntelliJ IDEA | [Build from source](packages/intellij-client/README.md) |
+| WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
 
 ![Showcase](images/showcase.png)
 
