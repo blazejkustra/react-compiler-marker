@@ -1,8 +1,10 @@
 package com.blazejkustra.reactcompilermarker.lsp
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.Launcher
@@ -91,7 +93,8 @@ class ReactCompilerLspServerManager(private val project: Project) : Disposable {
                         inlayHint = InlayHintCapabilities()
                     }
                 }
-                clientInfo = ClientInfo("WebStorm React Compiler Marker", "1.0.0")
+                val pluginVersion = PluginManagerCore.getPlugin(PluginId.getId("com.blazejkustra.reactcompilermarker"))?.version ?: "unknown"
+                clientInfo = ClientInfo("WebStorm React Compiler Marker", pluginVersion)
                 // Request HTML format for tooltips (IntelliJ renders HTML, not markdown)
                 initializationOptions = mapOf("tooltipFormat" to "html")
             }

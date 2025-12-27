@@ -2,7 +2,16 @@
 
 All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will be documented in this file.
 
-## [1.0.0] - 2026-01-01
+## [Unreleased]
+### Added
+- 
+
+### Fixed
+-
+
+---
+
+## [0.0.1] - 2025-12-27
 
 ### Added
 - Initial release of WebStorm/IntelliJ plugin
