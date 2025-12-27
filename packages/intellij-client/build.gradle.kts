@@ -131,8 +131,21 @@ kover {
     }
 }
 
+// Task to build the LSP server TypeScript code
+val buildServer = tasks.register<Exec>("buildServer") {
+    val serverDir = file("../server")
+
+    workingDir = serverDir
+    commandLine("npm", "run", "build")
+
+    inputs.dir(serverDir.resolve("src"))
+    outputs.dir(serverDir.resolve("out"))
+}
+
 // Task to bundle the LSP server using esbuild
 val bundleServer = tasks.register<Exec>("bundleServer") {
+    dependsOn(buildServer)
+
     val serverDir = file("../server")
     val outputDir = file("src/main/resources/server")
 

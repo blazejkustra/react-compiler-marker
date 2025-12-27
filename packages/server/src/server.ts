@@ -50,6 +50,10 @@ let globalSettings: Settings = {
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
 };
 
+// Tooltip format preference from client (markdown or html)
+type TooltipFormat = "markdown" | "html";
+let tooltipFormat: TooltipFormat = "markdown";
+
 // Store activation state
 let isActivated = true;
 
@@ -72,9 +76,15 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     workspaceFolder = workspaceFolder.slice(7);
   }
 
+  // Check for tooltip format preference in initialization options
+  const initOptions = params.initializationOptions as { tooltipFormat?: TooltipFormat } | undefined;
+  if (initOptions?.tooltipFormat === "html" || initOptions?.tooltipFormat === "markdown") {
+    tooltipFormat = initOptions.tooltipFormat;
+  }
+
   // Log client info for debugging
   logMessage(
-    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""}`
+    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat})`
   );
 
   return {
@@ -161,7 +171,8 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         failedCompilations,
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
-        params.textDocument.uri
+        params.textDocument.uri,
+        tooltipFormat
       );
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);

@@ -92,6 +92,8 @@ class ReactCompilerLspServerManager(private val project: Project) : Disposable {
                     }
                 }
                 clientInfo = ClientInfo("WebStorm React Compiler Marker", "1.0.0")
+                // Request HTML format for tooltips (IntelliJ renders HTML, not markdown)
+                initializationOptions = mapOf("tooltipFormat" to "html")
             }
 
             val initResult = languageServer!!.initialize(initParams).get(10, TimeUnit.SECONDS)
