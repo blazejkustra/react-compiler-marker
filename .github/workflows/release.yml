@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   # VS Code extension release (triggered by vscode-v* tags)
   publish-vscode:
