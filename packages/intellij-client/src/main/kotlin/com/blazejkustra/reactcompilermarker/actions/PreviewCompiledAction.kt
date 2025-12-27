@@ -8,9 +8,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightVirtualFile
 
 class PreviewCompiledAction : AnAction() {
@@ -77,7 +82,10 @@ class PreviewCompiledAction : AnAction() {
                     if (success && code != null) {
                         // Create a virtual file with the compiled output
                         val compiledFileName = "${psiFile.name.substringBeforeLast(".")}.compiled.${psiFile.name.substringAfterLast(".")}"
-                        val compiledFile = LightVirtualFile(compiledFileName, code)
+
+                        // Format the code before displaying
+                        val formattedCode = formatCode(project, code, compiledFileName)
+                        val compiledFile = LightVirtualFile(compiledFileName, formattedCode)
 
                         // Open the compiled file in a new editor tab
                         FileEditorManager.getInstance(project).openFile(compiledFile, true)
@@ -109,6 +117,25 @@ class PreviewCompiledAction : AnAction() {
             fileName.endsWith(".jsx") -> "javascriptreact"
             fileName.endsWith(".js") -> "javascript"
             else -> "javascript"
+        }
+    }
+
+    private fun formatCode(project: Project, code: String, fileName: String): String {
+        return try {
+            val extension = fileName.substringAfterLast(".", "js")
+            val fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension)
+
+            val psiFile = PsiFileFactory.getInstance(project)
+                .createFileFromText(fileName, fileType, code)
+
+            WriteCommandAction.runWriteCommandAction(project) {
+                CodeStyleManager.getInstance(project).reformat(psiFile)
+            }
+
+            psiFile.text
+        } catch (e: Exception) {
+            thisLogger().warn("Failed to format code, returning original", e)
+            code
         }
     }
 
