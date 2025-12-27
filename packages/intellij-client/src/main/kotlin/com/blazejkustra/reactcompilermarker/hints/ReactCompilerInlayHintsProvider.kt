@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
+import com.intellij.util.Alarm
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
@@ -88,6 +89,30 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
 
         // Track if we've already processed this file in this collection cycle
         private var hasProcessedFile = false
+
+        companion object {
+            private const val COMMAND_REVEAL_SELECTION = "command:react-compiler-marker.revealSelection"
+            private const val COMMAND_FIX_WITH_AI = "command:react-compiler-marker.fixWithAI"
+            private const val COMMAND_PREVIEW_COMPILED = "command:react-compiler-marker.previewCompiled"
+
+            // Global popup tracker to ensure only one tooltip popup is visible at a time
+            @Volatile
+            private var activePopup: JBPopup? = null
+
+            private fun closeActivePopup() {
+                activePopup?.let { popup ->
+                    if (!popup.isDisposed) {
+                        popup.cancel()
+                    }
+                }
+                activePopup = null
+            }
+
+            private fun setActivePopup(popup: JBPopup) {
+                closeActivePopup()
+                activePopup = popup
+            }
+        }
 
         override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
             val project = element.project
@@ -216,30 +241,36 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
             tooltipText: String,
             editor: Editor
         ): InlayPresentation {
-            var currentPopup: JBPopup? = null
             var isHoveringOverInlay = false
+            // Use Alarm instead of Timer for proper lifecycle management
+            val popupCloseAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
             return factory.onHover(base, object : InlayPresentationFactory.HoverListener {
                 override fun onHover(event: MouseEvent, translated: Point) {
                     isHoveringOverInlay = true
+                    // Cancel any pending close request
+                    popupCloseAlarm.cancelAllRequests()
 
-                    // Don't open a new popup if one is already visible
-                    val popup = currentPopup
-                    if (popup != null && !popup.isDisposed && popup.isVisible) return
+                    // Don't open a new popup if the active one is for this same inlay
+                    val existingPopup = activePopup
+                    if (existingPopup != null && !existingPopup.isDisposed && existingPopup.isVisible) return
+
+                    // Close any existing popup before showing a new one
+                    closeActivePopup()
 
                     // Use JBHtmlPane for proper IntelliJ-styled HTML rendering
-                    val maxWidth = 400
-                    val maxHeight = 300
+                    val maxWidth = JBUI.scale(400)
+                    val maxHeight = JBUI.scale(300)
 
                     val htmlPane = JBHtmlPane().apply {
                         text = tooltipText
                         border = JBUI.Borders.empty(8, 12)
                         // Set a fixed width to allow proper height calculation
                         setSize(maxWidth, Short.MAX_VALUE.toInt())
-                        addHyperlinkListener { event ->
-                            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                                val url = event.url?.toString() ?: event.description ?: return@addHyperlinkListener
-                                handleHyperlinkClick(url, editor, currentPopup)
+                        addHyperlinkListener { hyperlinkEvent ->
+                            if (hyperlinkEvent.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                                val url = hyperlinkEvent.url?.toString() ?: hyperlinkEvent.description ?: return@addHyperlinkListener
+                                handleHyperlinkClick(url, editor, activePopup)
                             }
                         }
                     }
@@ -256,7 +287,7 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
                         maximumSize = preferredSize
                     }
 
-                    currentPopup = JBPopupFactory.getInstance()
+                    val newPopup = JBPopupFactory.getInstance()
                         .createComponentPopupBuilder(scrollPane, null)
                         .setResizable(false)
                         .setMovable(false)
@@ -268,6 +299,8 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
                         }
                         .createPopup()
 
+                    setActivePopup(newPopup)
+
                     // Show popup below the line using screen coordinates
                     val screenPoint = event.locationOnScreen
                     val lineHeight = editor.lineHeight
@@ -275,35 +308,30 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
                     val yInLine = event.y % lineHeight
                     val yOffset = lineHeight - yInLine + 2
                     val point = RelativePoint(Point(screenPoint.x, screenPoint.y + yOffset))
-                    currentPopup?.show(point)
+                    newPopup.show(point)
                 }
 
                 override fun onHoverFinished() {
                     isHoveringOverInlay = false
 
-                    // Delay to allow mouse to move to popup
-                    java.util.Timer().schedule(object : java.util.TimerTask() {
-                        override fun run() {
-                            ApplicationManager.getApplication().invokeLater {
-                                // Don't close if mouse moved back to inlay
-                                if (isHoveringOverInlay) return@invokeLater
+                    // Use Alarm to delay popup close, allowing mouse to move to popup
+                    popupCloseAlarm.addRequest({
+                        // Don't close if mouse moved back to inlay
+                        if (isHoveringOverInlay) return@addRequest
 
-                                val popup = currentPopup ?: return@invokeLater
-                                if (popup.isDisposed) {
-                                    currentPopup = null
-                                    return@invokeLater
-                                }
+                        val popup = activePopup ?: return@addRequest
+                        if (popup.isDisposed) {
+                            activePopup = null
+                            return@addRequest
+                        }
 
-                                // Check if mouse is over the popup
-                                val mousePos = java.awt.MouseInfo.getPointerInfo()?.location
-                                if (mousePos != null && popup.content.isShowing) {
-                                    val popupBounds = popup.content.bounds
-                                    popupBounds.location = popup.content.locationOnScreen
-                                    if (!popupBounds.contains(mousePos)) {
-                                        popup.cancel()
-                                        currentPopup = null
-                                    }
-                                }
+                        // Check if mouse is over the popup
+                        val mousePos = java.awt.MouseInfo.getPointerInfo()?.location
+                        if (mousePos != null && popup.content.isShowing) {
+                            val popupBounds = popup.content.bounds
+                            popupBounds.location = popup.content.locationOnScreen
+                            if (!popupBounds.contains(mousePos)) {
+                                closeActivePopup()
                             }
                         }
                     }, 100) // 100ms delay
@@ -313,61 +341,16 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
 
         private fun handleHyperlinkClick(url: String, editor: Editor, popup: JBPopup?) {
             when {
-                url.startsWith("command:react-compiler-marker.revealSelection?") -> {
-                    // Parse the JSON params from the command URL
-                    val paramsJson = URLDecoder.decode(
-                        url.substringAfter("command:react-compiler-marker.revealSelection?"),
-                        "UTF-8"
-                    )
-                    try {
-                        val params = JsonParser.parseString(paramsJson).asJsonObject
-                        val start = params.getAsJsonObject("start")
-                        val startLine = start.get("line").asInt
-                        val startChar = start.get("character").asInt
-
-                        // Navigate to the line in the editor
-                        ApplicationManager.getApplication().invokeLater {
-                            val logicalPosition = LogicalPosition(startLine, startChar)
-                            editor.caretModel.moveToLogicalPosition(logicalPosition)
-                            editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-
-                            // Select the range if end position is provided
-                            val end = params.getAsJsonObject("end")
-                            if (end != null) {
-                                val endLine = end.get("line").asInt
-                                val endChar = end.get("character").asInt
-                                val startOffset = editor.logicalPositionToOffset(LogicalPosition(startLine, startChar))
-                                val endOffset = editor.logicalPositionToOffset(LogicalPosition(endLine, endChar))
-                                editor.selectionModel.setSelection(startOffset, endOffset)
-                            }
-
-                            popup?.cancel()
-                        }
-                    } catch (e: Exception) {
-                        thisLogger().warn("Failed to parse revealSelection command", e)
-                    }
+                url.startsWith(COMMAND_REVEAL_SELECTION) -> {
+                    handleRevealSelectionCommand(url, editor, popup)
                 }
-                url.startsWith("command:react-compiler-marker.fixWithAI?") -> {
+                url.startsWith(COMMAND_FIX_WITH_AI) -> {
                     // TODO: Implement Fix with AI functionality for IntelliJ
                     thisLogger().info("Fix with AI clicked - not yet implemented for IntelliJ")
                     popup?.cancel()
                 }
-                url.startsWith("command:react-compiler-marker.previewCompiled") -> {
-                    popup?.cancel()
-                    ApplicationManager.getApplication().invokeLater {
-                        val action = ActionManager.getInstance().getAction("ReactCompilerMarker.PreviewCompiled")
-                        if (action != null) {
-                            val dataContext = SimpleDataContext.builder()
-                                .add(CommonDataKeys.PROJECT, editor.project)
-                                .add(CommonDataKeys.EDITOR, editor)
-                                .add(CommonDataKeys.VIRTUAL_FILE, editor.virtualFile)
-                                .build()
-                            val event = AnActionEvent.createFromAnAction(action, null, "ReactCompilerInlayHint", dataContext)
-                            action.actionPerformed(event)
-                        } else {
-                            thisLogger().warn("PreviewCompiled action not found")
-                        }
-                    }
+                url.startsWith(COMMAND_PREVIEW_COMPILED) -> {
+                    handlePreviewCompiledCommand(editor, popup)
                 }
                 url.startsWith("http://") || url.startsWith("https://") -> {
                     BrowserUtil.browse(url)
@@ -378,5 +361,63 @@ class ReactCompilerInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAwar
             }
         }
 
+        private fun handleRevealSelectionCommand(url: String, editor: Editor, popup: JBPopup?) {
+            val paramsJson = parseCommandParams(url, COMMAND_REVEAL_SELECTION) ?: return
+
+            try {
+                val params = JsonParser.parseString(paramsJson).asJsonObject
+                val start = params.getAsJsonObject("start")
+                val startLine = start.get("line").asInt
+                val startChar = start.get("character").asInt
+
+                ApplicationManager.getApplication().invokeLater {
+                    val logicalPosition = LogicalPosition(startLine, startChar)
+                    editor.caretModel.moveToLogicalPosition(logicalPosition)
+                    editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+
+                    // Select the range if end position is provided
+                    val end = params.getAsJsonObject("end")
+                    if (end != null) {
+                        val endLine = end.get("line").asInt
+                        val endChar = end.get("character").asInt
+                        val startOffset = editor.logicalPositionToOffset(LogicalPosition(startLine, startChar))
+                        val endOffset = editor.logicalPositionToOffset(LogicalPosition(endLine, endChar))
+                        editor.selectionModel.setSelection(startOffset, endOffset)
+                    }
+
+                    popup?.cancel()
+                }
+            } catch (e: Exception) {
+                thisLogger().warn("Failed to parse revealSelection command", e)
+            }
+        }
+
+        private fun handlePreviewCompiledCommand(editor: Editor, popup: JBPopup?) {
+            popup?.cancel()
+            ApplicationManager.getApplication().invokeLater {
+                val action = ActionManager.getInstance().getAction("ReactCompilerMarker.PreviewCompiled")
+                if (action != null) {
+                    val dataContextBuilder = SimpleDataContext.builder()
+                        .add(CommonDataKeys.PROJECT, editor.project)
+                        .add(CommonDataKeys.EDITOR, editor)
+                    // editor.virtualFile can be null for in-memory documents
+                    editor.virtualFile?.let { dataContextBuilder.add(CommonDataKeys.VIRTUAL_FILE, it) }
+                    val dataContext = dataContextBuilder.build()
+                    val event = AnActionEvent.createFromAnAction(action, null, "ReactCompilerInlayHint", dataContext)
+                    action.actionPerformed(event)
+                } else {
+                    thisLogger().warn("PreviewCompiled action not found")
+                }
+            }
+        }
+
+        private fun parseCommandParams(url: String, commandPrefix: String): String? {
+            return try {
+                URLDecoder.decode(url.substringAfter("$commandPrefix?"), "UTF-8")
+            } catch (e: Exception) {
+                thisLogger().warn("Failed to decode command URL: $url", e)
+                null
+            }
+        }
     }
 }
