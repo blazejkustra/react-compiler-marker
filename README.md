@@ -12,10 +12,10 @@
 
 ## Supported IDEs
 
-| IDE | Status | Installation |
-|-----|--------|--------------|
-| VS Code / Cursor | Published | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
-| WebStorm / IntelliJ IDEA | In Development | [Build from source](packages/intellij-client/README.md) |
+| IDE  | Installation |
+|------|--------------|
+| VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
+| WebStorm / IntelliJ IDEA | [Build from source](packages/intellij-client/README.md) |
 
 ![Showcase](images/showcase.png)
 

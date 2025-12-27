@@ -1,7 +1,6 @@
 # Changelog
 
-All notable changes to **react-compiler-marker** will be documented in this file.  
-This project follows [Semantic Versioning](https://semver.org).
+All notable changes to the React Compiler Marker VS Code/Cursor plugin will be documented in this file.
 
 ## [Unreleased]
 ### Added

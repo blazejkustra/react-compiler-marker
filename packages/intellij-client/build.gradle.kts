@@ -152,6 +152,7 @@ val bundleServer = tasks.register<Exec>("bundleServer") {
     workingDir = serverDir
     commandLine("npx", "esbuild", "out/server.js",
         "--bundle",
+        "--minify",
         "--platform=node",
         "--target=node18",
         "--outfile=${outputDir.absolutePath}/server.bundle.js"

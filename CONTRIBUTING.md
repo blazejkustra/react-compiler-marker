@@ -104,15 +104,15 @@ Each client has its own version:
 
 ### VS Code Extension
 
-1. Update version in `packages/vscode-client/package.json`
-2. Create a GitHub release with tag `vscode-v{version}` (e.g., `vscode-v1.3.5`)
-3. CI will publish to VS Code Marketplace and Open VSX
+1. Create a GitHub release with tag `vscode-v{version}` (e.g., `vscode-v1.3.5`)
+2. Add release notes in the release body - these will be added to CHANGELOG.md
+3. CI will automatically update `package.json` version and publish to VS Code Marketplace and Open VSX
 
 ### IntelliJ Plugin
 
-1. Update version in `packages/intellij-client/gradle.properties`
-2. Create a GitHub release with tag `intellij-v{version}` (e.g., `intellij-v1.0.0`)
-3. CI will build the plugin and attach it to the release
+1. Create a GitHub release with tag `intellij-v{version}` (e.g., `intellij-v1.0.0`)
+2. Add release notes in the release body - these will be added to CHANGELOG.md
+3. CI will automatically update `gradle.properties` version, build the plugin, and attach it to the release
 
 ## Adding a New Client
 
