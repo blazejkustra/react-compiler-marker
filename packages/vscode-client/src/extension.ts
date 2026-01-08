@@ -248,6 +248,61 @@ function registerCommands(
     }
   );
 
+  const generateReport = vscode.commands.registerCommand(
+    "react-compiler-marker.generateReport",
+    async () => {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      const storageBase = context.storageUri ?? workspaceFolder?.uri;
+      if (!storageBase) {
+        vscode.window.showErrorMessage("No storage or workspace folder available.");
+        return;
+      }
+
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "React Compiler: Generating report...",
+            cancellable: false,
+          },
+          async () => {
+            const result = (await client.sendRequest("workspace/executeCommand", {
+              command: "react-compiler-marker/generateReport",
+              arguments: [{ root: workspaceFolder?.uri.fsPath }],
+            })) as { success: boolean; report?: unknown; error?: string };
+
+            if (!result.success || !result.report) {
+              throw new Error(result.error || "Report generation failed");
+            }
+
+            const totals = (result.report as any)?.totals;
+            if (totals) {
+              logMessage(
+                `Report totals: scanned=${totals.filesScanned} files=${totals.filesWithResults} success=${totals.successCount} failed=${totals.failedCount}`
+              );
+            }
+
+            const reportJson = JSON.stringify(result.report, null, 2);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const reportsDir = vscode.Uri.joinPath(storageBase, "react-compiler-marker");
+            await vscode.workspace.fs.createDirectory(reportsDir);
+            const reportUri = vscode.Uri.joinPath(reportsDir, `report-${timestamp}.json`);
+            await vscode.workspace.fs.writeFile(reportUri, Buffer.from(reportJson, "utf8"));
+            const reportDoc = await vscode.workspace.openTextDocument(reportUri);
+            await vscode.window.showTextDocument(reportDoc, {
+              preview: true,
+              viewColumn: vscode.ViewColumn.Beside,
+            });
+          }
+        );
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          `Failed to generate report: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
   // Register the Reveal Selection command
   const revealSelectionCmd = vscode.commands.registerCommand(
     "react-compiler-marker.revealSelection",
@@ -329,6 +384,7 @@ function registerCommands(
     activateCommand,
     deactivateCommand,
     previewCompiled,
+    generateReport,
     revealSelectionCmd,
     fixWithAICmd
   );
