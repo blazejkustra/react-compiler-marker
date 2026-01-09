@@ -8,6 +8,8 @@ import {
   InlayHintParams,
   InlayHint,
   ExecuteCommandParams,
+  HoverParams,
+  Hover,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -42,12 +44,14 @@ interface Settings {
   successEmoji: string | null;
   errorEmoji: string | null;
   babelPluginPath: string;
+  hintFormat: string;
 }
 
 let globalSettings: Settings = {
   successEmoji: "✨",
   errorEmoji: "🚫",
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
+  hintFormat: "{emoji}",
 };
 
 // Tooltip format preference from client (markdown or html)
@@ -95,6 +99,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       inlayHintProvider: true,
+      hoverProvider: true,
       executeCommandProvider: {
         commands: [
           "react-compiler-marker/activate",
@@ -120,6 +125,7 @@ connection.onDidChangeConfiguration((change) => {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
+      hintFormat: settings.hintFormat ?? "{emoji}",
     };
 
     // Clear caches if babel plugin path changed
@@ -154,10 +160,9 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     const fileName = params.textDocument.uri;
     const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
 
-    logMessage(`Process inlay hints for ${params.textDocument.uri}`);
-
     try {
       const sourceCode = document.getText();
+
       const { successfulCompilations, failedCompilations } = checkReactCompiler(
         sourceCode,
         fileNameForCompiler,
@@ -165,20 +170,83 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         globalSettings.babelPluginPath
       );
 
-      return generateInlayHints(
+      const hints = generateInlayHints(
         document,
         successfulCompilations,
         failedCompilations,
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
         params.textDocument.uri,
-        tooltipFormat
+        tooltipFormat,
+        globalSettings.hintFormat
       );
+
+      return hints;
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);
       return null;
     }
   });
+});
+
+// Handle hover request
+connection.onHover((params: HoverParams): Hover | null => {
+  if (!isActivated) {
+    return null;
+  }
+
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  // Only process JS/TS/JSX/TSX files
+  const languageId = document.languageId;
+  if (!["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(languageId)) {
+    return null;
+  }
+
+  const fileName = params.textDocument.uri;
+  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+  const hoveredLine = params.position.line;
+
+  try {
+    const sourceCode = document.getText();
+
+    const { successfulCompilations, failedCompilations } = checkReactCompiler(
+      sourceCode,
+      fileNameForCompiler,
+      workspaceFolder,
+      globalSettings.babelPluginPath
+    );
+
+    // Generate hints to find which components have hints on which lines
+    const hints = generateInlayHints(
+      document,
+      successfulCompilations,
+      failedCompilations,
+      globalSettings.successEmoji,
+      globalSettings.errorEmoji,
+      params.textDocument.uri,
+      tooltipFormat,
+      globalSettings.hintFormat
+    );
+
+    // Find hint on the hovered line
+    const hintOnLine = hints.find((hint) => hint.position.line === hoveredLine);
+
+    if (hintOnLine && hintOnLine.tooltip) {
+      // Return the tooltip as hover content
+      return {
+        contents: hintOnLine.tooltip,
+      };
+    }
+
+    return null;
+  } catch (error: any) {
+    logError(`Error in hover: ${error?.message}`);
+    return null;
+  }
 });
 
 // Handle execute command

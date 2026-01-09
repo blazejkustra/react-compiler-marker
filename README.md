@@ -16,6 +16,7 @@
 |------|--------------|
 | VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
 | WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
+| Neovim | [Setup instructions](packages/nvim-client/README.md) |
 
 ![Showcase](images/showcase.png)
 
@@ -28,12 +29,14 @@ packages/
   server/           # LSP server (shared by all clients)
   vscode-client/    # VS Code extension
   intellij-client/  # WebStorm/IntelliJ plugin
+  nvim-client/      # Neovim plugin
 ```
 
 Each client has its own version and release cycle. See individual READMEs for client-specific documentation:
 
 - [VS Code Client](packages/vscode-client/README.md)
 - [IntelliJ Client](packages/intellij-client/README.md)
+- [Neovim Client](packages/nvim-client/README.md)
 - [LSP Server](packages/server/README.md)
 
 ## Quick Start
@@ -48,6 +51,22 @@ Each client has its own version and release cycle. See individual READMEs for cl
 1. Build the plugin: `cd packages/intellij-client && ./gradlew buildPlugin`
 2. Install from disk: Settings > Plugins > Install Plugin from Disk
 3. Select `build/distributions/react-compiler-marker-*.zip`
+
+### Neovim
+
+Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  'blazejkustra/react-compiler-marker',
+  ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+  config = function()
+    require('react-compiler-marker').setup()
+  end,
+}
+```
+
+See the [Neovim Client README](packages/nvim-client/README.md) for more details.
 
 ## Configuration
 
