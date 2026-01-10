@@ -21,38 +21,6 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
 
-      - name: Update package.json version
-        working-directory: packages/vscode-client
-        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
-
-      - name: Update CHANGELOG.md
-        working-directory: packages/vscode-client
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          DATE=$(date +%Y-%m-%d)
-          RELEASE_BODY="${{ github.event.release.body }}"
-
-          # Insert new version entry after the --- separator
-          awk -v ver="$VERSION" -v date="$DATE" -v body="$RELEASE_BODY" '
-            /^---$/ && !inserted {
-              print "---"
-              print ""
-              print "## [" ver "] - " date
-              print body
-              inserted=1
-              next
-            }
-            {print}
-          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
-
-      - name: Commit version changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md
-          git commit -m "chore(vscode): bump version to ${{ steps.version.outputs.VERSION }}"
-          git push origin HEAD:main
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -61,6 +29,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Update package.json version
+        working-directory: packages/vscode-client
+        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
 
       - name: Build extension
         working-directory: packages/vscode-client
@@ -89,6 +61,36 @@ jobs:
           fi
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Update CHANGELOG.md
+        if: success()
+        working-directory: packages/vscode-client
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          DATE=$(date +%Y-%m-%d)
+          RELEASE_BODY="${{ github.event.release.body }}"
+
+          # Insert new version entry after the --- separator
+          awk -v ver="$VERSION" -v date="$DATE" -v body="$RELEASE_BODY" '
+            /^---$/ && !inserted {
+              print "---"
+              print ""
+              print "## [" ver "] - " date
+              print body
+              inserted=1
+              next
+            }
+            {print}
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Commit version changes
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md
+          git commit -m "chore(vscode): bump version to ${{ steps.version.outputs.VERSION }}"
+          git push origin HEAD:main
 
   # IntelliJ plugin release (triggered by intellij-v* tags)
   build-intellij:
