@@ -86,6 +86,12 @@ jobs:
       - name: Commit version changes
         if: success()
         run: |
+          # Check if there are any changes to commit
+          if git diff --quiet packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md; then
+            echo "No changes to commit, version already up to date"
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md
@@ -131,6 +137,12 @@ jobs:
 
       - name: Commit version changes
         run: |
+          # Check if there are any changes to commit
+          if git diff --quiet packages/intellij-client/gradle.properties packages/intellij-client/CHANGELOG.md; then
+            echo "No changes to commit, version already up to date"
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add packages/intellij-client/gradle.properties packages/intellij-client/CHANGELOG.md
