@@ -11,6 +11,14 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ---
 
+## [2.0.0] - 2026-01-10
+## [2.0.0] - 2026-01-10
+### Added
+- **Language Server Protocol (LSP) architecture**: Complete rewrite using LSP for improved performance and cross-editor compatibility
+- **LRU caching**: Implemented caching for compilation results to improve performance
+- **Debounce functionality**: Added debouncing for inlay hints to reduce unnecessary computations
+- **Enhanced logging**: Improved logging with timestamps and better error messages
+
 ## [2.0.0-rc.1] - 2026-01-10
 ## [2.0.0] - 2026-01-10
 ### Added
