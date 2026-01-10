@@ -74,7 +74,7 @@ cd packages/intellij-client
 
 ## Code Style
 
-- TypeScript: ESLint + Prettier (run `npm run format` from root)
+- TypeScript: ESLint + Prettier (run `npm run prettier` from root)
 - Kotlin: Default IntelliJ formatter
 
 ## Testing
@@ -83,7 +83,7 @@ cd packages/intellij-client
 # From root - shared checks
 npm run typecheck
 npm run lint
-npm run format:check
+npm run prettier
 
 # From packages/vscode-client - extension tests
 cd packages/vscode-client
