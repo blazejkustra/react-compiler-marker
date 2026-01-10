@@ -19,7 +19,14 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
+          # Check if this is a prerelease (contains alpha, beta, rc, etc.)
+          if [[ "${GITHUB_REF_NAME#vscode-v}" =~ (alpha|beta|rc|pre) ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update package.json version
         working-directory: packages/vscode-client
@@ -69,14 +76,24 @@ jobs:
       - name: Publish to VS Code Marketplace
         if: success()
         working-directory: packages/vscode-client
-        run: npm run publish:vscode
+        run: |
+          if [[ "${{ steps.version.outputs.IS_PRERELEASE }}" == "true" ]]; then
+            npm run publish:vscode -- --pre-release
+          else
+            npm run publish:vscode
+          fi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX Registry
         if: success()
         working-directory: packages/vscode-client
-        run: npm run publish:ovsx
+        run: |
+          if [[ "${{ steps.version.outputs.IS_PRERELEASE }}" == "true" ]]; then
+            npm run publish:ovsx -- --pre-release
+          else
+            npm run publish:ovsx
+          fi
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
