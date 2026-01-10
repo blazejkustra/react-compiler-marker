@@ -56,6 +56,11 @@
         "command": "react-compiler-marker.previewCompiled",
         "title": "Preview Compiled Output",
         "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.generateReport",
+        "title": "Generate Report",
+        "category": "React Compiler Marker"
       }
     ],
     "configuration": {
