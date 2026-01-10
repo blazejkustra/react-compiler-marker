@@ -19,7 +19,11 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
+        run: |
+          FULL_VERSION="${GITHUB_REF_NAME#vscode-v}"
+          # Strip any prerelease suffix (e.g., -rc.1, -beta.1, -alpha.1)
+          VERSION="${FULL_VERSION%%-*}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
