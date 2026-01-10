@@ -3,12 +3,18 @@
 out/**
 node_modules/**
 src/**
+test/**
 .gitignore
 .yarnrc
 esbuild.js
 vsc-extension-quickstart.md
 **/tsconfig.json
+**/tsconfig.tsbuildinfo
 **/eslint.config.mjs
 **/*.map
 **/*.ts
 **/.vscode-test.*
+
+# Exclude parent and sibling directories
+../../**
+!../../packages/vscode-client/**
