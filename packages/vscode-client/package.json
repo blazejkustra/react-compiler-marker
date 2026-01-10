@@ -94,8 +94,8 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"../../packages/server/src/**/*.ts\"",
     "test": "vscode-test",
-    "publish:vscode": "vsce publish",
-    "publish:ovsx": "npx ovsx publish -p"
+    "publish:vscode": "vsce publish -p $VSCE_PAT",
+    "publish:ovsx": "npx ovsx publish -p $OVSX_PAT"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
