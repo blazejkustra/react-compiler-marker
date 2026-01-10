@@ -34,7 +34,7 @@
     "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.js",
-  "icon": "../../images/logo.jpeg",
+  "icon": "logo.jpeg",
   "contributes": {
     "commands": [
       {
