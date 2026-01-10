@@ -19,14 +19,7 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: |
-          echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
-          # Check if this is a prerelease (contains alpha, beta, rc, etc.)
-          if [[ "${GITHUB_REF_NAME#vscode-v}" =~ (alpha|beta|rc|pre) ]]; then
-            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
-          else
-            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
-          fi
+        run: echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
 
       - name: Update package.json version
         working-directory: packages/vscode-client
@@ -77,7 +70,7 @@ jobs:
         if: success()
         working-directory: packages/vscode-client
         run: |
-          if [[ "${{ steps.version.outputs.IS_PRERELEASE }}" == "true" ]]; then
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
             npm run publish:vscode -- --pre-release
           else
             npm run publish:vscode
@@ -89,7 +82,7 @@ jobs:
         if: success()
         working-directory: packages/vscode-client
         run: |
-          if [[ "${{ steps.version.outputs.IS_PRERELEASE }}" == "true" ]]; then
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
             npm run publish:ovsx -- --pre-release
           else
             npm run publish:ovsx
