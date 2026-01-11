@@ -135,17 +135,7 @@ function M.create_client_config(config)
     },
     settings = require("react-compiler-marker.config").get_server_settings(),
     on_init = function(client, initialize_result)
-      notify("React Compiler Marker LSP started", "info")
-      if config.log_level ~= "off" then
-        notify(
-          string.format(
-            "Server: %s %s",
-            initialize_result.serverInfo.name or "Unknown",
-            initialize_result.serverInfo.version or ""
-          ),
-          "info"
-        )
-      end
+      -- Server started successfully
     end,
     on_attach = function(client, bufnr)
       -- Enable inlay hints if supported and configured
@@ -165,12 +155,7 @@ function M.create_client_config(config)
       vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
     end,
     on_exit = function(code, signal, client_id)
-      if config.log_level ~= "off" then
-        vim.notify(
-          string.format("React Compiler Marker LSP exited with code %d, signal %d", code, signal),
-          vim.log.levels.INFO
-        )
-      end
+      -- Server exited
     end,
     flags = {
       debounce_text_changes = 150,
@@ -199,7 +184,6 @@ function M.start(config)
   if M.client_id then
     local client = vim.lsp.get_client_by_id(M.client_id)
     if client then
-      vim.notify("react-compiler-marker: LSP client already running", vim.log.levels.INFO)
       return M.client_id
     end
     -- Client died, reset the ID

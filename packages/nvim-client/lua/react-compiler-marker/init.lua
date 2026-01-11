@@ -76,16 +76,13 @@ function M.setup(user_config)
       if client and client.name == "react-compiler-marker" then
         local bufnr = args.buf
 
-        -- Enable inlay hints when LSP attaches
-        -- Wait longer to ensure buffer is fully ready
+        -- Enable inlay hints and trigger initial analysis
         vim.defer_fn(function()
           if vim.api.nvim_buf_is_valid(bufnr) then
             vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
 
-            -- Force a refresh after enabling to ensure correct positions
-            vim.defer_fn(function()
-              pcall(vim.lsp.inlay_hint.refresh)
-            end, 200)
+            -- Trigger initial file analysis to populate hints
+            lsp.check_current_file()
           end
         end, 300)
 
