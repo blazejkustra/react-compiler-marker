@@ -27,20 +27,22 @@
 ```lua
 {
   'blazejkustra/react-compiler-marker',
-  ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
-  config = function()
-    require('react-compiler-marker').setup({
-      -- your configuration here (optional)
-    })
-  end,
+  event = { 'BufReadPre *.js,*.jsx,*.ts,*.tsx', 'BufNewFile *.js,*.jsx,*.ts,*.tsx' },
+  build = 'npm install && node esbuild.js --production',
+  opts = {
+    -- your configuration here (optional)
+  },
 }
 ```
+
+> **Note**: The `build` step compiles the LSP server after installation. The `event` option provides lazy-loading for React/JS/TS files.
 
 ### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 use {
   'blazejkustra/react-compiler-marker',
+  run = 'npm install && node esbuild.js --production',
   config = function()
     require('react-compiler-marker').setup()
   end
@@ -50,7 +52,7 @@ use {
 ### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-Plug 'blazejkustra/react-compiler-marker'
+Plug 'blazejkustra/react-compiler-marker', { 'do': 'npm install && node esbuild.js --production' }
 
 " In your init.lua or init.vim:
 lua << EOF
@@ -60,11 +62,14 @@ EOF
 
 ### Manual Installation
 
-Clone this repository to your Neovim config directory:
+Clone this repository and build the server:
 
 ```bash
 git clone https://github.com/blazejkustra/react-compiler-marker.git \
   ~/.local/share/nvim/site/pack/plugins/start/react-compiler-marker
+
+cd ~/.local/share/nvim/site/pack/plugins/start/react-compiler-marker
+npm install && node esbuild.js --production
 ```
 
 ## Configuration

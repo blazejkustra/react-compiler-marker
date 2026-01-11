@@ -59,10 +59,9 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 {
   'blazejkustra/react-compiler-marker',
-  ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
-  config = function()
-    require('react-compiler-marker').setup()
-  end,
+  event = { 'BufReadPre *.js,*.jsx,*.ts,*.tsx', 'BufNewFile *.js,*.jsx,*.ts,*.tsx' },
+  build = 'npm install && node esbuild.js --production',
+  opts = {},
 }
 ```
 
