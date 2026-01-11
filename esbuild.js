@@ -46,11 +46,19 @@ const sharedOptions = {
 };
 
 async function main() {
-  // Build the LSP server
+  // Build the LSP server for VS Code
   const serverCtx = await esbuild.context({
     ...sharedOptions,
     entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
     outfile: path.join(rootDir, "packages/vscode-client/dist/server.js"),
+    external: [],
+  });
+
+  // Build the LSP server for Neovim (bundled)
+  const nvimServerCtx = await esbuild.context({
+    ...sharedOptions,
+    entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
+    outfile: path.join(rootDir, "packages/nvim-client/server/server.bundle.js"),
     external: [],
   });
 
@@ -63,10 +71,10 @@ async function main() {
   });
 
   if (watch) {
-    await Promise.all([serverCtx.watch(), clientCtx.watch()]);
+    await Promise.all([serverCtx.watch(), nvimServerCtx.watch(), clientCtx.watch()]);
   } else {
-    await Promise.all([serverCtx.rebuild(), clientCtx.rebuild()]);
-    await Promise.all([serverCtx.dispose(), clientCtx.dispose()]);
+    await Promise.all([serverCtx.rebuild(), nvimServerCtx.rebuild(), clientCtx.rebuild()]);
+    await Promise.all([serverCtx.dispose(), nvimServerCtx.dispose(), clientCtx.dispose()]);
   }
 }
 
