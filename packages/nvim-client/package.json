@@ -1,0 +1,30 @@
+{
+  "name": "@react-compiler-marker/nvim-client",
+  "version": "0.1.0",
+  "description": "Neovim plugin for React Compiler Marker - shows which components are optimized by the React Compiler",
+  "main": "lua/react-compiler-marker/init.lua",
+  "keywords": [
+    "neovim",
+    "nvim",
+    "plugin",
+    "react",
+    "react-compiler",
+    "lsp"
+  ],
+  "author": "Blazej Kustra <kustrablazej@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blazejkustra/react-compiler-marker",
+    "directory": "packages/nvim-client"
+  },
+  "scripts": {
+    "lint": "luacheck lua/",
+    "format": "stylua lua/ plugin/"
+  },
+  "files": [
+    "lua/",
+    "plugin/",
+    "doc/"
+  ]
+}
