@@ -234,6 +234,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
       if (!reportRoot) {
         return { success: false, error: "No workspace folder available" };
       }
+      const reportId = options?.reportId;
       try {
         logMessage(`Generating report for ${reportRoot}`);
         const report = await generateReport({
@@ -242,6 +243,14 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
           maxConcurrency: options?.maxConcurrency,
           includeExtensions: options?.includeExtensions,
           excludeDirs: options?.excludeDirs,
+          onProgress: reportId
+            ? (progress) => {
+                connection.sendNotification("react-compiler-marker/reportProgress", {
+                  reportId,
+                  ...progress,
+                });
+              }
+            : undefined,
         });
         logMessage(
           `Report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount}`

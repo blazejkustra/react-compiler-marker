@@ -38,11 +38,6 @@ function logMessage(message: string): void {
   outputChannel.appendLine(`[${timestamp}] CLIENT LOG: ${message}`);
 }
 
-function logError(error: string): void {
-  const timestamp = new Date().toISOString();
-  outputChannel.appendLine(`[${timestamp}] CLIENT ERROR: ${error}`);
-}
-
 // IDE detection helpers for "Fix with AI" command routing
 function isVSCode(): boolean {
   const appName = vscode.env.appName;
@@ -284,6 +279,7 @@ function registerCommands(
         return;
       }
 
+      const reportId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       try {
         await vscode.window.withProgress(
           {
@@ -291,33 +287,59 @@ function registerCommands(
             title: "React Compiler: Generating report...",
             cancellable: false,
           },
-          async () => {
-            const result = (await client.sendRequest("workspace/executeCommand", {
-              command: "react-compiler-marker/generateReport",
-              arguments: [{ root: workspaceFolder?.uri.fsPath }],
-            })) as { success: boolean; report?: ReactCompilerReport; error?: string };
+          async (progress) => {
+            let lastProcessed = 0;
+            const progressDisposable = client.onNotification(
+              "react-compiler-marker/reportProgress",
+              (payload: { reportId: string; processed: number; total: number }) => {
+                if (payload.reportId !== reportId) {
+                  return;
+                }
+                if (payload.total === 0) {
+                  progress.report({ message: "No matching files found", increment: 100 });
+                  return;
+                }
+                const delta = payload.processed - lastProcessed;
+                if (delta <= 0) {
+                  return;
+                }
+                const increment = (delta / payload.total) * 100;
+                lastProcessed = payload.processed;
+                progress.report({
+                  message: `Scanning ${payload.processed}/${payload.total} files`,
+                  increment,
+                });
+              }
+            );
 
-            if (!result.success || !result.report) {
-              throw new Error(result.error || "Report generation failed");
+            try {
+              const result = (await client.sendRequest("workspace/executeCommand", {
+                command: "react-compiler-marker/generateReport",
+                arguments: [{ root: workspaceFolder?.uri.fsPath, reportId }],
+              })) as { success: boolean; report?: ReactCompilerReport; error?: string };
+
+              if (!result.success || !result.report) {
+                throw new Error(result.error || "Report generation failed");
+              }
+
+              const reportJson = JSON.stringify(result.report, null, 2);
+              const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+              const reportsDir = vscode.Uri.joinPath(storageBase, "react-compiler-marker");
+              await vscode.workspace.fs.createDirectory(reportsDir);
+              const reportUri = vscode.Uri.joinPath(reportsDir, `report-${timestamp}.json`);
+              await vscode.workspace.fs.writeFile(reportUri, Buffer.from(reportJson, "utf8"));
+              const reportDoc = await vscode.workspace.openTextDocument(reportUri);
+              await vscode.window.showTextDocument(reportDoc, {
+                preview: true,
+                viewColumn: vscode.ViewColumn.Beside,
+              });
+            } finally {
+              progressDisposable.dispose();
             }
-
-            const reportJson = JSON.stringify(result.report, null, 2);
-            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-            const reportsDir = vscode.Uri.joinPath(storageBase, "react-compiler-marker");
-            await vscode.workspace.fs.createDirectory(reportsDir);
-            const reportUri = vscode.Uri.joinPath(reportsDir, `report-${timestamp}.json`);
-            await vscode.workspace.fs.writeFile(reportUri, Buffer.from(reportJson, "utf8"));
-            const reportDoc = await vscode.workspace.openTextDocument(reportUri);
-            await vscode.window.showTextDocument(reportDoc, {
-              preview: true,
-              viewColumn: vscode.ViewColumn.Beside,
-            });
           }
         );
       } catch (error: any) {
-        vscode.window.showErrorMessage(
-          `Failed to generate report: ${error?.message ?? error}`
-        );
+        vscode.window.showErrorMessage(`Failed to generate report: ${error?.message ?? error}`);
       }
     }
   );

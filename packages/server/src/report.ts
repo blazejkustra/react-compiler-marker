@@ -42,6 +42,13 @@ export interface ReportOptions {
   includeExtensions?: string[];
   /** Directory names to skip at any depth (e.g. ["node_modules"]). */
   excludeDirs?: string[];
+  /** Optional progress callback for reporting processed file counts. */
+  onProgress?: (progress: ReportProgress) => void;
+}
+
+export interface ReportProgress {
+  processed: number;
+  total: number;
 }
 
 const DEFAULT_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]);
@@ -147,6 +154,21 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
   const maxConcurrency = options.maxConcurrency ?? Math.max(1, os.cpus().length - 1);
 
   const files = await listSourceFiles(root, includeExtensions, excludeDirs);
+  const totalFiles = files.length;
+  let processed = 0;
+  let lastProgressAt = 0;
+  const reportProgress = () => {
+    if (!options.onProgress) {
+      return;
+    }
+    const now = Date.now();
+    if (processed === totalFiles || now - lastProgressAt >= 100) {
+      options.onProgress({ processed, total: totalFiles });
+      lastProgressAt = now;
+    }
+  };
+
+  reportProgress();
 
   const errors: ReactCompilerReport["errors"] = [];
   const results = await mapWithConcurrency(files, maxConcurrency, async (filePath) => {
@@ -168,6 +190,9 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
         path: path.relative(root, filePath),
         message: error?.message ?? "Unknown error",
       });
+    } finally {
+      processed += 1;
+      reportProgress();
     }
   });
 
