@@ -429,32 +429,6 @@ lsp.execute_command("custom-command", {}, function(err, result)
 end)
 ```
 
-## Integration with Other Plugins
-
-### With [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
-
-Show React Compiler status in your statusline:
-
-```lua
-require('lualine').setup({
-  sections = {
-    lualine_x = {
-      function()
-        local lsp = require('react-compiler-marker').lsp
-        if lsp.is_running() then
-          return lsp.is_activated and '✨ RC' or '🚫 RC'
-        end
-        return ''
-      end,
-    },
-  },
-})
-```
-
-### With [nvim-notify](https://github.com/rcarriga/nvim-notify)
-
-The plugin uses `vim.notify()` for all notifications, so if you have nvim-notify installed, you'll automatically get nice notification popups.
-
 ## Contributing
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) in the main repository.

@@ -65,7 +65,11 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-See the [Neovim Client README](packages/nvim-client/README.md) for more details.
+Open a React component file - markers appear automatically.
+
+**Requirements:** Neovim 0.10+, Node.js, `babel-plugin-react-compiler` in your project.
+
+See the [Neovim Client README](packages/nvim-client/README.md) for configuration options and other package managers.
 
 ## Configuration
 
