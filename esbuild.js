@@ -1,8 +1,18 @@
+/**
+ * Build script for React Compiler Marker
+ *
+ * Usage:
+ *   node esbuild.js                           - Build VS Code (dev mode)
+ *   node esbuild.js --production              - Build VS Code (production)
+ *   BUILD_TARGET=nvim node esbuild.js --production  - Build for Neovim
+ *   node esbuild.js --watch                   - Watch mode for VS Code
+ */
 const esbuild = require("esbuild");
 const path = require("path");
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
+const buildTarget = process.env.BUILD_TARGET || "vscode";
 
 // Resolve paths relative to this file's location (repo root)
 const rootDir = __dirname;
@@ -46,35 +56,37 @@ const sharedOptions = {
 };
 
 async function main() {
-  // Build the LSP server for VS Code
+  console.log(`Building for ${buildTarget}...`);
+
+  const contexts = [];
+
+  // Build the LSP server
   const serverCtx = await esbuild.context({
     ...sharedOptions,
     entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
-    outfile: path.join(rootDir, "packages/vscode-client/dist/server.js"),
+    outfile: buildTarget === "nvim"
+      ? path.join(rootDir, "packages/nvim-client/server/server.bundle.js")
+      : path.join(rootDir, "packages/vscode-client/dist/server.js"),
     external: [],
   });
+  contexts.push(serverCtx);
 
-  // Build the LSP server for Neovim (bundled)
-  const nvimServerCtx = await esbuild.context({
-    ...sharedOptions,
-    entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
-    outfile: path.join(rootDir, "packages/nvim-client/server/server.bundle.js"),
-    external: [],
-  });
-
-  // Build the VS Code client extension
-  const clientCtx = await esbuild.context({
-    ...sharedOptions,
-    entryPoints: [path.join(rootDir, "packages/vscode-client/src/extension.ts")],
-    outfile: path.join(rootDir, "packages/vscode-client/dist/extension.js"),
-    external: ["vscode"],
-  });
+  // Build VS Code client extension if not nvim
+  if (buildTarget !== "nvim") {
+    const clientCtx = await esbuild.context({
+      ...sharedOptions,
+      entryPoints: [path.join(rootDir, "packages/vscode-client/src/extension.ts")],
+      outfile: path.join(rootDir, "packages/vscode-client/dist/extension.js"),
+      external: ["vscode"],
+    });
+    contexts.push(clientCtx);
+  }
 
   if (watch) {
-    await Promise.all([serverCtx.watch(), nvimServerCtx.watch(), clientCtx.watch()]);
+    await Promise.all(contexts.map(ctx => ctx.watch()));
   } else {
-    await Promise.all([serverCtx.rebuild(), nvimServerCtx.rebuild(), clientCtx.rebuild()]);
-    await Promise.all([serverCtx.dispose(), nvimServerCtx.dispose(), clientCtx.dispose()]);
+    await Promise.all(contexts.map(ctx => ctx.rebuild()));
+    await Promise.all(contexts.map(ctx => ctx.dispose()));
   }
 }
 

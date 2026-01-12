@@ -72,23 +72,6 @@ local function find_server_path(cfg)
     return workspace_server
   end
 
-  -- 4. Check for monorepo development setup
-  local dev_paths = {
-    workspace_root .. "/packages/server/out/server.js",
-    workspace_root .. "/../server/out/server.js",
-  }
-  for _, path in ipairs(dev_paths) do
-    if vim.fn.filereadable(path) == 1 then
-      return path
-    end
-  end
-
-  -- 5. Try global installation
-  local global_server = vim.fn.exepath("react-compiler-marker-lsp")
-  if global_server ~= "" then
-    return global_server
-  end
-
   return nil
 end
 
@@ -134,9 +117,6 @@ function M.create_client_config(config)
       tooltipFormat = "markdown",
     },
     settings = require("react-compiler-marker.config").get_server_settings(),
-    on_init = function(client, initialize_result)
-      -- Server started successfully
-    end,
     on_attach = function(client, bufnr)
       -- Enable inlay hints if supported and configured
       if config.inlay_hints.enabled and client.server_capabilities.inlayHintProvider then
@@ -150,12 +130,6 @@ function M.create_client_config(config)
           )
         end
       end
-
-      -- Set up buffer-local keymaps and options here if needed
-      vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
-    end,
-    on_exit = function(code, signal, client_id)
-      -- Server exited
     end,
     flags = {
       debounce_text_changes = 150,
@@ -254,54 +228,42 @@ function M.execute_command(command, args, callback)
 end
 
 -- Activate the extension
-function M.activate(callback)
+function M.activate()
   M.is_activated = true
   M.execute_command("react-compiler-marker/activate", {}, function(err, result)
     if err then
       notify("Failed to activate: " .. vim.inspect(err), "error")
     else
       notify("React Compiler Marker activated", "info", "activate")
-      -- Inlay hints will be automatically refreshed by the LSP server
-    end
-    if callback then
-      callback(err, result)
     end
   end)
 end
 
 -- Deactivate the extension
-function M.deactivate(callback)
+function M.deactivate()
   M.is_activated = false
   M.execute_command("react-compiler-marker/deactivate", {}, function(err, result)
     if err then
       notify("Failed to deactivate: " .. vim.inspect(err), "error")
     else
       notify("React Compiler Marker deactivated", "info", "activate")
-      -- Inlay hints will be automatically cleared by the LSP server
-    end
-    if callback then
-      callback(err, result)
     end
   end)
 end
 
 -- Check current file
-function M.check_current_file(callback)
+function M.check_current_file()
   M.execute_command("react-compiler-marker/checkOnce", {}, function(err, result)
     if err then
       notify("Failed to check file: " .. vim.inspect(err), "error")
     else
       notify("React Compiler Markers refreshed", "info", "check")
-      -- Inlay hints will be automatically refreshed by the LSP server
-    end
-    if callback then
-      callback(err, result)
     end
   end)
 end
 
 -- Preview compiled output
-function M.preview_compiled(callback)
+function M.preview_compiled()
   local bufnr = vim.api.nvim_get_current_buf()
   local uri = vim.uri_from_bufnr(bufnr)
 
@@ -311,9 +273,6 @@ function M.preview_compiled(callback)
         "Failed to compile: " .. (result and result.error or vim.inspect(err)),
         vim.log.levels.ERROR
       )
-      if callback then
-        callback(err, result)
-      end
       return
     end
 
@@ -332,10 +291,6 @@ function M.preview_compiled(callback)
     -- Open in a vertical split
     vim.cmd("vsplit")
     vim.api.nvim_win_set_buf(0, new_buf)
-
-    if callback then
-      callback(nil, result)
-    end
   end)
 end
 

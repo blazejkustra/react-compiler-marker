@@ -8,6 +8,3 @@
 
 # Node modules (if using npm for tooling)
 node_modules/
-
-# Build artifacts
-server/

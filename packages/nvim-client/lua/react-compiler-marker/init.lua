@@ -147,28 +147,6 @@ function M.setup(user_config)
   end
 end
 
--- Get the current configuration
-function M.get_config()
-  return config.get()
-end
-
--- Update configuration at runtime
-function M.update_config(updates)
-  local new_config = config.update(updates)
-
-  -- If server settings changed, notify the LSP server
-  if lsp.is_running() then
-    local client = lsp.get_client()
-    if client then
-      client.notify("workspace/didChangeConfiguration", {
-        settings = config.get_server_settings(),
-      })
-    end
-  end
-
-  return new_config
-end
-
 -- Expose submodules
 M.lsp = lsp
 M.config = config

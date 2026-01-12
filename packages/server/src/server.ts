@@ -155,6 +155,8 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     return null;
   }
 
+  logMessage(`Process inlay hints for ${params.textDocument.uri}`);
+
   // Use document URI as the debounce key
   return debounce(params.textDocument.uri, () => {
     const fileName = params.textDocument.uri;
@@ -170,7 +172,7 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         globalSettings.babelPluginPath
       );
 
-      const hints = generateInlayHints(
+      return generateInlayHints(
         document,
         successfulCompilations,
         failedCompilations,
@@ -180,8 +182,6 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         tooltipFormat,
         globalSettings.hintFormat
       );
-
-      return hints;
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);
       return null;

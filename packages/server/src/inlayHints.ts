@@ -86,9 +86,6 @@ function getInlayHintPosition(
     })
     .trimEnd();
 
-  // Get the actual line length to ensure we don't exceed bounds
-  const actualLineLength = lineContent.length;
-
   // Find the matching pattern
   const matchingPattern = FUNCTION_PATTERNS.find((pattern) => lineContent.includes(pattern));
 
@@ -98,12 +95,7 @@ function getInlayHintPosition(
   const patternLength = matchingPattern?.length ?? 0;
 
   // Position after the pattern, or at end of line
-  let hintPosition = hasMatch ? matchedIndex + patternLength + 1 : lineContent.length;
-
-  // CRITICAL: Clamp the position to ensure it's within the line bounds
-  // This prevents "Invalid 'col': out of range" errors in Neovim
-  hintPosition = Math.min(hintPosition, actualLineLength);
-  hintPosition = Math.max(0, hintPosition);
+  const hintPosition = hasMatch ? matchedIndex + patternLength + 1 : lineContent.length;
 
   // Try to extract function name for the label
   const functionName = log.fnName || "Component";
@@ -132,12 +124,6 @@ export function generateInlayHints(
       const positionInfo = getInlayHintPosition(document, log);
       if (!positionInfo) {
         continue;
-      }
-
-      // CRITICAL: Validate that the line still exists in the current document
-      // This prevents errors when lines are deleted (dd, etc.)
-      if (positionInfo.position.line >= document.lineCount) {
-        continue; // Skip this hint - line no longer exists
       }
 
       const f = fmt[tooltipFormat];
@@ -218,12 +204,7 @@ export function generateInlayHints(
     const firstLog = failedCompilations[0];
     const positionInfo = getInlayHintPosition(document, firstLog);
     if (!positionInfo) {
-      return hints; // Return successful hints even if failed hint can't be placed
-    }
-
-    // CRITICAL: Validate that the line still exists
-    if (positionInfo.position.line >= document.lineCount) {
-      return hints; // Skip failed hint - line no longer exists
+      return [];
     }
 
     // Format the hint label based on template

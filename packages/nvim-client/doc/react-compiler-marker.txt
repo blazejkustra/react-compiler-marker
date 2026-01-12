@@ -1,41 +1,16 @@
 *react-compiler-marker.txt*  Show React Compiler optimization status in Neovim
 
 ==============================================================================
-Table of Contents                        *react-compiler-marker-contents*
+INTRODUCTION                             *react-compiler-marker*
 
-1. Introduction ..................... |react-compiler-marker-introduction|
-2. Requirements ..................... |react-compiler-marker-requirements|
-3. Installation ..................... |react-compiler-marker-installation|
-4. Configuration .................... |react-compiler-marker-configuration|
-5. Commands ......................... |react-compiler-marker-commands|
-6. Functions ........................ |react-compiler-marker-functions|
-7. Highlights ....................... |react-compiler-marker-highlights|
-8. Troubleshooting .................. |react-compiler-marker-troubleshooting|
-9. About ............................ |react-compiler-marker-about|
+React Compiler Marker shows which React components are optimized by the
+React Compiler using inline markers (✨ optimized, 🚫 failed) and hover
+tooltips with detailed error information.
+
+Requires: Neovim 0.9+, Node.js, babel-plugin-react-compiler
 
 ==============================================================================
-1. Introduction                      *react-compiler-marker-introduction*
-
-React Compiler Marker is a Neovim plugin that shows which React components
-are optimized by the React Compiler. It uses the Language Server Protocol
-(LSP) to analyze your code and display inline markers next to components.
-
-Features:
-  - Inline markers with emoji indicators (✨ optimized, 🚫 failed)
-  - Hover tooltips with detailed error information
-  - Commands to activate, deactivate, and check components
-  - Preview compiled output
-  - Health check integration
-
-==============================================================================
-2. Requirements                      *react-compiler-marker-requirements*
-
-- Neovim 0.9+ (0.10+ for native inlay hints)
-- Node.js (to run the LSP server)
-- babel-plugin-react-compiler installed in your project
-
-==============================================================================
-3. Installation                      *react-compiler-marker-installation*
+INSTALLATION                             *react-compiler-marker-installation*
 
 Using lazy.nvim: >lua
     {
@@ -47,232 +22,54 @@ Using lazy.nvim: >lua
     }
 <
 
-Using packer.nvim: >lua
-    use {
-      'blazejkustra/react-compiler-marker',
-      config = function()
-        require('react-compiler-marker').setup()
-      end
-    }
-<
-
 ==============================================================================
-4. Configuration                     *react-compiler-marker-configuration*
+CONFIGURATION                            *react-compiler-marker-configuration*
 
-Setup function:                      *react-compiler-marker.setup()*
-
-    require('react-compiler-marker').setup({config})
-
-    Configure the plugin. If called without arguments, uses defaults.
-
-    Parameters: ~
-        {config} (table|nil) Configuration options
-
-    Default configuration: >lua
-        {
-          server = {
-            path = nil,              -- Auto-detect LSP server
-            node_path = "node",      -- Node.js executable path
-            args = { "--stdio" },    -- Server command arguments
-          },
-          emojis = {
-            success = "✨",          -- Successfully optimized
-            error = "🚫",            -- Failed to optimize
-          },
-          babel_plugin_path = "node_modules/babel-plugin-react-compiler",
-          enabled = true,            -- Enable on startup
-          inlay_hints = {
-            enabled = true,          -- Show inlay hints
-            only_current_line = false,
-          },
-          autostart = true,          -- Auto-start LSP server
-          filetypes = {
-            "javascript",
-            "javascriptreact",
-            "typescript",
-            "typescriptreact"
-          },
-          log_level = "warn",        -- Logging level
-        }
-<
-
-Examples: ~
-
-Minimal setup: >lua
-    require('react-compiler-marker').setup()
-<
-
-Custom emojis: >lua
+Default configuration: >lua
     require('react-compiler-marker').setup({
       emojis = {
-        success = "✓",
-        error = "✗",
+        success = "✨",
+        error = "🚫",
       },
-    })
-<
-
-Custom server path: >lua
-    require('react-compiler-marker').setup({
-      server = {
-        path = vim.fn.expand("~/path/to/server.js"),
+      enabled = true,
+      autostart = true,
+      inlay_hints = {
+        enabled = true,
+        only_current_line = false,
       },
     })
 <
 
 ==============================================================================
-5. Commands                          *react-compiler-marker-commands*
+COMMANDS                                 *react-compiler-marker-commands*
 
-                                    *:ReactCompilerMarkerActivate*
-:ReactCompilerMarkerActivate
-    Enable React Compiler markers.
-
-                                    *:ReactCompilerMarkerDeactivate*
-:ReactCompilerMarkerDeactivate
-    Disable React Compiler markers.
-
-                                    *:ReactCompilerMarkerToggle*
-:ReactCompilerMarkerToggle
-    Toggle React Compiler markers on/off.
-
-                                    *:ReactCompilerMarkerCheck*
-:ReactCompilerMarkerCheck
-    Refresh markers in the current file.
-
-                                    *:ReactCompilerMarkerPreview*
-:ReactCompilerMarkerPreview
-    Preview compiled output in a vertical split.
-
-                                    *:ReactCompilerMarkerStart*
-:ReactCompilerMarkerStart
-    Start the LSP server manually.
-
-                                    *:ReactCompilerMarkerStop*
-:ReactCompilerMarkerStop
-    Stop the LSP server.
-
-                                    *:ReactCompilerMarkerRestart*
-:ReactCompilerMarkerRestart
-    Restart the LSP server.
-
-                                    *:ReactCompilerMarkerStatus*
-:ReactCompilerMarkerStatus
-    Show server status and configuration.
+:RCMActivate                            Enable markers
+:RCMDeactivate                          Disable markers
+:RCMToggle                              Toggle markers on/off
+:RCMCheck                               Refresh markers in current file
+:RCMPreview                             Preview compiled output
+:RCMStart                               Start LSP server
+:RCMStop                                Stop LSP server
+:RCMRestart                             Restart LSP server
+:RCMStatus                              Show server status
 
 Suggested keymaps: >lua
-    vim.keymap.set('n', '<leader>rca', ':ReactCompilerMarkerActivate<CR>')
-    vim.keymap.set('n', '<leader>rcd', ':ReactCompilerMarkerDeactivate<CR>')
-    vim.keymap.set('n', '<leader>rct', ':ReactCompilerMarkerToggle<CR>')
-    vim.keymap.set('n', '<leader>rcc', ':ReactCompilerMarkerCheck<CR>')
-    vim.keymap.set('n', '<leader>rcp', ':ReactCompilerMarkerPreview<CR>')
+    vim.keymap.set('n', '<leader>rct', ':RCMToggle<CR>')
+    vim.keymap.set('n', '<leader>rcc', ':RCMCheck<CR>')
+    vim.keymap.set('n', '<leader>rcp', ':RCMPreview<CR>')
 <
 
 ==============================================================================
-6. Functions                         *react-compiler-marker-functions*
+TROUBLESHOOTING                          *react-compiler-marker-troubleshooting*
 
-                                    *react-compiler-marker.get_config()*
-get_config()
-    Get the current configuration.
-
-    Returns: ~
-        Configuration table
-
-                                    *react-compiler-marker.update_config()*
-update_config({updates})
-    Update configuration at runtime.
-
-    Parameters: ~
-        {updates} (table) Configuration updates
-
-    Returns: ~
-        Updated configuration table
-
-    Example: >lua
-        require('react-compiler-marker').update_config({
-          emojis = { success = "👍", error = "👎" }
-        })
-<
-
-LSP Module:                         *react-compiler-marker.lsp*
-
-Access the LSP client directly: >lua
-    local lsp = require('react-compiler-marker').lsp
-<
-
-                                    *react-compiler-marker.lsp.is_running()*
-lsp.is_running()
-    Check if the LSP server is running.
-
-    Returns: ~
-        (boolean) true if running, false otherwise
-
-                                    *react-compiler-marker.lsp.get_client()*
-lsp.get_client()
-    Get the LSP client instance.
-
-    Returns: ~
-        (table|nil) LSP client or nil if not running
-
-==============================================================================
-7. Highlights                        *react-compiler-marker-highlights*
-
-The plugin uses Neovim's native inlay hint highlighting:
-
-    LspInlayHint ~
-        Default highlight group for inlay hints.
-        Customize with: >lua
-            vim.api.nvim_set_hl(0, 'LspInlayHint', {
-              fg = '#6C7086',
-              bg = '#313244',
-            })
-<
-
-==============================================================================
-8. Troubleshooting                   *react-compiler-marker-troubleshooting*
-
-Health Check ~
-
-Run the health check to diagnose issues: >vim
+Run health check to diagnose issues: >vim
     :checkhealth react-compiler-marker
 <
 
-Inlay hints not showing ~
-
-1. Ensure Neovim 0.10+
-2. Check if hints are enabled: >lua
-    print(vim.lsp.inlay_hint.is_enabled())
-<
-3. Verify server is running: >vim
-    :ReactCompilerMarkerStatus
-<
-
-LSP server not starting ~
-
-1. Check Node.js: >bash
-    node --version
-<
-2. Run health check: >vim
-    :checkhealth react-compiler-marker
-<
-3. Check logs: >vim
-    :messages
-<
-
-Enable debug logging ~
->lua
-    require('react-compiler-marker').setup({
-      log_level = "debug",
-    })
-<
-
 ==============================================================================
-9. About                             *react-compiler-marker-about*
+ABOUT                                    *react-compiler-marker-about*
 
 Repository: https://github.com/blazejkustra/react-compiler-marker
-Issues: https://github.com/blazejkustra/react-compiler-marker/issues
 License: MIT
-
-Author: Blazej Kustra
-
-React Compiler: https://react.dev/learn/react-compiler
 
 vim:tw=78:ts=8:ft=help:norl:
