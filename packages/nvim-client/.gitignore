@@ -8,3 +8,6 @@
 
 # Node modules (if using npm for tooling)
 node_modules/
+
+# Built server bundle (generated during build)
+server/server.bundle.js
