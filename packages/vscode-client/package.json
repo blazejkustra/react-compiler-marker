@@ -1,8 +1,8 @@
 {
   "name": "react-compiler-marker",
-  "displayName": "React Compiler Marker",
+  "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.",
-  "version": "1.3.4",
+  "version": "2.0.1",
   "author": "Blazej Kustra <kustrablazej@gmail.com>",
   "publisher": "blazejkustra",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.js",
-  "icon": "../../images/logo.jpeg",
+  "icon": "logo.jpeg",
   "contributes": {
     "commands": [
       {
@@ -55,6 +55,11 @@
       {
         "command": "react-compiler-marker.previewCompiled",
         "title": "Preview Compiled Output",
+        "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.generateReport",
+        "title": "Generate Report",
         "category": "React Compiler Marker"
       }
     ],
@@ -94,8 +99,8 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"../../packages/server/src/**/*.ts\"",
     "test": "vscode-test",
-    "publish:vscode": "vsce publish",
-    "publish:ovsx": "npx ovsx publish -p"
+    "publish:vscode": "vsce publish -p $VSCE_PAT",
+    "publish:ovsx": "npx ovsx publish -p $OVSX_PAT"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

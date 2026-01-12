@@ -1,14 +1,30 @@
+# Build artifacts
 .vscode/**
 .vscode-test/**
+.vscode-test.mjs
 out/**
 node_modules/**
+
+# Source files (only bundled files in dist/ are included)
 src/**
+test/**
+
+# Config and build files
 .gitignore
 .yarnrc
 esbuild.js
 vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
+tsconfig.json
+tsconfig.tsbuildinfo
+eslint.config.mjs
 **/*.map
 **/*.ts
-**/.vscode-test.*
+
+# Parent directory files - ignore everything from parent
+../../**
+
+# Other packages - ignore ALL sibling packages automatically
+../**
+
+# Re-include only the bundled server from dist
+!dist/**

@@ -12,14 +12,30 @@ let client: LanguageClient;
 // Output channel for logging
 const outputChannel = vscode.window.createOutputChannel("React Compiler Marker ✨");
 
+interface ReactCompilerReport {
+  generatedAt: string;
+  totals: {
+    filesScanned: number;
+    filesWithResults: number;
+    compiledFiles: number;
+    failedFiles: number;
+    successCount: number;
+    failedCount: number;
+  };
+  files: Array<{
+    path: string;
+    success: unknown[];
+    failed: unknown[];
+  }>;
+  errors: Array<{
+    path: string;
+    message: string;
+  }>;
+}
+
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
   outputChannel.appendLine(`[${timestamp}] CLIENT LOG: ${message}`);
-}
-
-function logError(error: string): void {
-  const timestamp = new Date().toISOString();
-  outputChannel.appendLine(`[${timestamp}] CLIENT ERROR: ${error}`);
 }
 
 // IDE detection helpers for "Fix with AI" command routing
@@ -248,6 +264,86 @@ function registerCommands(
     }
   );
 
+  const generateReport = vscode.commands.registerCommand(
+    "react-compiler-marker.generateReport",
+    async () => {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage("Open a workspace folder to generate a report.");
+        return;
+      }
+
+      const storageBase = context.storageUri ?? workspaceFolder.uri;
+      if (!storageBase) {
+        vscode.window.showErrorMessage("No storage or workspace folder available.");
+        return;
+      }
+
+      const reportId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "React Compiler: Generating report...",
+            cancellable: false,
+          },
+          async (progress) => {
+            let lastProcessed = 0;
+            const progressDisposable = client.onNotification(
+              "react-compiler-marker/reportProgress",
+              (payload: { reportId: string; processed: number; total: number }) => {
+                if (payload.reportId !== reportId) {
+                  return;
+                }
+                if (payload.total === 0) {
+                  progress.report({ message: "No matching files found", increment: 100 });
+                  return;
+                }
+                const delta = payload.processed - lastProcessed;
+                if (delta <= 0) {
+                  return;
+                }
+                const increment = (delta / payload.total) * 100;
+                lastProcessed = payload.processed;
+                progress.report({
+                  message: `Scanning ${payload.processed}/${payload.total} files`,
+                  increment,
+                });
+              }
+            );
+
+            try {
+              const result = (await client.sendRequest("workspace/executeCommand", {
+                command: "react-compiler-marker/generateReport",
+                arguments: [{ root: workspaceFolder?.uri.fsPath, reportId }],
+              })) as { success: boolean; report?: ReactCompilerReport; error?: string };
+
+              if (!result.success || !result.report) {
+                throw new Error(result.error || "Report generation failed");
+              }
+
+              const reportJson = JSON.stringify(result.report, null, 2);
+              const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+              const reportsDir = vscode.Uri.joinPath(storageBase, "react-compiler-marker");
+              await vscode.workspace.fs.createDirectory(reportsDir);
+              const reportUri = vscode.Uri.joinPath(reportsDir, `report-${timestamp}.json`);
+              await vscode.workspace.fs.writeFile(reportUri, Buffer.from(reportJson, "utf8"));
+              const reportDoc = await vscode.workspace.openTextDocument(reportUri);
+              await vscode.window.showTextDocument(reportDoc, {
+                preview: true,
+                viewColumn: vscode.ViewColumn.Beside,
+              });
+            } finally {
+              progressDisposable.dispose();
+            }
+          }
+        );
+      } catch (error: any) {
+        vscode.window.showErrorMessage(`Failed to generate report: ${error?.message ?? error}`);
+      }
+    }
+  );
+
   // Register the Reveal Selection command
   const revealSelectionCmd = vscode.commands.registerCommand(
     "react-compiler-marker.revealSelection",
@@ -329,6 +425,7 @@ function registerCommands(
     activateCommand,
     deactivateCommand,
     previewCompiled,
+    generateReport,
     revealSelectionCmd,
     fixWithAICmd
   );

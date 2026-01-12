@@ -14,8 +14,8 @@
   "scripts": {
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint \"packages/*/src/**/*.ts\"",
-    "format": "prettier --write \"packages/*/src/**/*.ts\"",
-    "format:check": "prettier --check \"packages/*/src/**/*.ts\""
+    "prettier": "prettier --check \"packages/*/src/**/*.ts\"",
+    "prettier:write": "prettier --write \"packages/*/src/**/*.ts\""
   },
   "devDependencies": {
     "@types/babel__core": "^7.20.5",

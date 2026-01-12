@@ -19,13 +19,55 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#vscode-v}" >> $GITHUB_OUTPUT
+        run: |
+          FULL_VERSION="${GITHUB_REF_NAME#vscode-v}"
+          # Strip any prerelease suffix (e.g., -rc.1, -beta.1, -alpha.1)
+          VERSION="${FULL_VERSION%%-*}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Update package.json version
         working-directory: packages/vscode-client
-        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --allow-same-version
+
+      - name: Build extension
+        working-directory: packages/vscode-client
+        run: npm run package
+
+      - name: Publish to VS Code Marketplace
+        if: success()
+        working-directory: packages/vscode-client
+        run: |
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            npm run publish:vscode -- --pre-release
+          else
+            npm run publish:vscode
+          fi
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX Registry
+        if: success()
+        working-directory: packages/vscode-client
+        run: |
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            npm run publish:ovsx -- --pre-release
+          else
+            npm run publish:ovsx
+          fi
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
       - name: Update CHANGELOG.md
+        if: success()
         working-directory: packages/vscode-client
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
@@ -46,39 +88,19 @@ jobs:
           ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
       - name: Commit version changes
+        if: success()
         run: |
+          # Check if there are any changes to commit
+          if git diff --quiet packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md; then
+            echo "No changes to commit, version already up to date"
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add packages/vscode-client/package.json packages/vscode-client/CHANGELOG.md
           git commit -m "chore(vscode): bump version to ${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build extension
-        working-directory: packages/vscode-client
-        run: npm run package
-
-      - name: Publish to VS Code Marketplace
-        if: success()
-        working-directory: packages/vscode-client
-        run: npm run publish:vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-
-      - name: Publish to Open VSX Registry
-        if: success()
-        working-directory: packages/vscode-client
-        run: npm run publish:ovsx
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
   # IntelliJ plugin release (triggered by intellij-v* tags)
   build-intellij:
@@ -119,6 +141,12 @@ jobs:
 
       - name: Commit version changes
         run: |
+          # Check if there are any changes to commit
+          if git diff --quiet packages/intellij-client/gradle.properties packages/intellij-client/CHANGELOG.md; then
+            echo "No changes to commit, version already up to date"
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add packages/intellij-client/gradle.properties packages/intellij-client/CHANGELOG.md
