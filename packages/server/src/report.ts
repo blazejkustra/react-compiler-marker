@@ -4,6 +4,9 @@ import os from "os";
 import path from "path";
 import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
 
+/**
+ * Full report generated from scanning a project with the React Compiler.
+ */
 export interface ReactCompilerReport {
   generatedAt: string;
   totals: {
@@ -25,11 +28,19 @@ export interface ReactCompilerReport {
   }>;
 }
 
+/**
+ * Options for scanning a project and producing a report.
+ */
 export interface ReportOptions {
+  /** Absolute or workspace-relative root directory to scan. */
   root: string;
+  /** Path to the babel-plugin-react-compiler entry. */
   babelPluginPath: string;
+  /** Maximum number of files processed in parallel. */
   maxConcurrency?: number;
+  /** File extensions to include (e.g. [".js", ".tsx"]). */
   includeExtensions?: string[];
+  /** Directory names to skip at any depth (e.g. ["node_modules"]). */
   excludeDirs?: string[];
 }
 
@@ -45,14 +56,23 @@ const DEFAULT_EXCLUDES = new Set([
   ".turbo",
 ]);
 
+/**
+ * Check if a file path matches one of the configured source extensions.
+ */
 function isSourceFile(filePath: string, includeExtensions: Set<string>): boolean {
   return includeExtensions.has(path.extname(filePath).toLowerCase());
 }
 
+/**
+ * Check if a directory name should be excluded from traversal.
+ */
 function shouldSkipDir(dirName: string, excludeDirs: Set<string>): boolean {
   return excludeDirs.has(dirName);
 }
 
+/**
+ * Recursively list source files under a root, honoring extension and exclude filters.
+ */
 async function listSourceFiles(
   root: string,
   includeExtensions: Set<string>,
@@ -99,6 +119,7 @@ async function mapWithConcurrency<T, R>(
   limit: number,
   worker: (item: T) => Promise<R>
 ) {
+  // Simple worker pool with bounded parallelism.
   const results: R[] = new Array(items.length);
   let index = 0;
   const run = async () => {
@@ -116,6 +137,9 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+/**
+ * Generate a report for all React Compiler results under a root directory.
+ */
 export async function generateReport(options: ReportOptions): Promise<ReactCompilerReport> {
   const root = path.resolve(options.root);
   const includeExtensions = new Set(options.includeExtensions ?? Array.from(DEFAULT_EXTENSIONS));

@@ -7,6 +7,7 @@
 - Visual emoji markers next to React components (customizable)
 - Hover tooltips with optimization details and error messages
 - Preview compiled output to see what the React Compiler generates
+- Generate JSON reports for a full-project compilation snapshot
 - Commands to activate/deactivate markers or check individual files
 - Configurable babel plugin path for custom setups
 
@@ -65,6 +66,7 @@ All clients support these settings:
 - **Deactivate Extension** - Disable markers
 - **Check Current File** - Refresh markers in the active file
 - **Preview Compiled Output** - View the compiled code
+- **Generate Report** - Save a JSON report for the current workspace
 
 ## Links
 

@@ -12,6 +12,27 @@ let client: LanguageClient;
 // Output channel for logging
 const outputChannel = vscode.window.createOutputChannel("React Compiler Marker ✨");
 
+interface ReactCompilerReport {
+  generatedAt: string;
+  totals: {
+    filesScanned: number;
+    filesWithResults: number;
+    compiledFiles: number;
+    failedFiles: number;
+    successCount: number;
+    failedCount: number;
+  };
+  files: Array<{
+    path: string;
+    success: unknown[];
+    failed: unknown[];
+  }>;
+  errors: Array<{
+    path: string;
+    message: string;
+  }>;
+}
+
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
   outputChannel.appendLine(`[${timestamp}] CLIENT LOG: ${message}`);
@@ -252,7 +273,12 @@ function registerCommands(
     "react-compiler-marker.generateReport",
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      const storageBase = context.storageUri ?? workspaceFolder?.uri;
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage("Open a workspace folder to generate a report.");
+        return;
+      }
+
+      const storageBase = context.storageUri ?? workspaceFolder.uri;
       if (!storageBase) {
         vscode.window.showErrorMessage("No storage or workspace folder available.");
         return;
@@ -269,17 +295,10 @@ function registerCommands(
             const result = (await client.sendRequest("workspace/executeCommand", {
               command: "react-compiler-marker/generateReport",
               arguments: [{ root: workspaceFolder?.uri.fsPath }],
-            })) as { success: boolean; report?: unknown; error?: string };
+            })) as { success: boolean; report?: ReactCompilerReport; error?: string };
 
             if (!result.success || !result.report) {
               throw new Error(result.error || "Report generation failed");
-            }
-
-            const totals = (result.report as any)?.totals;
-            if (totals) {
-              logMessage(
-                `Report totals: scanned=${totals.filesScanned} files=${totals.filesWithResults} success=${totals.successCount} failed=${totals.failedCount}`
-              );
             }
 
             const reportJson = JSON.stringify(result.report, null, 2);
