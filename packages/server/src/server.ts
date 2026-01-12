@@ -21,6 +21,7 @@ import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
 
 import packageJson from "../package.json";
+import { generateReport } from "./report";
 const { version } = packageJson;
 
 // Determine the connection type based on command line arguments
@@ -101,6 +102,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
           "react-compiler-marker/deactivate",
           "react-compiler-marker/getCompiledOutput",
           "react-compiler-marker/checkOnce",
+          "react-compiler-marker/generateReport",
         ],
       },
     },
@@ -225,6 +227,40 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
       return { success: true };
     }
 
+    case "react-compiler-marker/generateReport": {
+      // Generate JSON data report
+      const [options] = params.arguments ?? [];
+      const reportRoot = options?.root ?? workspaceFolder;
+      if (!reportRoot) {
+        return { success: false, error: "No workspace folder available" };
+      }
+      const reportId = options?.reportId;
+      try {
+        logMessage(`Generating report for ${reportRoot}`);
+        const report = await generateReport({
+          root: reportRoot,
+          babelPluginPath: globalSettings.babelPluginPath,
+          maxConcurrency: options?.maxConcurrency,
+          includeExtensions: options?.includeExtensions,
+          excludeDirs: options?.excludeDirs,
+          onProgress: reportId
+            ? (progress) => {
+                connection.sendNotification("react-compiler-marker/reportProgress", {
+                  reportId,
+                  ...progress,
+                });
+              }
+            : undefined,
+        });
+        logMessage(
+          `Report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount}`
+        );
+        return { success: true, report };
+      } catch (error: any) {
+        logError(`Report generation failed: ${error?.message ?? error}`);
+        return { success: false, error: error?.message ?? "Failed to generate report" };
+      }
+    }
     default:
       return { success: false, error: "Unknown command" };
   }
