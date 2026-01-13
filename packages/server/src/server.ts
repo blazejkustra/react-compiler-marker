@@ -65,6 +65,9 @@ let isActivated = true;
 // Store workspace folder
 let workspaceFolder: string | undefined;
 
+// Store client name
+let clientName: string | undefined;
+
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
   connection.console.log(`[${timestamp}] SERVER LOG: ${message}`);
@@ -81,15 +84,23 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     workspaceFolder = workspaceFolder.slice(7);
   }
 
+  // Store client name for feature detection
+  clientName = params.clientInfo?.name;
+
   // Check for tooltip format preference in initialization options
   const initOptions = params.initializationOptions as { tooltipFormat?: TooltipFormat } | undefined;
   if (initOptions?.tooltipFormat === "html" || initOptions?.tooltipFormat === "markdown") {
     tooltipFormat = initOptions.tooltipFormat;
   }
 
+  // Disable hover for VSCode and IntelliJ clients
+  const isVSCode = clientName?.toLowerCase().includes("visual studio code");
+  const isIntelliJ = clientName?.toLowerCase().includes("intellij");
+  const shouldEnableHover = !isVSCode && !isIntelliJ;
+
   // Log client info for debugging
   logMessage(
-    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat})`
+    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${shouldEnableHover ? "enabled" : "disabled"})`
   );
 
   return {
@@ -100,7 +111,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       inlayHintProvider: true,
-      hoverProvider: true,
+      hoverProvider: shouldEnableHover,
       executeCommandProvider: {
         commands: [
           "react-compiler-marker/activate",
