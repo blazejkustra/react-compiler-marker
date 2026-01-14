@@ -57,7 +57,6 @@ require('react-compiler-marker').setup({
     only_current_line = false,
     hide_in_insert_mode = true,
     position = "eol",  -- "eol" or "inline"
-    format = "{emoji}",  -- {emoji}, {name}, {status}
   },
 
   -- Auto-refresh settings

@@ -113,8 +113,7 @@ export function generateInlayHints(
   successEmoji: string | null,
   errorEmoji: string | null,
   documentUri: string,
-  tooltipFormat: TooltipFormat = "markdown",
-  hintFormat: string = "{emoji}"
+  tooltipFormat: TooltipFormat = "markdown"
 ): InlayHint[] {
   const hints: InlayHint[] = [];
 
@@ -134,15 +133,9 @@ export function generateInlayHints(
           f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
         );
 
-      // Format the hint label based on template
-      const labelText = hintFormat
-        .replace(/{emoji}/g, successEmoji)
-        .replace(/{name}/g, positionInfo.functionName)
-        .replace(/{status}/g, "optimized");
-
       const hint: InlayHint = {
         position: positionInfo.position,
-        label: labelText + " ",
+        label: successEmoji + " ",
         kind: InlayHintKind.Type,
         tooltip: { kind: "markdown", value: tooltipValue },
       };
@@ -207,15 +200,9 @@ export function generateInlayHints(
       return [];
     }
 
-    // Format the hint label based on template
-    const labelText = hintFormat
-      .replace(/{emoji}/g, errorEmoji)
-      .replace(/{name}/g, positionInfo.functionName)
-      .replace(/{status}/g, "failed");
-
     const hint: InlayHint = {
       position: positionInfo.position,
-      label: labelText + " ",
+      label: errorEmoji + " ",
       kind: InlayHintKind.Type,
       tooltip: { kind: "markdown", value: tooltipContent },
     };

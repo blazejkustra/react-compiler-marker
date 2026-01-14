@@ -45,14 +45,12 @@ interface Settings {
   successEmoji: string | null;
   errorEmoji: string | null;
   babelPluginPath: string;
-  hintFormat: string;
 }
 
 let globalSettings: Settings = {
   successEmoji: "✨",
   errorEmoji: "🚫",
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
-  hintFormat: "{emoji}",
 };
 
 // Tooltip format preference from client (markdown or html)
@@ -138,7 +136,6 @@ connection.onDidChangeConfiguration((change) => {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
-      hintFormat: settings.hintFormat ?? "{emoji}",
     };
 
     // Clear caches if babel plugin path changed
@@ -192,8 +189,7 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
         params.textDocument.uri,
-        tooltipFormat,
-        globalSettings.hintFormat
+        tooltipFormat
       );
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);
@@ -241,8 +237,7 @@ connection.onHover((params: HoverParams): Hover | null => {
       globalSettings.successEmoji,
       globalSettings.errorEmoji,
       params.textDocument.uri,
-      tooltipFormat,
-      globalSettings.hintFormat
+      tooltipFormat
     );
 
     // Find hint on the hovered line

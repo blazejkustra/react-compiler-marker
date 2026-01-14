@@ -36,8 +36,6 @@ M.defaults = {
     hide_in_insert_mode = true,
     -- Hint position: "eol" (end of line) or "inline"
     position = "eol",
-    -- Format template: {emoji}, {name}, {status}
-    format = "{emoji}",
   },
 
   -- Hover settings
@@ -127,7 +125,6 @@ function M.get_server_settings()
       successEmoji = M.config.emojis.success,
       errorEmoji = M.config.emojis.error,
       babelPluginPath = M.config.babel_plugin_path,
-      hintFormat = M.config.inlay_hints.format,
     },
   }
 end
