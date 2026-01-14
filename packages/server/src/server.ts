@@ -21,6 +21,7 @@ import {
 } from "./checkReactCompiler";
 import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
+import { shouldEnableHover } from "./clientUtils";
 
 import packageJson from "../package.json";
 import { generateReport } from "./report";
@@ -91,14 +92,10 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     tooltipFormat = initOptions.tooltipFormat;
   }
 
-  // Disable hover for VSCode and IntelliJ clients
-  const isVSCode = clientName?.toLowerCase().includes("visual studio code");
-  const isIntelliJ = clientName?.toLowerCase().includes("intellij");
-  const shouldEnableHover = !isVSCode && !isIntelliJ;
+  const hoverEnabled = shouldEnableHover(clientName);
 
-  // Log client info for debugging
   logMessage(
-    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${shouldEnableHover ? "enabled" : "disabled"})`
+    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${hoverEnabled ? "enabled" : "disabled"})`
   );
 
   return {
@@ -109,7 +106,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       inlayHintProvider: true,
-      hoverProvider: shouldEnableHover,
+      hoverProvider: hoverEnabled,
       executeCommandProvider: {
         commands: [
           "react-compiler-marker/activate",
@@ -189,7 +186,8 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
         params.textDocument.uri,
-        tooltipFormat
+        tooltipFormat,
+        clientName
       );
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);
@@ -237,7 +235,8 @@ connection.onHover((params: HoverParams): Hover | null => {
       globalSettings.successEmoji,
       globalSettings.errorEmoji,
       params.textDocument.uri,
-      tooltipFormat
+      tooltipFormat,
+      clientName
     );
 
     // Find hint on the hovered line
