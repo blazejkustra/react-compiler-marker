@@ -33,6 +33,7 @@ This is a WebStorm/IntelliJ IDEA plugin that provides the same functionality as 
 2. **Run in development:**
    ```bash
    ./gradlew runIde
+   ./gradlew compileKotlin 
    ```
 
 3. **Build for distribution:**
