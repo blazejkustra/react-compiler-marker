@@ -118,6 +118,8 @@ intellijPlatform {
 changelog {
     groups.empty()
     repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
+    // Only parse headers that look like version numbers (e.g., [0.0.4], [Unreleased])
+    headerParserRegex = Regex("""^\[?(\d+\.\d+(\.\d+)?|Unreleased)]?.*""")
 }
 
 // Configure Gradle Kover Plugin - read more: https://kotlin.github.io/kotlinx-kover/gradle-plugin/#configuration-details
