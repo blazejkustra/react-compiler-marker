@@ -10,6 +10,9 @@ import {
   ExecuteCommandParams,
   HoverParams,
   Hover,
+  Diagnostic,
+  DiagnosticSeverity,
+  Range,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -21,7 +24,7 @@ import {
 } from "./checkReactCompiler";
 import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
-import { shouldEnableHover } from "./clientUtils";
+import { shouldEnableHover, shouldEnableDiagnostics } from "./clientUtils";
 
 import packageJson from "../package.json";
 import { generateReport } from "./report";
@@ -77,6 +80,54 @@ function logError(error: string): void {
   connection.console.error(`[${timestamp}] SERVER ERROR: ${error}`);
 }
 
+function generateDiagnostics(
+  failedCompilations: Array<any>
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+
+  for (const log of failedCompilations) {
+    // Extract location information
+    const getLocValue = (
+      property: "start" | "end",
+      field: "line" | "column",
+      defaultValue: number
+    ) => {
+      return (
+        log.detail?.options?.details?.at(0)?.loc?.[property]?.[field] ??
+        log.detail?.options?.loc?.[property]?.[field] ??
+        log.detail?.loc?.[property]?.[field] ??
+        defaultValue
+      );
+    };
+
+    const startLine = getLocValue("start", "line", 1);
+    const endLine = getLocValue("end", "line", 1);
+    const startChar = getLocValue("start", "column", 0);
+    const endChar = getLocValue("end", "column", 0);
+
+    const reason = log?.detail?.options?.reason || "Unknown reason";
+    const description = log?.detail?.options?.description || "";
+
+    const range: Range = {
+      start: { line: Math.max(0, startLine - 1), character: Math.max(0, startChar) },
+      end: { line: Math.max(0, endLine - 1), character: Math.max(0, endChar) },
+    };
+
+    const message = description ? `${reason}: ${description}` : reason;
+
+    const diagnostic: Diagnostic = {
+      severity: DiagnosticSeverity.Warning,
+      range,
+      message,
+      source: "react-compiler",
+    };
+
+    diagnostics.push(diagnostic);
+  }
+
+  return diagnostics;
+}
+
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   workspaceFolder = params.workspaceFolders?.[0]?.uri;
   if (workspaceFolder?.startsWith("file://")) {
@@ -93,9 +144,10 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
   }
 
   const hoverEnabled = shouldEnableHover(clientName);
+  const diagnosticsEnabled = shouldEnableDiagnostics(clientName);
 
   logMessage(
-    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${hoverEnabled ? "enabled" : "disabled"})`
+    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${hoverEnabled ? "enabled" : "disabled"}, diagnostics: ${diagnosticsEnabled ? "enabled" : "disabled"})`
   );
 
   return {
@@ -141,8 +193,11 @@ connection.onDidChangeConfiguration((change) => {
       clearCompilationCache();
     }
   }
-  // Refresh inlay hints on all documents
+  // Refresh inlay hints and diagnostics on all documents
   connection.languages.inlayHint.refresh();
+  if (shouldEnableDiagnostics(clientName)) {
+    documents.all().forEach((doc) => analyzeAndSendDiagnostics(doc));
+  }
 });
 
 // Handle inlay hints request with debouncing
@@ -256,17 +311,74 @@ connection.onHover((params: HoverParams): Hover | null => {
   }
 });
 
+// Analyze document and send diagnostics
+async function analyzeAndSendDiagnostics(document: TextDocument): Promise<void> {
+  if (!isActivated || !shouldEnableDiagnostics(clientName)) {
+    // Clear diagnostics if disabled
+    connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+    return;
+  }
+
+  // Only process JS/TS/JSX/TSX files
+  const languageId = document.languageId;
+  if (!["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(languageId)) {
+    return;
+  }
+
+  const fileName = document.uri;
+  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+
+  try {
+    const sourceCode = document.getText();
+
+    const { failedCompilations } = checkReactCompiler(
+      sourceCode,
+      fileNameForCompiler,
+      workspaceFolder,
+      globalSettings.babelPluginPath
+    );
+
+    const diagnostics = generateDiagnostics(failedCompilations);
+
+    connection.sendDiagnostics({ uri: document.uri, diagnostics });
+  } catch (error: any) {
+    logError(`Error generating diagnostics: ${error?.message}`);
+    connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+  }
+}
+
+// Send diagnostics when document is opened
+documents.onDidOpen((event) => {
+  analyzeAndSendDiagnostics(event.document);
+});
+
+// Send diagnostics when document changes
+documents.onDidChangeContent((event) => {
+  analyzeAndSendDiagnostics(event.document);
+});
+
+// Send diagnostics when document is saved
+documents.onDidSave((event) => {
+  analyzeAndSendDiagnostics(event.document);
+});
+
 // Handle execute command
 connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
   switch (params.command) {
     case "react-compiler-marker/activate":
       isActivated = true;
       connection.languages.inlayHint.refresh();
+      if (shouldEnableDiagnostics(clientName)) {
+        documents.all().forEach((doc) => analyzeAndSendDiagnostics(doc));
+      }
       return { success: true, activated: true };
 
     case "react-compiler-marker/deactivate":
       isActivated = false;
       connection.languages.inlayHint.refresh();
+      if (shouldEnableDiagnostics(clientName)) {
+        documents.all().forEach((doc) => connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] }));
+      }
       return { success: true, activated: false };
 
     case "react-compiler-marker/getCompiledOutput": {
@@ -295,8 +407,11 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
     }
 
     case "react-compiler-marker/checkOnce": {
-      // Force refresh inlay hints
+      // Force refresh inlay hints and diagnostics
       connection.languages.inlayHint.refresh();
+      if (shouldEnableDiagnostics(clientName)) {
+        documents.all().forEach((doc) => analyzeAndSendDiagnostics(doc));
+      }
       return { success: true };
     }
 
