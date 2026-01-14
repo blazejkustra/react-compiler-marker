@@ -1,6 +1,8 @@
 package com.blazejkustra.reactcompilermarker.lsp
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
+import com.intellij.javascript.nodejs.interpreter.local.NodeJsLocalInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -276,34 +278,32 @@ class ReactCompilerLspServerManager(private val project: Project) : Disposable {
     }
 
     private fun findNodePath(): String {
-        // Try common node locations
-        val possiblePaths = listOf(
-            "/opt/homebrew/bin/node",  // macOS Apple Silicon (Homebrew)
-            "/usr/local/bin/node",      // macOS Intel (Homebrew) / Linux
-            "/usr/bin/node",            // Linux system
-            System.getenv("NVM_BIN")?.let { "$it/node" },  // nvm
-            "node" // Fallback to PATH
-        ).filterNotNull()
-
-        for (path in possiblePaths) {
-            if (path == "node") {
-                // Check if node is available in PATH
-                try {
-                    val process = ProcessBuilder("which", "node").start()
-                    val result = process.inputStream.bufferedReader().readText().trim()
-                    if (result.isNotEmpty() && File(result).exists()) {
-                        return result
-                    }
-                } catch (e: Exception) {
-                    // Ignore
+        // Try to get Node.js from IDE settings first
+        try {
+            val interpreter = NodeJsInterpreterManager.getInstance(project).interpreter
+            if (interpreter is NodeJsLocalInterpreter) {
+                val path = interpreter.interpreterSystemDependentPath
+                if (File(path).exists()) {
+                    thisLogger().info("Using Node.js from IDE settings: $path")
+                    return path
                 }
-                return path
             }
-            if (File(path).exists()) {
-                return path
-            }
+        } catch (e: Exception) {
+            thisLogger().debug("Could not get Node.js from IDE settings: ${e.message}")
         }
 
+        // Fallback: resolve from PATH
+        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+        val command = if (isWindows) "where" else "which"
+        try {
+            val process = ProcessBuilder(command, "node").start()
+            val result = process.inputStream.bufferedReader().readText().trim()
+            if (result.isNotEmpty()) {
+                return result.lines().first()
+            }
+        } catch (_: Exception) {
+            // Ignore
+        }
         return "node"
     }
 
