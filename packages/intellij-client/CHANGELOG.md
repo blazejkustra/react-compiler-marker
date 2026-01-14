@@ -11,6 +11,9 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ---
 
+## [0.0.5] - 2026-01-14
+**Full Changelog**: https://github.com/blazejkustra/react-compiler-marker/compare/intellij-v0.0.4...intellij-v0.0.5
+
 ## [0.0.4] - 2026-01-14
 ### Changed
 - Use Node.js interpreter from IDE settings (Settings → Languages & Frameworks → Node.js) instead of hardcoded paths
