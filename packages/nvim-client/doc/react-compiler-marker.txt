@@ -16,9 +16,8 @@ Using lazy.nvim: >lua
     {
       'blazejkustra/react-compiler-marker',
       ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
-      config = function()
-        require('react-compiler-marker').setup()
-      end,
+      build = './scripts/build-nvim.sh',
+      opts = {},
     }
 <
 
@@ -36,6 +35,7 @@ Default configuration: >lua
       inlay_hints = {
         enabled = true,
         only_current_line = false,
+        hide_in_insert_mode = true,
       },
     })
 <
