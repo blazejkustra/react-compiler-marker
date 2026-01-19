@@ -28,10 +28,12 @@ Neovim plugin that shows which React components are optimized by the [React Comp
 {
   'blazejkustra/react-compiler-marker',
   event = { 'BufReadPre *.js,*.jsx,*.ts,*.tsx', 'BufNewFile *.js,*.jsx,*.ts,*.tsx' },
-  build = 'npm install && node esbuild.js --production',
+  build = './scripts/build-nvim.sh',
   opts = {},
 }
 ```
+
+The `build` command runs automatically after plugin installation to compile the LSP server locally. This is standard for lazy.nvim - plugins that need a build step specify it via the `build` option.
 
 ## Configuration
 
