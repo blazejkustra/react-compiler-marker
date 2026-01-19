@@ -7,7 +7,7 @@ React Compiler Marker shows which React components are optimized by the
 React Compiler using inline markers (✨ optimized, 🚫 failed) and hover
 tooltips with detailed error information.
 
-Requires: Neovim 0.9+, Node.js, babel-plugin-react-compiler
+Requires: Neovim 0.9+ (0.10+ recommended), Node.js, babel-plugin-react-compiler
 
 ==============================================================================
 INSTALLATION                             *react-compiler-marker-installation*
