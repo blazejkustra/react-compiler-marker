@@ -1,7 +1,6 @@
 {
   "name": "@react-compiler-marker/nvim-client",
   "version": "0.1.0",
-  "private": true,
   "description": "Neovim plugin for React Compiler Marker - shows which components are optimized by the React Compiler",
   "main": "lua/react-compiler-marker/init.lua",
   "keywords": [
