@@ -8,6 +8,8 @@ import {
   InlayHintParams,
   InlayHint,
   ExecuteCommandParams,
+  HoverParams,
+  Hover,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -19,6 +21,7 @@ import {
 } from "./checkReactCompiler";
 import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
+import { shouldEnableHover } from "./clientUtils";
 
 import packageJson from "../package.json";
 import { generateReport } from "./report";
@@ -61,6 +64,9 @@ let isActivated = true;
 // Store workspace folder
 let workspaceFolder: string | undefined;
 
+// Store client name
+let clientName: string | undefined;
+
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
   connection.console.log(`[${timestamp}] SERVER LOG: ${message}`);
@@ -77,15 +83,19 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     workspaceFolder = workspaceFolder.slice(7);
   }
 
+  // Store client name for feature detection
+  clientName = params.clientInfo?.name;
+
   // Check for tooltip format preference in initialization options
   const initOptions = params.initializationOptions as { tooltipFormat?: TooltipFormat } | undefined;
   if (initOptions?.tooltipFormat === "html" || initOptions?.tooltipFormat === "markdown") {
     tooltipFormat = initOptions.tooltipFormat;
   }
 
-  // Log client info for debugging
+  const hoverEnabled = shouldEnableHover(clientName);
+
   logMessage(
-    `Client connected: ${params.clientInfo?.name ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat})`
+    `Client connected: ${clientName ?? "Unknown"} ${params.clientInfo?.version ?? ""} (tooltipFormat: ${tooltipFormat}, hover: ${hoverEnabled ? "enabled" : "disabled"})`
   );
 
   return {
@@ -96,6 +106,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       inlayHintProvider: true,
+      hoverProvider: hoverEnabled,
       executeCommandProvider: {
         commands: [
           "react-compiler-marker/activate",
@@ -151,15 +162,16 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     return null;
   }
 
+  logMessage(`Process inlay hints for ${params.textDocument.uri}`);
+
   // Use document URI as the debounce key
   return debounce(params.textDocument.uri, () => {
     const fileName = params.textDocument.uri;
     const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
 
-    logMessage(`Process inlay hints for ${params.textDocument.uri}`);
-
     try {
       const sourceCode = document.getText();
+
       const { successfulCompilations, failedCompilations } = checkReactCompiler(
         sourceCode,
         fileNameForCompiler,
@@ -174,13 +186,74 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
         params.textDocument.uri,
-        tooltipFormat
+        tooltipFormat,
+        clientName
       );
     } catch (error: any) {
       logError(`Error checking React Compiler: ${error?.message}`);
       return null;
     }
   });
+});
+
+// Handle hover request (only enabled for Neovim client, as VSCode/IntelliJ have native inlay hint hover)
+connection.onHover((params: HoverParams): Hover | null => {
+  if (!isActivated) {
+    return null;
+  }
+
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  // Only process JS/TS/JSX/TSX files
+  const languageId = document.languageId;
+  if (!["javascript", "typescript", "javascriptreact", "typescriptreact"].includes(languageId)) {
+    return null;
+  }
+
+  const fileName = params.textDocument.uri;
+  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+  const hoveredLine = params.position.line;
+
+  try {
+    const sourceCode = document.getText();
+
+    const { successfulCompilations, failedCompilations } = checkReactCompiler(
+      sourceCode,
+      fileNameForCompiler,
+      workspaceFolder,
+      globalSettings.babelPluginPath
+    );
+
+    // Generate hints to find which components have hints on which lines
+    const hints = generateInlayHints(
+      document,
+      successfulCompilations,
+      failedCompilations,
+      globalSettings.successEmoji,
+      globalSettings.errorEmoji,
+      params.textDocument.uri,
+      tooltipFormat,
+      clientName
+    );
+
+    // Find hint on the hovered line
+    const hintOnLine = hints.find((hint) => hint.position.line === hoveredLine);
+
+    if (hintOnLine && hintOnLine.tooltip) {
+      // Return the tooltip as hover content
+      return {
+        contents: hintOnLine.tooltip,
+      };
+    }
+
+    return null;
+  } catch (error: any) {
+    logError(`Error in hover: ${error?.message}`);
+    return null;
+  }
 });
 
 // Handle execute command

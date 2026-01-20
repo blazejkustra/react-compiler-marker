@@ -1,6 +1,7 @@
 import { InlayHint, InlayHintKind, Position } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { LoggerEvent } from "./checkReactCompiler";
+import { supportsCommandLinks, isVSCodeClient } from "./clientUtils";
 
 // Patterns that come first will be used first if possible
 const FUNCTION_PATTERNS = [
@@ -113,9 +114,12 @@ export function generateInlayHints(
   successEmoji: string | null,
   errorEmoji: string | null,
   documentUri: string,
-  tooltipFormat: TooltipFormat = "markdown"
+  tooltipFormat: TooltipFormat = "markdown",
+  clientName?: string
 ): InlayHint[] {
   const hints: InlayHint[] = [];
+
+  const shouldShowCommandLinks = supportsCommandLinks(clientName);
 
   // Generate hints for successful compilations
   if (successEmoji) {
@@ -126,12 +130,15 @@ export function generateInlayHints(
       }
 
       const f = fmt[tooltipFormat];
-      const tooltipValue =
-        `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.` +
-        f.br2() +
-        f.bold(
-          f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
-        );
+      let tooltipValue = `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.`;
+
+      if (shouldShowCommandLinks) {
+        tooltipValue +=
+          f.br2() +
+          f.bold(
+            f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
+          );
+      }
 
       const hint: InlayHint = {
         position: positionInfo.position,
@@ -161,22 +168,25 @@ export function generateInlayHints(
       }
 
       if (startLine !== undefined || endLine !== undefined) {
-        const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
-          JSON.stringify({
-            uri: documentUri,
-            start: { line: startLine, character: startChar },
-            end: { line: endLine, character: endChar },
-          })
-        )}`;
-
         const lineText =
           startLine === endLine ? `Line ${startLine + 1}` : `Lines ${startLine + 1}–${endLine + 1}`;
 
-        tooltipContent += f.bold(f.link(`📍 ${lineText}`, selectionCmd));
+        if (shouldShowCommandLinks) {
+          const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
+            JSON.stringify({
+              uri: documentUri,
+              start: { line: startLine, character: startChar },
+              end: { line: endLine, character: endChar },
+            })
+          )}`;
+          tooltipContent += f.bold(f.link(`📍 ${lineText}`, selectionCmd));
+        } else {
+          tooltipContent += f.bold(`📍 ${lineText}`);
+        }
       }
 
-      // Add Fix with AI button for this error (VSCode only - markdown format)
-      if (tooltipFormat === "markdown") {
+      // Add Fix with AI button for VSCode only
+      if (isVSCodeClient(clientName)) {
         const filename = documentUri.startsWith("file://") ? documentUri.slice(7) : documentUri;
         const fixWithAICmd = `command:react-compiler-marker.fixWithAI?${encodeURIComponent(
           JSON.stringify({

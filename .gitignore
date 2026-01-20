@@ -7,3 +7,7 @@
 **/.DS_Store
 .idea
 
+# Neovim plugin files (copied during build)
+/lua
+/plugin
+/server

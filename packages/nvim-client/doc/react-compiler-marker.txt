@@ -1,0 +1,75 @@
+*react-compiler-marker.txt*  Show React Compiler optimization status in Neovim
+
+==============================================================================
+INTRODUCTION                             *react-compiler-marker*
+
+React Compiler Marker shows which React components are optimized by the
+React Compiler using inline markers (✨ optimized, 🚫 failed) and hover
+tooltips with detailed error information.
+
+Requires: Neovim 0.9+ (0.10+ recommended), Node.js, babel-plugin-react-compiler
+
+==============================================================================
+INSTALLATION                             *react-compiler-marker-installation*
+
+Using lazy.nvim: >lua
+    {
+      'blazejkustra/react-compiler-marker',
+      ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+      build = './scripts/build-nvim.sh',
+      opts = {},
+    }
+<
+
+==============================================================================
+CONFIGURATION                            *react-compiler-marker-configuration*
+
+Default configuration: >lua
+    require('react-compiler-marker').setup({
+      emojis = {
+        success = "✨",
+        error = "🚫",
+      },
+      enabled = true,
+      autostart = true,
+      inlay_hints = {
+        enabled = true,
+        only_current_line = false,
+        hide_in_insert_mode = true,
+      },
+    })
+<
+
+==============================================================================
+COMMANDS                                 *react-compiler-marker-commands*
+
+:RCMActivate                            Enable markers
+:RCMDeactivate                          Disable markers
+:RCMToggle                              Toggle markers on/off
+:RCMCheck                               Refresh markers in current file
+:RCMPreview                             Preview compiled output
+:RCMStart                               Start LSP server
+:RCMStop                                Stop LSP server
+:RCMRestart                             Restart LSP server
+:RCMStatus                              Show server status
+
+Suggested keymaps: >lua
+    vim.keymap.set('n', '<leader>rct', ':RCMToggle<CR>')
+    vim.keymap.set('n', '<leader>rcc', ':RCMCheck<CR>')
+    vim.keymap.set('n', '<leader>rcp', ':RCMPreview<CR>')
+<
+
+==============================================================================
+TROUBLESHOOTING                          *react-compiler-marker-troubleshooting*
+
+Run health check to diagnose issues: >vim
+    :checkhealth react-compiler-marker
+<
+
+==============================================================================
+ABOUT                                    *react-compiler-marker-about*
+
+Repository: https://github.com/blazejkustra/react-compiler-marker
+License: MIT
+
+vim:tw=78:ts=8:ft=help:norl:
