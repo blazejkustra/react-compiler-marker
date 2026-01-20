@@ -130,13 +130,14 @@ export function generateInlayHints(
       }
 
       const f = fmt[tooltipFormat];
-      let tooltipValue =
-        `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.`;
+      let tooltipValue = `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.`;
 
       if (shouldShowCommandLinks) {
-        tooltipValue += f.br2() + f.bold(
-          f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
-        );
+        tooltipValue +=
+          f.br2() +
+          f.bold(
+            f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
+          );
       }
 
       const hint: InlayHint = {
