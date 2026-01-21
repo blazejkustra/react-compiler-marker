@@ -80,9 +80,7 @@ function logError(error: string): void {
   connection.console.error(`[${timestamp}] SERVER ERROR: ${error}`);
 }
 
-function generateDiagnostics(
-  failedCompilations: Array<any>
-): Diagnostic[] {
+function generateDiagnostics(failedCompilations: Array<any>): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
   for (const log of failedCompilations) {
@@ -377,7 +375,9 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
       isActivated = false;
       connection.languages.inlayHint.refresh();
       if (shouldEnableDiagnostics(clientName)) {
-        documents.all().forEach((doc) => connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] }));
+        documents
+          .all()
+          .forEach((doc) => connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] }));
       }
       return { success: true, activated: false };
 
