@@ -60,15 +60,15 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 {
   'blazejkustra/react-compiler-marker',
-  event = { 'BufReadPre *.js,*.jsx,*.ts,*.tsx', 'BufNewFile *.js,*.jsx,*.ts,*.tsx' },
-  build = 'npm install && node esbuild.js --production',
+  ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+  build = './scripts/build-nvim.sh',
   opts = {},
 }
 ```
 
 Open a React component file - markers appear automatically.
 
-**Requirements:** Neovim 0.10+, Node.js, `babel-plugin-react-compiler` in your project.
+**Requirements:** Neovim 0.9+ (0.10+ recommended for native inlay hints), Node.js, `babel-plugin-react-compiler` in your project.
 
 See the [Neovim Client README](packages/nvim-client/README.md) for configuration options and other package managers.
 

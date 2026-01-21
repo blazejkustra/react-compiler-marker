@@ -34,8 +34,6 @@ M.defaults = {
     only_current_line = false,
     -- Hide hints in insert mode (prevents rendering issues)
     hide_in_insert_mode = true,
-    -- Hint position: "eol" (end of line) or "inline"
-    position = "eol",
   },
 
   -- Hover settings

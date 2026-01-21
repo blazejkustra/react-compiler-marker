@@ -27,11 +27,15 @@ Neovim plugin that shows which React components are optimized by the [React Comp
 ```lua
 {
   'blazejkustra/react-compiler-marker',
-  event = { 'BufReadPre *.js,*.jsx,*.ts,*.tsx', 'BufNewFile *.js,*.jsx,*.ts,*.tsx' },
-  build = 'npm install && node esbuild.js --production',
+  ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+  build = './scripts/build-nvim.sh',
   opts = {},
 }
 ```
+
+- `ft` - lazy-loads the plugin only for React/JS/TS files
+- `build` - runs after installation to compile the LSP server locally
+- `opts` - automatically passed to `setup()` (empty table uses defaults)
 
 ## Configuration
 
@@ -56,7 +60,6 @@ require('react-compiler-marker').setup({
     enabled = true,
     only_current_line = false,
     hide_in_insert_mode = true,
-    position = "eol",  -- "eol" or "inline"
   },
 
   -- Auto-refresh settings

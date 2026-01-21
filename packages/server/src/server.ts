@@ -251,7 +251,7 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
   });
 });
 
-// Handle hover request
+// Handle hover request (only enabled for Neovim client, as VSCode/IntelliJ have native inlay hint hover)
 connection.onHover((params: HoverParams): Hover | null => {
   if (!isActivated) {
     return null;

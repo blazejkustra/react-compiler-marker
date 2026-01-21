@@ -119,7 +119,7 @@ export function generateInlayHints(
 ): InlayHint[] {
   const hints: InlayHint[] = [];
 
-  const useLinks = supportsCommandLinks(clientName);
+  const shouldShowCommandLinks = supportsCommandLinks(clientName);
 
   // Generate hints for successful compilations
   if (successEmoji) {
@@ -130,18 +130,19 @@ export function generateInlayHints(
       }
 
       const f = fmt[tooltipFormat];
-      let tooltipValue =
-        `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.`;
+      let tooltipValue = `${successEmoji} ${f.bold(positionInfo.functionName)} has been auto-memoized by React Compiler.`;
 
-      if (useLinks) {
-        tooltipValue += f.br2() + f.bold(
-          f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
-        );
+      if (shouldShowCommandLinks) {
+        tooltipValue +=
+          f.br2() +
+          f.bold(
+            f.link("📄 Preview compiled output", "command:react-compiler-marker.previewCompiled")
+          );
       }
 
       const hint: InlayHint = {
         position: positionInfo.position,
-        label: successEmoji + " ",
+        label: `${successEmoji} `,
         kind: InlayHintKind.Type,
         tooltip: { kind: "markdown", value: tooltipValue },
       };
@@ -170,7 +171,7 @@ export function generateInlayHints(
         const lineText =
           startLine === endLine ? `Line ${startLine + 1}` : `Lines ${startLine + 1}–${endLine + 1}`;
 
-        if (useLinks) {
+        if (shouldShowCommandLinks) {
           const selectionCmd = `command:react-compiler-marker.revealSelection?${encodeURIComponent(
             JSON.stringify({
               uri: documentUri,
@@ -211,7 +212,7 @@ export function generateInlayHints(
 
     const hint: InlayHint = {
       position: positionInfo.position,
-      label: errorEmoji + " ",
+      label: `${errorEmoji} `,
       kind: InlayHintKind.Type,
       tooltip: { kind: "markdown", value: tooltipContent },
     };
