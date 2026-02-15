@@ -4,7 +4,7 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ## [Unreleased]
 ### Added
--
+- **"Fix with AI" support for Cursor**: Extended the "Fix with AI" button to work in Cursor in addition to VS Code and Antigravity
 
 ### Fixed
 -

@@ -1,7 +1,7 @@
 import { InlayHint, InlayHintKind, Position } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { LoggerEvent } from "./checkReactCompiler";
-import { supportsCommandLinks, isVSCodeClient } from "./clientUtils";
+import { supportsCommandLinks, isVSCodeClient, supportsFixWithAI } from "./clientUtils";
 
 // Patterns that come first will be used first if possible
 const FUNCTION_PATTERNS = [
@@ -186,7 +186,7 @@ export function generateInlayHints(
       }
 
       // Add Fix with AI button for VSCode only
-      if (isVSCodeClient(clientName)) {
+      if (supportsFixWithAI(clientName)) {
         const filename = documentUri.startsWith("file://") ? documentUri.slice(7) : documentUri;
         const fixWithAICmd = `command:react-compiler-marker.fixWithAI?${encodeURIComponent(
           JSON.stringify({
