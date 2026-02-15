@@ -3,6 +3,10 @@
   "version": "1.3.4",
   "description": "Language Server for React Compiler Marker - works with VS Code, WebStorm, Neovim, and other LSP-compatible editors",
   "main": "./out/server.js",
+  "exports": {
+    ".": "./out/server.js",
+    "./src/report": "./out/report.js"
+  },
   "bin": {
     "react-compiler-marker-lsp": "./bin/server.js"
   },

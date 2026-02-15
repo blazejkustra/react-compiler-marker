@@ -5,5 +5,6 @@
     "rootDir": ".",
     "types": ["vscode", "node", "mocha"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "references": [{ "path": "../server" }]
 }

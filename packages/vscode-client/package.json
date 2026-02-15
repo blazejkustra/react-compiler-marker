@@ -71,6 +71,38 @@
           "default": "node_modules/babel-plugin-react-compiler",
           "description": "Path to the babel-plugin-react-compiler in your project. By default it's 'node_modules/babel-plugin-react-compiler'"
         },
+        "reactCompilerMarker.excludedDirectories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "node_modules",
+            ".git",
+            "dist",
+            "build",
+            "out",
+            "coverage",
+            ".next",
+            ".turbo"
+          ],
+          "description": "Directories to exclude when generating reports"
+        },
+        "reactCompilerMarker.supportedExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".js",
+            ".jsx",
+            ".ts",
+            ".tsx",
+            ".mjs",
+            ".cjs"
+          ],
+          "description": "File extensions to include when generating reports"
+        },
         "reactCompilerMarker.errorEmoji": {
           "type": "string",
           "nullable": true,
@@ -96,7 +128,7 @@
     "compile-tests": "tsc -b",
     "watch-tests": "tsc -b -w",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b",
     "lint": "eslint \"src/**/*.ts\" \"../../packages/server/src/**/*.ts\"",
     "test": "vscode-test",
     "publish:vscode": "vsce publish -p $VSCE_PAT",

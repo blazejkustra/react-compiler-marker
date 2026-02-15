@@ -6,32 +6,14 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
+import { buildReportTree } from "./report/buildTree";
+import { ReportPanel } from "./report/ReportPanel";
 
 let client: LanguageClient;
 
 // Output channel for logging
 const outputChannel = vscode.window.createOutputChannel("React Compiler Marker ✨");
-
-interface ReactCompilerReport {
-  generatedAt: string;
-  totals: {
-    filesScanned: number;
-    filesWithResults: number;
-    compiledFiles: number;
-    failedFiles: number;
-    successCount: number;
-    failedCount: number;
-  };
-  files: Array<{
-    path: string;
-    success: unknown[];
-    failed: unknown[];
-  }>;
-  errors: Array<{
-    path: string;
-    message: string;
-  }>;
-}
 
 function logMessage(message: string): void {
   const timestamp = new Date().toISOString();
@@ -303,26 +285,36 @@ function registerCommands(
             );
 
             try {
+              const config = vscode.workspace.getConfiguration("reactCompilerMarker");
               const result = (await client.sendRequest("workspace/executeCommand", {
                 command: "react-compiler-marker/generateReport",
-                arguments: [{ root: workspaceFolder?.uri.fsPath, reportId }],
+                arguments: [{
+                  root: workspaceFolder.uri.fsPath,
+                  reportId,
+                  excludeDirs: config.get<string[]>("excludedDirectories"),
+                  includeExtensions: config.get<string[]>("supportedExtensions"),
+                }],
               })) as { success: boolean; report?: ReactCompilerReport; error?: string };
 
               if (!result.success || !result.report) {
                 throw new Error(result.error || "Report generation failed");
               }
 
+              // Save raw JSON for reference
               const reportJson = JSON.stringify(result.report, null, 2);
               const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
               const reportsDir = vscode.Uri.joinPath(storageBase, "react-compiler-marker");
               await vscode.workspace.fs.createDirectory(reportsDir);
               const reportUri = vscode.Uri.joinPath(reportsDir, `report-${timestamp}.json`);
               await vscode.workspace.fs.writeFile(reportUri, Buffer.from(reportJson, "utf8"));
-              const reportDoc = await vscode.workspace.openTextDocument(reportUri);
-              await vscode.window.showTextDocument(reportDoc, {
-                preview: true,
-                viewColumn: vscode.ViewColumn.Beside,
-              });
+
+              // Open visual report panel
+              const treeData = buildReportTree(result.report);
+              const emojis = {
+                success: config.get<string>("successEmoji") ?? "✨",
+                error: config.get<string>("errorEmoji") ?? "🚫",
+              };
+              ReportPanel.createOrShow(context.extensionUri, workspaceFolder.uri, treeData, emojis);
             } finally {
               progressDisposable.dispose();
             }
