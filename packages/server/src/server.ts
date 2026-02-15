@@ -162,10 +162,9 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     return null;
   }
 
-  logMessage(`Process inlay hints for ${params.textDocument.uri}`);
-
   // Use document URI as the debounce key
   return debounce(params.textDocument.uri, () => {
+    logMessage(`Process inlay hints for ${params.textDocument.uri}`);
     const fileName = params.textDocument.uri;
     const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
 
