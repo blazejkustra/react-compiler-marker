@@ -2,6 +2,14 @@ export function isVSCodeClient(clientName?: string): boolean {
   return clientName?.toLowerCase().includes("visual studio code") ?? false;
 }
 
+export function isCursorClient(clientName?: string): boolean {
+  return clientName?.toLowerCase().includes("cursor") ?? false;
+}
+
+export function isAntigravityClient(clientName?: string): boolean {
+  return clientName?.toLowerCase().includes("antigravity") ?? false;
+}
+
 export function isIntelliJClient(clientName?: string): boolean {
   return clientName?.toLowerCase().includes("intellij") ?? false;
 }
@@ -16,4 +24,10 @@ export function supportsCommandLinks(clientName?: string): boolean {
 
 export function shouldEnableHover(clientName?: string): boolean {
   return isNVimClient(clientName);
+}
+
+export function supportsFixWithAI(clientName?: string): boolean {
+  return (
+    isVSCodeClient(clientName) || isCursorClient(clientName) || isAntigravityClient(clientName)
+  );
 }

@@ -38,20 +38,10 @@ function logMessage(message: string): void {
   outputChannel.appendLine(`[${timestamp}] CLIENT LOG: ${message}`);
 }
 
-// IDE detection helpers for "Fix with AI" command routing
-function isVSCode(): boolean {
-  const appName = vscode.env.appName;
-  return (
-    appName.includes("Visual Studio Code") ||
-    appName.includes("VSCode") ||
-    appName.includes("VS Code")
-  );
-}
-
 // Antigravity is an AI-focused VS Code fork (https://antigravity.dev)
 function isAntigravity(): boolean {
   const appName = vscode.env.appName;
-  return appName.includes("Antigravity");
+  return appName.toLowerCase().includes("antigravity");
 }
 
 function generateAIPrompt(
@@ -402,9 +392,7 @@ function registerCommands(
 
       const prompt = generateAIPrompt(reason, code, filename, startLine, endLine);
 
-      if (isVSCode()) {
-        await vscode.commands.executeCommand("workbench.action.chat.open", prompt);
-      } else if (isAntigravity()) {
+      if (isAntigravity()) {
         await vscode.env.clipboard.writeText(prompt);
         await vscode.commands.executeCommand(
           "antigravity.prioritized.chat.openNewConversation",
@@ -412,9 +400,7 @@ function registerCommands(
         );
         await vscode.window.showInformationMessage("Prompt copied. Press CMD+V in the chat.");
       } else {
-        await vscode.env.clipboard.writeText(prompt);
-        await vscode.commands.executeCommand("composer.startComposerPrompt", prompt);
-        await vscode.window.showInformationMessage("Prompt copied. Press CMD+V in the chat.");
+        await vscode.commands.executeCommand("workbench.action.chat.open", prompt);
       }
     }
   );
