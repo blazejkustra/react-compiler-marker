@@ -25,6 +25,7 @@ Overview of features supported by each editor client.
 | Hover Tooltips | ✅ | ✅ | ✅ |
 | Real-time Feedback | ✅ | ✅ | ✅ |
 | Report Visualization (Webview) | ✅ | ❌ | ❌ |
+| Reports Sidebar (Activity Bar) | ✅ | ❌ | ❌ |
 | Health Check | ❌ | ❌ | ✅ |
 | Default Keybindings | ❌ | ❌ | ✅ |
 
