@@ -69,18 +69,19 @@ jobs:
       - name: Update CHANGELOG.md
         if: success()
         working-directory: packages/vscode-client
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           DATE=$(date +%Y-%m-%d)
-          RELEASE_BODY="${{ github.event.release.body }}"
 
           # Insert new version entry after the --- separator
-          awk -v ver="$VERSION" -v date="$DATE" -v body="$RELEASE_BODY" '
+          awk -v ver="$VERSION" -v date="$DATE" '
             /^---$/ && !inserted {
               print "---"
               print ""
               print "## [" ver "] - " date
-              print body
+              print ENVIRON["RELEASE_BODY"]
               inserted=1
               next
             }
@@ -121,18 +122,19 @@ jobs:
 
       - name: Update CHANGELOG.md
         working-directory: packages/intellij-client
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           DATE=$(date +%Y-%m-%d)
-          RELEASE_BODY="${{ github.event.release.body }}"
 
           # Insert new version entry after the --- separator
-          awk -v ver="$VERSION" -v date="$DATE" -v body="$RELEASE_BODY" '
+          awk -v ver="$VERSION" -v date="$DATE" '
             /^---$/ && !inserted {
               print "---"
               print ""
               print "## [" ver "] - " date
-              print body
+              print ENVIRON["RELEASE_BODY"]
               inserted=1
               next
             }
