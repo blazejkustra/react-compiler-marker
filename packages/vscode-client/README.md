@@ -2,7 +2,7 @@
 
 Highlights components optimized by the React Compiler with visual indicators directly in your editor.
 
-![Showcase](showcase.png)
+![Showcase](https://raw.githubusercontent.com/blazejkustra/react-compiler-marker/main/packages/vscode-client/showcase.png)
 
 ## Features
 
