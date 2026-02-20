@@ -288,12 +288,14 @@ function registerCommands(
               const config = vscode.workspace.getConfiguration("reactCompilerMarker");
               const result = (await client.sendRequest("workspace/executeCommand", {
                 command: "react-compiler-marker/generateReport",
-                arguments: [{
-                  root: workspaceFolder.uri.fsPath,
-                  reportId,
-                  excludeDirs: config.get<string[]>("excludedDirectories"),
-                  includeExtensions: config.get<string[]>("supportedExtensions"),
-                }],
+                arguments: [
+                  {
+                    root: workspaceFolder.uri.fsPath,
+                    reportId,
+                    excludeDirs: config.get<string[]>("excludedDirectories"),
+                    includeExtensions: config.get<string[]>("supportedExtensions"),
+                  },
+                ],
               })) as { success: boolean; report?: ReactCompilerReport; error?: string };
 
               if (!result.success || !result.report) {

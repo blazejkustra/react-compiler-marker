@@ -1,6 +1,11 @@
 import type { ReportTreeData, EmojiConfig } from "./types";
 
-export function getWebviewHtml(data: ReportTreeData, nonce: string, cspSource: string, emojis: EmojiConfig): string {
+export function getWebviewHtml(
+  data: ReportTreeData,
+  nonce: string,
+  cspSource: string,
+  emojis: EmojiConfig
+): string {
   const dataJson = JSON.stringify(data);
   const emojisJson = JSON.stringify(emojis);
 

@@ -33,5 +33,4 @@ export type WebviewMessage =
   | { type: "openFile"; path: string; line?: number; column?: number }
   | { type: "requestData" };
 
-export type ExtensionMessage =
-  | { type: "reportData"; data: ReportTreeData };
+export type ExtensionMessage = { type: "reportData"; data: ReportTreeData };
