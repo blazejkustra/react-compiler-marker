@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b",
     "lint": "eslint \"packages/*/src/**/*.ts\"",
     "prettier": "prettier --check \"packages/*/src/**/*.ts\"",
     "prettier:write": "prettier --write \"packages/*/src/**/*.ts\""
