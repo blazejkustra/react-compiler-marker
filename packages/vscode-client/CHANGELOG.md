@@ -12,6 +12,11 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ---
 
+## [2.1.0] - 2026-02-20
+### Added
+- **Report generation and visualization**: New command to generate a project-wide report of React Compiler optimization results, displayed in an interactive webview with a tree view of files and components
+- **Configurable report settings**: Added `excludedDirectories` and `supportedExtensions` settings to customize report scanning
+
 ## [2.0.2] - 2026-01-20
 ### Added
 - **Language Server Protocol (LSP) architecture**: Complete rewrite using LSP for improved performance and cross-editor compatibility
