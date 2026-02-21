@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import type { Dirent } from "fs";
 import os from "os";
 import path from "path";
-import { checkReactCompiler, LoggerEvent } from "./checkReactCompiler";
+import { checkReactCompiler, LoggerEvent } from "../checkReactCompiler";
 
 /**
  * Full report generated from scanning a project with the React Compiler.

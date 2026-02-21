@@ -1,4 +1,4 @@
-import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
+import type { ReactCompilerReport } from "./generate";
 
 export interface TreeNode {
   name: string;
