@@ -12,5 +12,4 @@
 /plugin
 /server
 **/zed-client/target
-**/zed-client/server
 **/zed-client/extension.wasm
