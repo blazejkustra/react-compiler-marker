@@ -11,3 +11,5 @@
 /lua
 /plugin
 /server
+**/zed-client/target
+**/zed-client/extension.wasm

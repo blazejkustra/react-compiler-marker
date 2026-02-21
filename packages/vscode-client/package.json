@@ -31,11 +31,30 @@
     "onLanguage:javascript",
     "onLanguage:typescript",
     "onLanguage:javascriptreact",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onView:react-compiler-marker.reportsView"
   ],
   "main": "./dist/extension.js",
   "icon": "logo.jpeg",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "react-compiler-marker",
+          "title": "React Compiler Marker",
+          "icon": "media/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "react-compiler-marker": [
+        {
+          "id": "react-compiler-marker.reportsView",
+          "name": "Reports",
+          "contextualTitle": "React Compiler Marker"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "react-compiler-marker.activate",
@@ -60,9 +79,58 @@
       {
         "command": "react-compiler-marker.generateReport",
         "title": "Generate Report",
+        "category": "React Compiler Marker",
+        "icon": "$(add)"
+      },
+      {
+        "command": "react-compiler-marker.refreshReports",
+        "title": "Refresh Reports List",
+        "category": "React Compiler Marker",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "react-compiler-marker.openReport",
+        "title": "Open Report",
         "category": "React Compiler Marker"
+      },
+      {
+        "command": "react-compiler-marker.deleteReport",
+        "title": "Delete Report",
+        "category": "React Compiler Marker",
+        "icon": "$(trash)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "react-compiler-marker.generateReport",
+          "when": "view == react-compiler-marker.reportsView",
+          "group": "navigation"
+        },
+        {
+          "command": "react-compiler-marker.refreshReports",
+          "when": "view == react-compiler-marker.reportsView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "react-compiler-marker.deleteReport",
+          "when": "view == react-compiler-marker.reportsView && viewItem == reportItem",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "react-compiler-marker.openReport",
+          "when": "false"
+        },
+        {
+          "command": "react-compiler-marker.deleteReport",
+          "when": "false"
+        }
+      ]
+    },
     "configuration": {
       "title": "React Compiler Marker",
       "properties": {
