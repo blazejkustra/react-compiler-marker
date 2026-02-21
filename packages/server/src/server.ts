@@ -24,7 +24,7 @@ import { debounce } from "./debounce";
 import { shouldEnableHover } from "./clientUtils";
 
 import packageJson from "../package.json";
-import { generateReport } from "./report";
+import { generateReport, buildReportTree, getReportHtml } from "./report/index";
 const { version } = packageJson;
 
 // Determine the connection type based on command line arguments
@@ -114,6 +114,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
           "react-compiler-marker/getCompiledOutput",
           "react-compiler-marker/checkOnce",
           "react-compiler-marker/generateReport",
+          "react-compiler-marker/generateReportHtml",
         ],
       },
     },
@@ -333,6 +334,53 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
         return { success: false, error: error?.message ?? "Failed to generate report" };
       }
     }
+    case "react-compiler-marker/generateReportHtml": {
+      // Generate report and return self-contained HTML page
+      const [htmlOptions] = params.arguments ?? [];
+      const htmlReportRoot = htmlOptions?.root ?? workspaceFolder;
+      if (!htmlReportRoot) {
+        return { success: false, error: "No workspace folder available" };
+      }
+      const htmlReportId = htmlOptions?.reportId;
+      try {
+        logMessage(`Generating HTML report for ${htmlReportRoot}`);
+        const report = await generateReport({
+          root: htmlReportRoot,
+          babelPluginPath: globalSettings.babelPluginPath,
+          maxConcurrency: htmlOptions?.maxConcurrency,
+          includeExtensions: htmlOptions?.includeExtensions,
+          excludeDirs: htmlOptions?.excludeDirs,
+          onProgress: htmlReportId
+            ? (progress) => {
+                connection.sendNotification("react-compiler-marker/reportProgress", {
+                  reportId: htmlReportId,
+                  ...progress,
+                });
+              }
+            : undefined,
+        });
+        const treeData = buildReportTree(report);
+        const emojis = {
+          success: htmlOptions?.emojis?.success ?? globalSettings.successEmoji ?? "✨",
+          error: htmlOptions?.emojis?.error ?? globalSettings.errorEmoji ?? "🚫",
+        };
+        const html = getReportHtml({
+          data: treeData,
+          emojis,
+          theme: htmlOptions?.theme,
+          headExtra: htmlOptions?.headExtra,
+          scriptExtra: htmlOptions?.scriptExtra,
+        });
+        logMessage(
+          `HTML report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount}`
+        );
+        return { success: true, html, report };
+      } catch (error: any) {
+        logError(`HTML report generation failed: ${error?.message ?? error}`);
+        return { success: false, error: error?.message ?? "Failed to generate report" };
+      }
+    }
+
     default:
       return { success: false, error: "Unknown command" };
   }

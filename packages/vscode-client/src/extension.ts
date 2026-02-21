@@ -7,7 +7,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
-import { buildReportTree } from "./report/buildTree";
+import { buildReportTree } from "@react-compiler-marker/server/src/report";
 import { ReportPanel } from "./report/ReportPanel";
 import { ReportItem, ReportsTreeProvider } from "./sidebar/ReportsTreeProvider";
 

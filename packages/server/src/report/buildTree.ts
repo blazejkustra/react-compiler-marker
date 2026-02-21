@@ -1,4 +1,4 @@
-import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
+import type { ReactCompilerReport } from "./generate";
 import type { TreeNode, ReportTreeData } from "./types";
 
 export function buildReportTree(report: ReactCompilerReport): ReportTreeData {

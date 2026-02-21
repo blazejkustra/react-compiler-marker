@@ -85,6 +85,11 @@
                     class="com.blazejkustra.reactcompilermarker.actions.PreviewCompiledAction"
                     text="Preview Compiled Output"
                     description="Preview the compiled output of current file"/>
+
+            <action id="ReactCompilerMarker.GenerateReport"
+                    class="com.blazejkustra.reactcompilermarker.actions.GenerateReportAction"
+                    text="Generate Report"
+                    description="Generate a React Compiler report for the project"/>
         </group>
     </actions>
 </idea-plugin>

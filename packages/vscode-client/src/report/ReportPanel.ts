@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import type { ReportTreeData, EmojiConfig, WebviewMessage, ExtensionMessage } from "./types";
-import { getWebviewHtml } from "./webviewContent";
+import type { ReportTreeData, EmojiConfig, WebviewMessage } from "@react-compiler-marker/server/src/report";
+import { getReportHtml } from "@react-compiler-marker/server/src/report";
 
 export class ReportPanel {
   public static readonly viewType = "reactCompilerMarkerReport";
@@ -14,7 +14,6 @@ export class ReportPanel {
 
   private constructor(
     panel: vscode.WebviewPanel,
-    extensionUri: vscode.Uri,
     workspaceUri: vscode.Uri,
     data: ReportTreeData,
     emojis: EmojiConfig
@@ -24,7 +23,7 @@ export class ReportPanel {
     this.workspaceUri = workspaceUri;
     this.emojis = emojis;
 
-    this.panel.webview.html = this.getHtml(extensionUri);
+    this.panel.webview.html = this.getHtml();
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     this.panel.webview.onDidReceiveMessage(
       (message: WebviewMessage) => this.handleMessage(message),
@@ -41,7 +40,7 @@ export class ReportPanel {
   ): void {
     if (ReportPanel.instance) {
       ReportPanel.instance.data = data;
-      ReportPanel.instance.panel.webview.html = ReportPanel.instance.getHtml(extensionUri);
+      ReportPanel.instance.panel.webview.html = ReportPanel.instance.getHtml();
       ReportPanel.instance.panel.reveal(vscode.ViewColumn.Beside);
       return;
     }
@@ -56,13 +55,51 @@ export class ReportPanel {
       }
     );
 
-    ReportPanel.instance = new ReportPanel(panel, extensionUri, workspaceUri, data, emojis);
+    ReportPanel.instance = new ReportPanel(panel, workspaceUri, data, emojis);
   }
 
-  private getHtml(extensionUri: vscode.Uri): string {
+  private getHtml(): string {
     const nonce = getNonce();
     const cspSource = this.panel.webview.cspSource;
-    return getWebviewHtml(this.data, nonce, cspSource, this.emojis);
+
+    const headExtra = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';" />
+    <style nonce="${nonce}">
+      :root {
+        --rcm-bg: var(--vscode-editor-background);
+        --rcm-foreground: var(--vscode-foreground);
+        --rcm-border: var(--vscode-widget-border, var(--vscode-panel-border));
+        --rcm-input-bg: var(--vscode-input-background);
+        --rcm-input-fg: var(--vscode-input-foreground);
+        --rcm-input-border: var(--vscode-input-border, transparent);
+        --rcm-input-placeholder: var(--vscode-input-placeholderForeground);
+        --rcm-button-bg: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+        --rcm-button-fg: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+        --rcm-button-hover-bg: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+        --rcm-list-hover-bg: var(--vscode-list-hoverBackground);
+        --rcm-success: var(--vscode-testing-iconPassed, #4caf50);
+        --rcm-failed: var(--vscode-testing-iconFailed, #f44336);
+        --rcm-font-family: var(--vscode-font-family);
+        --rcm-font-size: var(--vscode-font-size);
+        --rcm-editor-font-family: var(--vscode-editor-font-family, monospace);
+        --rcm-editor-font-size: var(--vscode-editor-font-size, 13px);
+      }
+    </style>`;
+
+    const scriptExtra = `window.ideBridge = (function() {
+      var vscode = acquireVsCodeApi();
+      return {
+        postMessage: function(msg) { vscode.postMessage(msg); },
+        getState: function() { return vscode.getState() || {}; },
+        setState: function(s) { vscode.setState(s); }
+      };
+    })();`;
+
+    return getReportHtml({
+      data: this.data,
+      emojis: this.emojis,
+      headExtra,
+      scriptExtra,
+    });
   }
 
   private async handleMessage(message: WebviewMessage): Promise<void> {
@@ -82,11 +119,8 @@ export class ReportPanel {
         }
         break;
       }
-      case "requestData": {
-        const msg: ExtensionMessage = { type: "reportData", data: this.data };
-        this.panel.webview.postMessage(msg);
+      case "requestData":
         break;
-      }
     }
   }
 
