@@ -1,5 +1,5 @@
-import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
-import { parseLog } from "@react-compiler-marker/server/src/parseLog";
+import type { ReactCompilerReport } from "./generate";
+import { parseLog } from "../parseLog";
 import type { TreeNode, NormalizedEntry, ReportTreeData } from "./types";
 
 export function buildReportTree(report: ReactCompilerReport): ReportTreeData {

@@ -8,14 +8,10 @@ Overview of features supported by each editor client.
 |---------|:-------:|:--------:|:------:|
 | Activate Extension | ✅ | ✅ | ✅ |
 | Deactivate Extension | ✅ | ✅ | ✅ |
-| Toggle Activation | ❌ | ❌ | ✅ |
 | Check Current File | ✅ | ✅ | ✅ |
 | Preview Compiled Output | ✅ | ✅ | ✅ |
-| Generate Report | ✅ | ❌ | ❌ |
+| Generate Report | ✅ | ✅ | ❌ |
 | Reveal Selection | ✅ | ✅ | ❌ |
-| Fix with AI | ✅ | ❌ | ❌ |
-| Start/Stop/Restart Server | ❌ | ❌ | ✅ |
-| Show Status | ❌ | ❌ | ✅ |
 
 ## Editor Features
 
@@ -24,10 +20,8 @@ Overview of features supported by each editor client.
 | Visual Markers (Inlay Hints) | ✅ | ✅ | ✅ |
 | Hover Tooltips | ✅ | ✅ | ✅ |
 | Real-time Feedback | ✅ | ✅ | ✅ |
-| Report Visualization (Webview) | ✅ | ❌ | ❌ |
+| Report Visualization (Webview) | ✅ | ✅ | ❌ |
 | Reports Sidebar (Activity Bar) | ✅ | ❌ | ❌ |
-| Health Check | ❌ | ❌ | ✅ |
-| Default Keybindings | ❌ | ❌ | ✅ |
 
 ## Configuration
 
@@ -36,10 +30,5 @@ Overview of features supported by each editor client.
 | Success Emoji | ✅ | ✅ | ✅ |
 | Error Emoji | ✅ | ✅ | ✅ |
 | Babel Plugin Path | ✅ | ✅ | ✅ |
-| Excluded Directories | ✅ | ❌ | ❌ |
-| Supported Extensions | ✅ | ❌ | ❌ |
-| Auto-refresh Settings | ❌ | ❌ | ✅ |
-| Notification Level | ❌ | ❌ | ✅ |
-| Keybinding Customization | ❌ | ❌ | ✅ |
-| Logging Level | ❌ | ❌ | ✅ |
-| Highlight Groups | ❌ | ❌ | ✅ |
+| Excluded Directories | ✅ | ✅ | ❌ |
+| Supported Extensions | ✅ | ✅ | ❌ |

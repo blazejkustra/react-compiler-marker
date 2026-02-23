@@ -7,7 +7,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
-import { buildReportTree } from "./report/buildTree";
+import { buildReportTree } from "@react-compiler-marker/server/src/report";
 import { ReportPanel } from "./report/ReportPanel";
 import { ReportItem, ReportsTreeProvider } from "./sidebar/ReportsTreeProvider";
 
@@ -175,7 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
             vscode.window.showErrorMessage("Open a workspace folder to view the report.");
             return;
           }
-          ReportPanel.createOrShow(context.extensionUri, workspaceFolder.uri, treeData, emojis);
+          ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
         } catch (error: any) {
           vscode.window.showErrorMessage(`Failed to open report: ${error?.message ?? error}`);
         }
@@ -414,7 +414,7 @@ function registerCommands(
                 success: config.get<string>("successEmoji") ?? "✨",
                 error: config.get<string>("errorEmoji") ?? "🚫",
               };
-              ReportPanel.createOrShow(context.extensionUri, workspaceFolder.uri, treeData, emojis);
+              ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
             } finally {
               progressDisposable.dispose();
             }
