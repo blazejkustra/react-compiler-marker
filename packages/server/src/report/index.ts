@@ -8,9 +8,9 @@ export { buildReportTree } from "./buildTree";
 export { getReportHtml, type ReportHtmlOptions } from "./webviewContent";
 export type {
   TreeNode,
+  NormalizedEntry,
   ReportTreeData,
   FilterState,
   EmojiConfig,
   WebviewMessage,
-  ExtensionMessage,
 } from "./types";

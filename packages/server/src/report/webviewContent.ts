@@ -44,24 +44,6 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       --rcm-editor-font-size: 13px;
     }
 
-    @media (prefers-color-scheme: light) {
-      :root:not([data-theme="dark"]) {
-        --rcm-bg: #ffffff;
-        --rcm-foreground: #333333;
-        --rcm-border: #e0e0e0;
-        --rcm-input-bg: #ffffff;
-        --rcm-input-fg: #333333;
-        --rcm-input-border: #cccccc;
-        --rcm-input-placeholder: #999999;
-        --rcm-button-bg: #e8e8e8;
-        --rcm-button-fg: #333333;
-        --rcm-button-hover-bg: #d0d0d0;
-        --rcm-list-hover-bg: rgba(0, 0, 0, 0.04);
-        --rcm-success: #2e7d32;
-        --rcm-failed: #c62828;
-      }
-    }
-
     html[data-theme="light"] {
       --rcm-bg: #ffffff;
       --rcm-foreground: #333333;
@@ -325,6 +307,11 @@ export function getReportHtml(options: ReportHtmlOptions): string {
   <div class="errors-section" id="errorsSection"></div>
 
   <script${nonceAttr}>
+    // Auto-detect OS light mode when no explicit theme is set
+    if (!document.documentElement.hasAttribute('data-theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+
     ${scriptExtra}
 
     var ideBridge = window.ideBridge || {

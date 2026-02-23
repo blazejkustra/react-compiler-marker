@@ -175,7 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
             vscode.window.showErrorMessage("Open a workspace folder to view the report.");
             return;
           }
-          ReportPanel.createOrShow(context.extensionUri, workspaceFolder.uri, treeData, emojis);
+          ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
         } catch (error: any) {
           vscode.window.showErrorMessage(`Failed to open report: ${error?.message ?? error}`);
         }
@@ -414,7 +414,7 @@ function registerCommands(
                 success: config.get<string>("successEmoji") ?? "✨",
                 error: config.get<string>("errorEmoji") ?? "🚫",
               };
-              ReportPanel.createOrShow(context.extensionUri, workspaceFolder.uri, treeData, emojis);
+              ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
             } finally {
               progressDisposable.dispose();
             }

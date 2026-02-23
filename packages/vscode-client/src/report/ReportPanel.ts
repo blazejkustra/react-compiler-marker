@@ -37,7 +37,6 @@ export class ReportPanel {
   }
 
   public static createOrShow(
-    extensionUri: vscode.Uri,
     workspaceUri: vscode.Uri,
     data: ReportTreeData,
     emojis: EmojiConfig
@@ -124,8 +123,6 @@ export class ReportPanel {
         }
         break;
       }
-      case "requestData":
-        break;
       case "fixWithAI": {
         const doc = await vscode.workspace.openTextDocument({
           language: "markdown",
