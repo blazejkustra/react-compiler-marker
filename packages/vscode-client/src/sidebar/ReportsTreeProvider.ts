@@ -48,7 +48,10 @@ export class ReportsTreeProvider implements vscode.TreeDataProvider<ReportItem> 
     try {
       const entries = await vscode.workspace.fs.readDirectory(reportsDir);
       const reportFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && name.startsWith("report-") && name.endsWith(".json"))
+        .filter(
+          ([name, type]) =>
+            type === vscode.FileType.File && name.startsWith("report-") && name.endsWith(".json")
+        )
         .map(([name]) => name);
 
       const loaded: ReportMetadata[] = [];
@@ -64,7 +67,10 @@ export class ReportsTreeProvider implements vscode.TreeDataProvider<ReportItem> 
       }
 
       // Sort newest first
-      loaded.sort((a, b) => new Date(b.report.generatedAt).getTime() - new Date(a.report.generatedAt).getTime());
+      loaded.sort(
+        (a, b) =>
+          new Date(b.report.generatedAt).getTime() - new Date(a.report.generatedAt).getTime()
+      );
       this.reports = loaded;
     } catch {
       // Directory doesn't exist yet — no reports
