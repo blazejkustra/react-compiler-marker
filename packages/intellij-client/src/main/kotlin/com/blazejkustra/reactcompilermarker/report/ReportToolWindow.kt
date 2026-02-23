@@ -63,31 +63,44 @@ class ReportToolWindow private constructor(
         }
 
         val browser = JBCefBrowser()
-        val openFileQuery = JBCefJSQuery.create(browser)
+        val messageQuery = JBCefJSQuery.create(browser)
 
-        openFileQuery.addHandler { arg ->
+        messageQuery.addHandler { arg ->
             try {
                 val gson = Gson()
-                val message = gson.fromJson(arg, OpenFileMessage::class.java)
-                if (message?.type == "openFile" && message.path != null) {
-                    ApplicationManager.getApplication().invokeLater {
-                        openFileInEditor(project, message.path, message.line, message.column)
+                val message = gson.fromJson(arg, WebviewMessage::class.java)
+                when (message?.type) {
+                    "openFile" -> {
+                        if (message.path != null) {
+                            ApplicationManager.getApplication().invokeLater {
+                                openFileInEditor(project, message.path, message.line, message.column)
+                            }
+                        }
+                    }
+                    "fixWithAI" -> {
+                        if (message.markdown != null) {
+                            ApplicationManager.getApplication().invokeLater {
+                                openMarkdownInEditor(project, message.markdown)
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
-                thisLogger().error("Failed to handle openFile message", e)
+                thisLogger().error("Failed to handle webview message", e)
             }
             null
         }
 
-        // Inject the ideBridge script after page loads
+        // Inject the ideBridge after page loads so JCEF query bindings are available.
+        // The webview script defers bridge usage to user interactions (clicks),
+        // so the bridge will be ready by the time any user action occurs.
         browser.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
             override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain) {
                     val bridgeScript = """
                         window.ideBridge = {
                             postMessage: function(msg) {
-                                ${openFileQuery.inject("JSON.stringify(msg)")}
+                                ${messageQuery.inject("JSON.stringify(msg)")}
                             },
                             getState: function() {
                                 try { return JSON.parse(sessionStorage.getItem('rcm-state') || '{}'); }
@@ -127,10 +140,25 @@ class ReportToolWindow private constructor(
         FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
     }
 
-    private data class OpenFileMessage(
+    private fun openMarkdownInEditor(project: Project, markdown: String) {
+        try {
+            val tempFile = File.createTempFile("rcm-fix-with-ai-", ".md")
+            tempFile.deleteOnExit()
+            tempFile.writeText(markdown)
+            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile)
+            if (virtualFile != null) {
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            }
+        } catch (e: Exception) {
+            thisLogger().error("Failed to open Fix with AI markdown", e)
+        }
+    }
+
+    private data class WebviewMessage(
         val type: String?,
         val path: String?,
         val line: Int?,
-        val column: Int?
+        val column: Int?,
+        val markdown: String?
     )
 }
