@@ -1,5 +1,14 @@
 import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
 
+export interface NormalizedEntry {
+  fnName: string | undefined;
+  kind: "success" | "failure";
+  reason: string;
+  description: string;
+  line: number | undefined;
+  column: number | undefined;
+}
+
 export interface TreeNode {
   name: string;
   path: string;
@@ -7,8 +16,7 @@ export interface TreeNode {
   children?: TreeNode[];
   successCount: number;
   failedCount: number;
-  success?: ReactCompilerReport["files"][number]["success"];
-  failed?: ReactCompilerReport["files"][number]["failed"];
+  entries?: NormalizedEntry[];
 }
 
 export interface ReportTreeData {
@@ -31,6 +39,7 @@ export interface EmojiConfig {
 
 export type WebviewMessage =
   | { type: "openFile"; path: string; line?: number; column?: number }
-  | { type: "requestData" };
+  | { type: "requestData" }
+  | { type: "fixWithAI"; markdown: string };
 
 export type ExtensionMessage = { type: "reportData"; data: ReportTreeData };

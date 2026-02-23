@@ -1,5 +1,6 @@
 import type { ReactCompilerReport } from "@react-compiler-marker/server/src/report";
-import type { TreeNode, ReportTreeData } from "./types";
+import { parseLog } from "@react-compiler-marker/server/src/parseLog";
+import type { TreeNode, NormalizedEntry, ReportTreeData } from "./types";
 
 export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
   const root: TreeNode = {
@@ -38,10 +39,27 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
       }
 
       if (isFile) {
-        child.successCount = file.success.length;
-        child.failedCount = file.failed.length;
-        child.success = file.success;
-        child.failed = file.failed;
+        const toEntry = (
+          event: (typeof file.success)[number],
+          kind: "success" | "failure"
+        ): NormalizedEntry => {
+          const parsed = parseLog(event);
+          return {
+            fnName: parsed.fnName,
+            kind,
+            reason: parsed.reason,
+            description: parsed.description,
+            line: parsed.startLine + 1, // parseLog returns 0-indexed, normalize back to 1-indexed
+            column: parsed.startChar,
+          };
+        };
+        const entries: NormalizedEntry[] = [
+          ...file.success.map((event) => toEntry(event, "success")),
+          ...file.failed.map((event) => toEntry(event, "failure")),
+        ];
+        child.entries = entries;
+        child.successCount = entries.filter((e) => e.kind === "success").length;
+        child.failedCount = entries.filter((e) => e.kind === "failure").length;
       }
 
       current = child;
