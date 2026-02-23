@@ -6,7 +6,6 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 ### Added
 - **Reports sidebar**: Dedicated activity bar tab with reports list and a welcome view for generating reports
 - **"Fix with AI" button in report webview**: Generates a markdown file listing all failed components with their error locations and reasons, including AI instructions for fixing them
-- **Shared `parseLog` utility**: Extracted log event parsing into a reusable module to keep location/reason extraction logic consistent across inlay hints and report views
 
 ### Changed
 - **Normalized report data**: Report webview now receives pre-processed entries instead of raw compiler events, eliminating duplicated parsing logic in the webview
