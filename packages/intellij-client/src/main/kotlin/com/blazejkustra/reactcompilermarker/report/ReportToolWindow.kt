@@ -17,6 +17,7 @@ import com.intellij.ui.jcef.JBCefJSQuery
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
+import java.awt.Cursor
 import java.io.File
 
 class ReportToolWindow private constructor(
@@ -64,6 +65,19 @@ class ReportToolWindow private constructor(
 
         val browser = JBCefBrowser()
         val messageQuery = JBCefJSQuery.create(browser)
+        val cursorQuery = JBCefJSQuery.create(browser)
+
+        cursorQuery.addHandler { cssCursor ->
+            val awtCursor = when (cssCursor) {
+                "pointer" -> Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                "text" -> Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR)
+                "move" -> Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
+                "wait" -> Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+                else -> Cursor.getDefaultCursor()
+            }
+            browser.component.cursor = awtCursor
+            null
+        }
 
         messageQuery.addHandler { arg ->
             try {
@@ -113,6 +127,21 @@ class ReportToolWindow private constructor(
                         };
                     """.trimIndent()
                     cefBrowser.executeJavaScript(bridgeScript, cefBrowser.url, 0)
+
+                    // Fix JCEF cursor: track CSS cursor changes and update Swing component
+                    val cursorScript = """
+                        (function() {
+                            var lastCursor = '';
+                            document.addEventListener('mouseover', function(e) {
+                                var cs = window.getComputedStyle(e.target).cursor;
+                                if (cs !== lastCursor) {
+                                    lastCursor = cs;
+                                    ${cursorQuery.inject("cs")}
+                                }
+                            });
+                        })();
+                    """.trimIndent()
+                    cefBrowser.executeJavaScript(cursorScript, cefBrowser.url, 0)
                 }
             }
         }, browser.cefBrowser)

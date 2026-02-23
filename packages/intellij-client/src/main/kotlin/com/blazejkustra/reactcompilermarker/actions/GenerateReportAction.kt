@@ -10,6 +10,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.ui.UIUtil
+import java.awt.Color
+import javax.swing.UIManager
 
 class GenerateReportAction : AnAction() {
 
@@ -40,8 +43,10 @@ class GenerateReportAction : AnAction() {
         }
 
         val settings = ReactCompilerMarkerSettings.getInstance(project)
+        val headExtra = buildThemeHeadExtra()
         val options = mapOf(
             "root" to basePath,
+            "headExtra" to headExtra,
             "emojis" to mapOf(
                 "success" to settings.successEmoji,
                 "error" to settings.errorEmoji
@@ -97,5 +102,64 @@ class GenerateReportAction : AnAction() {
         val project = e.project
         val settings = project?.let { ReactCompilerMarkerSettings.getInstance(it) }
         e.presentation.isEnabled = settings?.isEnabled == true
+    }
+
+    private fun buildThemeHeadExtra(): String {
+        fun colorToCss(c: Color): String = "rgb(${c.red}, ${c.green}, ${c.blue})"
+        fun colorToCssAlpha(c: Color, alpha: Double): String =
+            "rgba(${c.red}, ${c.green}, ${c.blue}, $alpha)"
+
+        val bg = UIManager.getColor("Panel.background") ?: UIUtil.getPanelBackground()
+        val fg = UIManager.getColor("Label.foreground") ?: UIUtil.getLabelForeground()
+        val border = UIManager.getColor("Borders.color") ?: UIManager.getColor("Component.borderColor") ?: bg
+        val inputBg = UIManager.getColor("TextField.background") ?: bg
+        val inputFg = UIManager.getColor("TextField.foreground") ?: fg
+        val inputBorder = UIManager.getColor("Component.borderColor") ?: border
+        val inputPlaceholder = UIManager.getColor("Component.infoForeground") ?: fg
+        val buttonBg = UIManager.getColor("Button.default.startBackground") ?: UIManager.getColor("Button.startBackground") ?: bg
+        val buttonFg = UIManager.getColor("Button.foreground") ?: fg
+
+        // Use readable text colors based on theme brightness
+        val isDark = (bg.red * 0.299 + bg.green * 0.587 + bg.blue * 0.114) < 128
+
+        // Derive hover colors by shifting brightness
+        fun shiftColor(c: Color, amount: Int): Color = Color(
+            (c.red + amount).coerceIn(0, 255),
+            (c.green + amount).coerceIn(0, 255),
+            (c.blue + amount).coerceIn(0, 255)
+        )
+        val shift = if (isDark) 20 else -20
+        val buttonHoverBg = shiftColor(buttonBg, shift)
+        val listHoverBg = shiftColor(bg, shift)
+        val success = if (isDark) Color(0x73, 0xC9, 0x91) else Color(0x2E, 0x7D, 0x32)
+        val failed = if (isDark) Color(0xF4, 0x87, 0x71) else Color(0xC6, 0x28, 0x28)
+        val fontFamily = UIManager.getFont("Label.font")?.family ?: "sans-serif"
+        val fontSize = UIManager.getFont("Label.font")?.size ?: 13
+        val editorFont = UIManager.getFont("EditorPane.font")?.family ?: "monospace"
+        val editorFontSize = UIManager.getFont("EditorPane.font")?.size ?: 13
+
+        return """
+            <style>
+              html {
+                --rcm-bg: ${colorToCss(bg)};
+                --rcm-foreground: ${colorToCss(fg)};
+                --rcm-border: ${colorToCss(border)};
+                --rcm-input-bg: ${colorToCss(inputBg)};
+                --rcm-input-fg: ${colorToCss(inputFg)};
+                --rcm-input-border: ${colorToCss(inputBorder)};
+                --rcm-input-placeholder: ${colorToCss(inputPlaceholder)};
+                --rcm-button-bg: ${colorToCss(buttonBg)};
+                --rcm-button-fg: ${colorToCss(buttonFg)};
+                --rcm-button-hover-bg: ${colorToCss(buttonHoverBg)};
+                --rcm-list-hover-bg: ${colorToCssAlpha(listHoverBg, 0.5)};
+                --rcm-success: ${colorToCss(success)};
+                --rcm-failed: ${colorToCss(failed)};
+                --rcm-font-family: '${fontFamily}', sans-serif;
+                --rcm-font-size: ${fontSize}px;
+                --rcm-editor-font-family: '${editorFont}', monospace;
+                --rcm-editor-font-size: ${editorFontSize}px;
+              }
+            </style>
+        """.trimIndent()
     }
 }
