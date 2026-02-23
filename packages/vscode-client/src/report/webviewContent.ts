@@ -57,6 +57,20 @@ export function getWebviewHtml(
       opacity: 0.6;
       font-size: 0.85em;
     }
+    .fix-with-ai {
+      margin-top: 8px;
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: var(--vscode-font-size);
+      font-family: var(--vscode-font-family);
+    }
+    .fix-with-ai:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
 
     .toolbar {
       display: flex;
@@ -233,6 +247,7 @@ export function getWebviewHtml(
     <h1>React Compiler Report</h1>
     <div class="summary" id="summary"></div>
     <div class="generated-at" id="generatedAt"></div>
+    <button id="fixWithAI" class="fix-with-ai" title="Generate a markdown file with all failures for AI to fix">Fix with AI</button>
   </div>
   <div class="toolbar">
     <select id="statusFilter" title="Filter by status">
@@ -301,10 +316,9 @@ export function getWebviewHtml(
     function collectErrorTypes(node) {
       const types = new Set();
       function walk(n) {
-        if (n.failed) {
-          for (const f of n.failed) {
-            const reason = f.detail && f.detail.options && f.detail.options.reason;
-            if (reason) types.add(reason);
+        if (n.entries) {
+          for (const e of n.entries) {
+            if (e.kind === 'failure' && e.reason) types.add(e.reason);
           }
         }
         if (n.children) {
@@ -337,8 +351,8 @@ export function getWebviewHtml(
         if (sf === 'failed' && node.failedCount === 0) return false;
         if (sq && !node.path.toLowerCase().includes(sq)) return false;
         if (ef) {
-          const hasMatchingError = node.failed && node.failed.some(function(f) {
-            return f.detail && f.detail.options && f.detail.options.reason === ef;
+          const hasMatchingError = node.entries && node.entries.some(function(e) {
+            return e.kind === 'failure' && e.reason === ef;
           });
           if (!hasMatchingError) return false;
         }
@@ -355,42 +369,29 @@ export function getWebviewHtml(
 
 
     function renderFileDetails(node, depth) {
-      if (!node.success && !node.failed) return '';
+      if (!node.entries || node.entries.length === 0) return '';
       const items = [];
-      if (node.success) {
-        for (const s of node.success) {
-          const name = s.fnName || 'anonymous';
-          const line = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.line : undefined;
-          const col = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.column : 0;
-          const locText = line !== undefined ? ':' + line : '';
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
-            '<span class="detail-icon">' + emojis.success + '</span>' +
-            '<span class="detail-name success-text">' + escapeHtml(name) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
-            '</div>'
-          );
-        }
-      }
-      if (node.failed) {
-        for (const f of node.failed) {
-          const name = f.fnName || 'anonymous';
-          const reason = (f.detail && f.detail.options && f.detail.options.reason) || (f.kind || '');
-          const line = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.line : undefined;
-          const col = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.column : 0;
-          const locText = line !== undefined ? ':' + line : '';
+      for (const e of node.entries) {
+        const name = e.fnName || 'anonymous';
+        const line = e.line;
+        const col = e.column || 0;
+        const locText = line !== undefined ? ':' + line : '';
+        const isSuccess = e.kind === 'success';
 
-          if (filterState.errorTypeFilter && reason !== filterState.errorTypeFilter) continue;
+        if (!isSuccess && filterState.errorTypeFilter && e.reason !== filterState.errorTypeFilter) continue;
 
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
-            '<span class="detail-icon">' + emojis.error + '</span>' +
-            '<span class="detail-name failed-text">' + escapeHtml(name) + '</span>' +
-            '<span class="detail-reason">' + escapeHtml(reason) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
-            '</div>'
-          );
-        }
+        const emoji = isSuccess ? emojis.success : emojis.error;
+        const textClass = isSuccess ? 'success-text' : 'failed-text';
+        const reasonHtml = !isSuccess && e.reason ? '<span class="detail-reason">' + escapeHtml(e.reason) + '</span>' : '';
+
+        items.push(
+          '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
+          '<span class="detail-icon">' + emoji + '</span>' +
+          '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' +
+          reasonHtml +
+          '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
+          '</div>'
+        );
       }
       if (items.length === 0) return '';
       return '<div class="file-details collapsed">' + items.join('') + '</div>';
@@ -542,9 +543,73 @@ export function getWebviewHtml(
       updateCollapseCount();
     }
 
+    function collectFailures(node) {
+      var results = [];
+      if (node.type === 'file' && node.entries) {
+        var failures = node.entries.filter(function(e) { return e.kind === 'failure'; });
+        if (failures.length > 0) {
+          results.push({ path: node.path, entries: failures });
+        }
+      }
+      if (node.children) {
+        for (var i = 0; i < node.children.length; i++) {
+          results = results.concat(collectFailures(node.children[i]));
+        }
+      }
+      return results;
+    }
+
+    function generateFailuresMarkdown() {
+      var failures = collectFailures(reportData.root);
+      if (failures.length === 0) return '# React Compiler Report\\n\\nNo failures found.';
+
+      var lines = ['# React Compiler Report - Failures', ''];
+      lines.push('## Instructions');
+      lines.push('');
+      lines.push('The following components failed to be optimized by the React Compiler. Fix each function one by one so the compiler can successfully memoize them.');
+      lines.push('');
+      lines.push('**Rules:**');
+      lines.push('- Do not change the underlying logic or behavior of any component.');
+      lines.push('- Preserve the existing API (props, return values, side effects).');
+      lines.push('- If a fix requires restructuring, extract helper functions rather than rewriting the component.');
+      lines.push('- If a failure reason is ambiguous or the fix is unclear, ask for clarification before making changes.');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+      lines.push('> Generated: ' + new Date(reportData.generatedAt).toLocaleString());
+      lines.push('> Total failed components: ' + reportData.totals.failedCount);
+      lines.push('');
+
+      for (var i = 0; i < failures.length; i++) {
+        var file = failures[i];
+        lines.push('## ' + file.path);
+        lines.push('');
+        // Derive a component name from the file path
+        var segments = file.path.replace(/\\\\/g, '/').split('/');
+        var baseName = segments[segments.length - 1].replace(/\\.[^.]+$/, '');
+        if (baseName === 'index' && segments.length > 1) baseName = segments[segments.length - 2];
+
+        for (var j = 0; j < file.entries.length; j++) {
+          var e = file.entries[j];
+          var name = e.fnName || baseName;
+          var loc = e.line != null ? ' (line ' + e.line + ')' : '';
+          var msg = e.description || e.reason;
+          lines.push('- **' + name + '**' + loc + ': ' + msg);
+        }
+        lines.push('');
+      }
+
+      return lines.join('\\n');
+    }
+
     // Event listeners
     document.getElementById('expandAll').addEventListener('click', function() { setAllFolders(true); });
     document.getElementById('collapseAll').addEventListener('click', function() { setAllFolders(false); });
+
+    document.getElementById('fixWithAI').addEventListener('click', function() {
+      var markdown = generateFailuresMarkdown();
+      vscode.postMessage({ type: 'fixWithAI', markdown: markdown });
+    });
 
     document.getElementById('statusFilter').addEventListener('change', function(e) {
       filterState.statusFilter = e.target.value;

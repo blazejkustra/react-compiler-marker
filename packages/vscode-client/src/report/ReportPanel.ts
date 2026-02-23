@@ -87,6 +87,14 @@ export class ReportPanel {
         this.panel.webview.postMessage(msg);
         break;
       }
+      case "fixWithAI": {
+        const doc = await vscode.workspace.openTextDocument({
+          language: "markdown",
+          content: message.markdown,
+        });
+        await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
+        break;
+      }
     }
   }
 
