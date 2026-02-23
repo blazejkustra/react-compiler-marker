@@ -9,6 +9,12 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ---
 
+## [1.0.0] - 2026-02-23
+Stable release! 🎉 
+
+- **Report generation and visualization**: Generate a project-wide report of React Compiler optimization results, displayed in an interactive webview with a tree view of files and components
+- **"Fix with AI" button in report webview**: Generates a markdown file listing all failed components with their error locations and reasons, including AI instructions for fixing them
+
 ## [0.0.5] - 2026-01-14
 **Full Changelog**: https://github.com/blazejkustra/react-compiler-marker/compare/intellij-v0.0.4...intellij-v0.0.5
 
