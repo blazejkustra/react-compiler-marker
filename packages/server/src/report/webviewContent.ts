@@ -4,12 +4,14 @@ export interface ReportHtmlOptions {
   data: ReportTreeData;
   emojis: EmojiConfig;
   theme?: "dark" | "light" | "auto";
+  nonce?: string;
   headExtra?: string;
   scriptExtra?: string;
 }
 
 export function getReportHtml(options: ReportHtmlOptions): string {
-  const { data, emojis, theme = "auto", headExtra = "", scriptExtra = "" } = options;
+  const { data, emojis, theme = "auto", nonce, headExtra = "", scriptExtra = "" } = options;
+  const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
   const dataJson = JSON.stringify(data);
   const emojisJson = JSON.stringify(emojis);
   const themeAttr = theme === "auto" ? "" : ` data-theme="${theme}"`;
@@ -21,7 +23,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   ${headExtra}
   <title>React Compiler Report</title>
-  <style>
+  <style${nonceAttr}>
     :root {
       --rcm-bg: #1e1e1e;
       --rcm-foreground: #cccccc;
@@ -115,6 +117,20 @@ export function getReportHtml(options: ReportHtmlOptions): string {
     .generated-at {
       opacity: 0.6;
       font-size: 0.85em;
+    }
+    .fix-with-ai {
+      margin-top: 8px;
+      background: var(--rcm-button-bg);
+      color: var(--rcm-button-fg);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: var(--rcm-font-size);
+      font-family: var(--rcm-font-family);
+    }
+    .fix-with-ai:hover {
+      background: var(--rcm-button-hover-bg);
     }
 
     .toolbar {
@@ -290,6 +306,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
     <h1>React Compiler Report</h1>
     <div class="summary" id="summary"></div>
     <div class="generated-at" id="generatedAt"></div>
+    <button id="fixWithAI" class="fix-with-ai" title="Generate a markdown file with all failures for AI to fix">Fix with AI</button>
   </div>
   <div class="toolbar">
     <select id="statusFilter" title="Filter by status">
@@ -307,7 +324,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
   <div class="tree" id="tree"></div>
   <div class="errors-section" id="errorsSection"></div>
 
-  <script>
+  <script${nonceAttr}>
     ${scriptExtra}
 
     var ideBridge = window.ideBridge || {
@@ -365,11 +382,10 @@ export function getReportHtml(options: ReportHtmlOptions): string {
     function collectErrorTypes(node) {
       var types = new Set();
       function walk(n) {
-        if (n.failed) {
-          for (var i = 0; i < n.failed.length; i++) {
-            var f = n.failed[i];
-            var reason = f.detail && f.detail.options && f.detail.options.reason;
-            if (reason) types.add(reason);
+        if (n.entries) {
+          for (var i = 0; i < n.entries.length; i++) {
+            var e = n.entries[i];
+            if (e.kind === 'failure' && e.reason) types.add(e.reason);
           }
         }
         if (n.children) {
@@ -402,8 +418,8 @@ export function getReportHtml(options: ReportHtmlOptions): string {
         if (sf === 'failed' && node.failedCount === 0) return false;
         if (sq && !node.path.toLowerCase().includes(sq)) return false;
         if (ef) {
-          var hasMatchingError = node.failed && node.failed.some(function(f) {
-            return f.detail && f.detail.options && f.detail.options.reason === ef;
+          var hasMatchingError = node.entries && node.entries.some(function(e) {
+            return e.kind === 'failure' && e.reason === ef;
           });
           if (!hasMatchingError) return false;
         }
@@ -419,44 +435,30 @@ export function getReportHtml(options: ReportHtmlOptions): string {
     }
 
     function renderFileDetails(node, depth) {
-      if (!node.success && !node.failed) return '';
+      if (!node.entries || node.entries.length === 0) return '';
       var items = [];
-      if (node.success) {
-        for (var i = 0; i < node.success.length; i++) {
-          var s = node.success[i];
-          var name = s.fnName || 'anonymous';
-          var line = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.line : undefined;
-          var col = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.column : 0;
-          var locText = line !== undefined ? ':' + line : '';
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
-            '<span class="detail-icon">' + emojis.success + '</span>' +
-            '<span class="detail-name success-text">' + escapeHtml(name) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
-            '</div>'
-          );
-        }
-      }
-      if (node.failed) {
-        for (var j = 0; j < node.failed.length; j++) {
-          var f = node.failed[j];
-          var fname = f.fnName || 'anonymous';
-          var reason = (f.detail && f.detail.options && f.detail.options.reason) || (f.kind || '');
-          var fline = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.line : undefined;
-          var fcol = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.column : 0;
-          var flocText = fline !== undefined ? ':' + fline : '';
+      for (var i = 0; i < node.entries.length; i++) {
+        var e = node.entries[i];
+        var name = e.fnName || 'anonymous';
+        var line = e.line;
+        var col = e.column || 0;
+        var locText = line !== undefined ? ':' + line : '';
+        var isSuccess = e.kind === 'success';
 
-          if (filterState.errorTypeFilter && reason !== filterState.errorTypeFilter) continue;
+        if (!isSuccess && filterState.errorTypeFilter && e.reason !== filterState.errorTypeFilter) continue;
 
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (fline !== undefined ? fline - 1 : '') + '" data-col="' + fcol + '">' +
-            '<span class="detail-icon">' + emojis.error + '</span>' +
-            '<span class="detail-name failed-text">' + escapeHtml(fname) + '</span>' +
-            '<span class="detail-reason">' + escapeHtml(reason) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(flocText) + '</span>' +
-            '</div>'
-          );
-        }
+        var emoji = isSuccess ? emojis.success : emojis.error;
+        var textClass = isSuccess ? 'success-text' : 'failed-text';
+        var reasonHtml = !isSuccess && e.reason ? '<span class="detail-reason">' + escapeHtml(e.reason) + '</span>' : '';
+
+        items.push(
+          '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
+          '<span class="detail-icon">' + emoji + '</span>' +
+          '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' +
+          reasonHtml +
+          '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
+          '</div>'
+        );
       }
       if (items.length === 0) return '';
       return '<div class="file-details collapsed">' + items.join('') + '</div>';
@@ -609,9 +611,73 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       updateCollapseCount();
     }
 
+    function collectFailures(node) {
+      var results = [];
+      if (node.type === 'file' && node.entries) {
+        var failures = node.entries.filter(function(e) { return e.kind === 'failure'; });
+        if (failures.length > 0) {
+          results.push({ path: node.path, entries: failures });
+        }
+      }
+      if (node.children) {
+        for (var i = 0; i < node.children.length; i++) {
+          results = results.concat(collectFailures(node.children[i]));
+        }
+      }
+      return results;
+    }
+
+    function generateFailuresMarkdown() {
+      var failures = collectFailures(reportData.root);
+      if (failures.length === 0) return '# React Compiler Report\\n\\nNo failures found.';
+
+      var lines = ['# React Compiler Report - Failures', ''];
+      lines.push('## Instructions');
+      lines.push('');
+      lines.push('The following components failed to be optimized by the React Compiler. Fix each function one by one so the compiler can successfully memoize them.');
+      lines.push('');
+      lines.push('**Rules:**');
+      lines.push('- Do not change the underlying logic or behavior of any component.');
+      lines.push('- Preserve the existing API (props, return values, side effects).');
+      lines.push('- If a fix requires restructuring, extract helper functions rather than rewriting the component.');
+      lines.push('- If a failure reason is ambiguous or the fix is unclear, ask for clarification before making changes.');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+      lines.push('> Generated: ' + new Date(reportData.generatedAt).toLocaleString());
+      lines.push('> Total failed components: ' + reportData.totals.failedCount);
+      lines.push('');
+
+      for (var i = 0; i < failures.length; i++) {
+        var file = failures[i];
+        lines.push('## ' + file.path);
+        lines.push('');
+        // Derive a component name from the file path
+        var segments = file.path.replace(/\\\\/g, '/').split('/');
+        var baseName = segments[segments.length - 1].replace(/\\.[^.]+$/, '');
+        if (baseName === 'index' && segments.length > 1) baseName = segments[segments.length - 2];
+
+        for (var j = 0; j < file.entries.length; j++) {
+          var e = file.entries[j];
+          var name = e.fnName || baseName;
+          var loc = e.line != null ? ' (line ' + e.line + ')' : '';
+          var msg = e.description || e.reason;
+          lines.push('- **' + name + '**' + loc + ': ' + msg);
+        }
+        lines.push('');
+      }
+
+      return lines.join('\\n');
+    }
+
     // Event listeners
     document.getElementById('expandAll').addEventListener('click', function() { setAllFolders(true); });
     document.getElementById('collapseAll').addEventListener('click', function() { setAllFolders(false); });
+
+    document.getElementById('fixWithAI').addEventListener('click', function() {
+      var markdown = generateFailuresMarkdown();
+      ideBridge.postMessage({ type: 'fixWithAI', markdown: markdown });
+    });
 
     document.getElementById('statusFilter').addEventListener('change', function(e) {
       filterState.statusFilter = e.target.value;

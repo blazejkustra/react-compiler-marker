@@ -5,7 +5,8 @@
   "main": "./out/server.js",
   "exports": {
     ".": "./out/server.js",
-    "./src/report": "./out/report/index.js"
+    "./src/report": "./out/report/index.js",
+    "./src/parseLog": "./out/parseLog.js"
   },
   "bin": {
     "react-compiler-marker-lsp": "./bin/server.js"

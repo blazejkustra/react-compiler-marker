@@ -64,7 +64,7 @@ export class ReportPanel {
 
     const headExtra = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';" />
     <style nonce="${nonce}">
-      :root {
+      body {
         --rcm-bg: var(--vscode-editor-background);
         --rcm-foreground: var(--vscode-foreground);
         --rcm-border: var(--vscode-widget-border, var(--vscode-panel-border));
@@ -97,6 +97,7 @@ export class ReportPanel {
     return getReportHtml({
       data: this.data,
       emojis: this.emojis,
+      nonce,
       headExtra,
       scriptExtra,
     });
@@ -121,6 +122,14 @@ export class ReportPanel {
       }
       case "requestData":
         break;
+      case "fixWithAI": {
+        const doc = await vscode.workspace.openTextDocument({
+          language: "markdown",
+          content: message.markdown,
+        });
+        await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
+        break;
+      }
     }
   }
 
