@@ -47,6 +47,8 @@ class GenerateReportAction : AnAction() {
         val options = mapOf(
             "root" to basePath,
             "headExtra" to headExtra,
+            "excludeDirs" to settings.excludedDirectoriesList,
+            "includeExtensions" to settings.supportedExtensionsList,
             "emojis" to mapOf(
                 "success" to settings.successEmoji,
                 "error" to settings.errorEmoji
