@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
-import type { ReportTreeData, EmojiConfig, WebviewMessage } from "@react-compiler-marker/server/src/report";
+import type {
+  ReportTreeData,
+  EmojiConfig,
+  WebviewMessage,
+} from "@react-compiler-marker/server/src/report";
 import { getReportHtml } from "@react-compiler-marker/server/src/report";
 
 export class ReportPanel {
