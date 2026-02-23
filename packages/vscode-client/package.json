@@ -55,6 +55,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "react-compiler-marker.reportsView",
+        "contents": "No reports generated yet.\n\nScan your project to see which components are optimized by the React Compiler.\n[$(add) Generate Report](command:react-compiler-marker.generateReport)"
+      }
+    ],
     "commands": [
       {
         "command": "react-compiler-marker.activate",
