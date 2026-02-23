@@ -39,7 +39,10 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
       }
 
       if (isFile) {
-        const toEntry = (event: (typeof file.success)[number], kind: "success" | "failure"): NormalizedEntry => {
+        const toEntry = (
+          event: (typeof file.success)[number],
+          kind: "success" | "failure"
+        ): NormalizedEntry => {
           const parsed = parseLog(event);
           return {
             fnName: parsed.fnName,
