@@ -21,45 +21,8 @@ export function getReportHtml(options: ReportHtmlOptions): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  ${headExtra}
   <title>React Compiler Report</title>
   <style${nonceAttr}>
-    :root {
-      --rcm-bg: #1e1e1e;
-      --rcm-foreground: #cccccc;
-      --rcm-border: #3c3c3c;
-      --rcm-input-bg: #3c3c3c;
-      --rcm-input-fg: #cccccc;
-      --rcm-input-border: transparent;
-      --rcm-input-placeholder: #8a8a8a;
-      --rcm-button-bg: #3c3c3c;
-      --rcm-button-fg: #cccccc;
-      --rcm-button-hover-bg: #505050;
-      --rcm-list-hover-bg: rgba(255, 255, 255, 0.05);
-      --rcm-success: #4caf50;
-      --rcm-failed: #f44336;
-      --rcm-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      --rcm-font-size: 13px;
-      --rcm-editor-font-family: 'SF Mono', Monaco, Menlo, Consolas, 'Courier New', monospace;
-      --rcm-editor-font-size: 13px;
-    }
-
-    html[data-theme="light"] {
-      --rcm-bg: #ffffff;
-      --rcm-foreground: #333333;
-      --rcm-border: #e0e0e0;
-      --rcm-input-bg: #ffffff;
-      --rcm-input-fg: #333333;
-      --rcm-input-border: #cccccc;
-      --rcm-input-placeholder: #999999;
-      --rcm-button-bg: #e8e8e8;
-      --rcm-button-fg: #333333;
-      --rcm-button-hover-bg: #d0d0d0;
-      --rcm-list-hover-bg: rgba(0, 0, 0, 0.04);
-      --rcm-success: #2e7d32;
-      --rcm-failed: #c62828;
-    }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: var(--rcm-font-family);
@@ -282,6 +245,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       margin-left: 8px;
     }
   </style>
+  ${headExtra}
 </head>
 <body>
   <div class="header">
@@ -307,11 +271,6 @@ export function getReportHtml(options: ReportHtmlOptions): string {
   <div class="errors-section" id="errorsSection"></div>
 
   <script${nonceAttr}>
-    // Auto-detect OS light mode when no explicit theme is set
-    if (!document.documentElement.hasAttribute('data-theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-
     ${scriptExtra}
 
     var ideBridge = window.ideBridge || {
@@ -426,7 +385,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       var items = [];
       for (var i = 0; i < node.entries.length; i++) {
         var e = node.entries[i];
-        var name = e.fnName || 'anonymous';
+        var name = e.fnName;
         var line = e.line;
         var col = e.column || 0;
         var locText = line !== undefined ? ':' + line : '';
@@ -436,12 +395,13 @@ export function getReportHtml(options: ReportHtmlOptions): string {
 
         var emoji = isSuccess ? emojis.success : emojis.error;
         var textClass = isSuccess ? 'success-text' : 'failed-text';
+        var nameHtml = name ? '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' : '';
         var reasonHtml = !isSuccess && e.reason ? '<span class="detail-reason">' + escapeHtml(e.reason) + '</span>' : '';
 
         items.push(
           '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
           '<span class="detail-icon">' + emoji + '</span>' +
-          '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' +
+          nameHtml +
           reasonHtml +
           '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
           '</div>'
