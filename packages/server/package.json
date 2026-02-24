@@ -5,7 +5,7 @@
   "main": "./out/server.js",
   "exports": {
     ".": "./out/server.js",
-    "./src/report": "./out/report.js"
+    "./src/report": "./out/report/index.js"
   },
   "bin": {
     "react-compiler-marker-lsp": "./bin/server.js"

@@ -1,35 +1,41 @@
 import type { ReportTreeData, EmojiConfig } from "./types";
 
-export function getWebviewHtml(
-  data: ReportTreeData,
-  nonce: string,
-  cspSource: string,
-  emojis: EmojiConfig
-): string {
+export interface ReportHtmlOptions {
+  data: ReportTreeData;
+  emojis: EmojiConfig;
+  theme?: "dark" | "light" | "auto";
+  nonce?: string;
+  headExtra?: string;
+  scriptExtra?: string;
+}
+
+export function getReportHtml(options: ReportHtmlOptions): string {
+  const { data, emojis, theme = "auto", nonce, headExtra = "", scriptExtra = "" } = options;
+  const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
   const dataJson = JSON.stringify(data);
   const emojisJson = JSON.stringify(emojis);
+  const themeAttr = theme === "auto" ? "" : ` data-theme="${theme}"`;
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en"${themeAttr}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';" />
   <title>React Compiler Report</title>
-  <style nonce="${nonce}">
+  <style${nonceAttr}>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-foreground);
-      background: var(--vscode-editor-background);
+      font-family: var(--rcm-font-family);
+      font-size: var(--rcm-font-size);
+      color: var(--rcm-foreground);
+      background: var(--rcm-bg);
       padding: 16px;
     }
 
     .header {
       margin-bottom: 16px;
       padding-bottom: 12px;
-      border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+      border-bottom: 1px solid var(--rcm-border);
     }
     .header h1 {
       font-size: 1.4em;
@@ -57,6 +63,20 @@ export function getWebviewHtml(
       opacity: 0.6;
       font-size: 0.85em;
     }
+    .fix-with-ai {
+      margin-top: 8px;
+      background: var(--rcm-button-bg);
+      color: var(--rcm-button-fg);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: var(--rcm-font-size);
+      font-family: var(--rcm-font-family);
+    }
+    .fix-with-ai:hover {
+      background: var(--rcm-button-hover-bg);
+    }
 
     .toolbar {
       display: flex;
@@ -67,38 +87,38 @@ export function getWebviewHtml(
     }
     .toolbar select,
     .toolbar input {
-      background: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border, transparent);
+      background: var(--rcm-input-bg);
+      color: var(--rcm-input-fg);
+      border: 1px solid var(--rcm-input-border);
       padding: 4px 8px;
       border-radius: 2px;
-      font-size: var(--vscode-font-size);
-      font-family: var(--vscode-font-family);
+      font-size: var(--rcm-font-size);
+      font-family: var(--rcm-font-family);
     }
     .toolbar input {
       flex: 1;
       min-width: 150px;
     }
     .toolbar input::placeholder {
-      color: var(--vscode-input-placeholderForeground);
+      color: var(--rcm-input-placeholder);
     }
     .toolbar button {
-      background: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
-      color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+      background: var(--rcm-button-bg);
+      color: var(--rcm-button-fg);
       border: none;
       padding: 4px 10px;
       border-radius: 2px;
       cursor: pointer;
-      font-size: var(--vscode-font-size);
-      font-family: var(--vscode-font-family);
+      font-size: var(--rcm-font-size);
+      font-family: var(--rcm-font-family);
     }
     .toolbar button:hover {
-      background: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+      background: var(--rcm-button-hover-bg);
     }
 
     .tree {
-      font-family: var(--vscode-editor-font-family, monospace);
-      font-size: var(--vscode-editor-font-size, 13px);
+      font-family: var(--rcm-editor-font-family);
+      font-size: var(--rcm-editor-font-size);
     }
     .tree-node {
       user-select: none;
@@ -114,7 +134,7 @@ export function getWebviewHtml(
       border-radius: 3px;
     }
     .node-row:hover {
-      background: var(--vscode-list-hoverBackground);
+      background: var(--rcm-list-hover-bg);
     }
     .toggle {
       width: 16px;
@@ -135,17 +155,15 @@ export function getWebviewHtml(
       text-overflow: ellipsis;
     }
     .file-name {
-      color: var(--vscode-foreground);
+      color: var(--rcm-foreground);
     }
     .file-name:hover {
       text-decoration: underline;
     }
     .folder-name {
-      color: var(--vscode-foreground);
+      color: var(--rcm-foreground);
       font-weight: 500;
     }
-
-
 
     .counts {
       font-size: 0.85em;
@@ -178,7 +196,7 @@ export function getWebviewHtml(
       padding-right: 4px;
     }
     .detail-row:hover {
-      background: var(--vscode-list-hoverBackground);
+      background: var(--rcm-list-hover-bg);
       text-decoration: underline;
     }
     .detail-icon {
@@ -199,13 +217,13 @@ export function getWebviewHtml(
       font-size: 0.85em;
       flex-shrink: 0;
     }
-    .success-text { color: var(--vscode-testing-iconPassed, #4caf50); }
-    .failed-text { color: var(--vscode-testing-iconFailed, #f44336); }
+    .success-text { color: var(--rcm-success); }
+    .failed-text { color: var(--rcm-failed); }
 
     .errors-section {
       margin-top: 16px;
       padding-top: 12px;
-      border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+      border-top: 1px solid var(--rcm-border);
     }
     .errors-section h2 {
       font-size: 1.1em;
@@ -217,7 +235,7 @@ export function getWebviewHtml(
       border-radius: 3px;
     }
     .error-item:hover {
-      background: var(--vscode-list-hoverBackground);
+      background: var(--rcm-list-hover-bg);
     }
     .error-path {
       font-weight: 500;
@@ -227,12 +245,14 @@ export function getWebviewHtml(
       margin-left: 8px;
     }
   </style>
+  ${headExtra}
 </head>
 <body>
   <div class="header">
     <h1>React Compiler Report</h1>
     <div class="summary" id="summary"></div>
     <div class="generated-at" id="generatedAt"></div>
+    <button id="fixWithAI" class="fix-with-ai" title="Generate a markdown file with all failures for AI to fix">Fix with AI</button>
   </div>
   <div class="toolbar">
     <select id="statusFilter" title="Filter by status">
@@ -250,21 +270,28 @@ export function getWebviewHtml(
   <div class="tree" id="tree"></div>
   <div class="errors-section" id="errorsSection"></div>
 
-  <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
-    const reportData = ${dataJson};
-    const emojis = ${emojisJson};
+  <script${nonceAttr}>
+    ${scriptExtra}
+
+    var ideBridge = window.ideBridge || {
+      postMessage: function(msg) { console.log('[RCM]', JSON.stringify(msg)); },
+      getState: function() { try { return JSON.parse(sessionStorage.getItem('rcm-state') || '{}'); } catch(e) { return {}; } },
+      setState: function(s) { try { sessionStorage.setItem('rcm-state', JSON.stringify(s)); } catch(e) {} }
+    };
+
+    var reportData = ${dataJson};
+    var emojis = ${emojisJson};
 
     // Restore filter state
-    const savedState = vscode.getState() || {};
-    const filterState = {
+    var savedState = ideBridge.getState() || {};
+    var filterState = {
       statusFilter: savedState.statusFilter || 'all',
       searchQuery: savedState.searchQuery || '',
       errorTypeFilter: savedState.errorTypeFilter || '',
     };
 
     function saveFilterState() {
-      vscode.setState(filterState);
+      ideBridge.setState(filterState);
     }
 
     function escapeHtml(text) {
@@ -285,11 +312,11 @@ export function getWebviewHtml(
     }
 
     function postOpenFile(filePath, line, column) {
-      vscode.postMessage({ type: 'openFile', path: filePath, line: line, column: column });
+      ideBridge.postMessage({ type: 'openFile', path: filePath, line: line, column: column });
     }
 
     function renderSummary() {
-      const t = reportData.totals;
+      var t = reportData.totals;
       document.getElementById('summary').innerHTML =
         '<div class="stat"><span class="stat-value">' + t.filesScanned + '</span><span class="stat-label">scanned</span></div>' +
         '<div class="stat"><span class="stat-value success-text">' + t.successCount + ' ' + emojis.success + '</span><span class="stat-label">compiled</span></div>' +
@@ -299,16 +326,16 @@ export function getWebviewHtml(
     }
 
     function collectErrorTypes(node) {
-      const types = new Set();
+      var types = new Set();
       function walk(n) {
-        if (n.failed) {
-          for (const f of n.failed) {
-            const reason = f.detail && f.detail.options && f.detail.options.reason;
-            if (reason) types.add(reason);
+        if (n.entries) {
+          for (var i = 0; i < n.entries.length; i++) {
+            var e = n.entries[i];
+            if (e.kind === 'failure' && e.reason) types.add(e.reason);
           }
         }
         if (n.children) {
-          for (const c of n.children) walk(c);
+          for (var j = 0; j < n.children.length; j++) walk(n.children[j]);
         }
       }
       walk(node);
@@ -316,29 +343,29 @@ export function getWebviewHtml(
     }
 
     function populateErrorTypeFilter() {
-      const select = document.getElementById('errorTypeFilter');
-      const types = collectErrorTypes(reportData.root);
-      for (const t of types) {
-        const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = t;
+      var select = document.getElementById('errorTypeFilter');
+      var types = collectErrorTypes(reportData.root);
+      for (var i = 0; i < types.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = types[i];
+        opt.textContent = types[i];
         select.appendChild(opt);
       }
       select.value = filterState.errorTypeFilter;
     }
 
     function matchesFilter(node) {
-      const sf = filterState.statusFilter;
-      const sq = filterState.searchQuery.toLowerCase();
-      const ef = filterState.errorTypeFilter;
+      var sf = filterState.statusFilter;
+      var sq = filterState.searchQuery.toLowerCase();
+      var ef = filterState.errorTypeFilter;
 
       if (node.type === 'file') {
         if (sf === 'compiled' && node.successCount === 0) return false;
         if (sf === 'failed' && node.failedCount === 0) return false;
         if (sq && !node.path.toLowerCase().includes(sq)) return false;
         if (ef) {
-          const hasMatchingError = node.failed && node.failed.some(function(f) {
-            return f.detail && f.detail.options && f.detail.options.reason === ef;
+          var hasMatchingError = node.entries && node.entries.some(function(e) {
+            return e.kind === 'failure' && e.reason === ef;
           });
           if (!hasMatchingError) return false;
         }
@@ -353,44 +380,32 @@ export function getWebviewHtml(
       return node.children.some(function(c) { return hasVisibleDescendant(c); });
     }
 
-
     function renderFileDetails(node, depth) {
-      if (!node.success && !node.failed) return '';
-      const items = [];
-      if (node.success) {
-        for (const s of node.success) {
-          const name = s.fnName || 'anonymous';
-          const line = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.line : undefined;
-          const col = s.fnLoc && s.fnLoc.start ? s.fnLoc.start.column : 0;
-          const locText = line !== undefined ? ':' + line : '';
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
-            '<span class="detail-icon">' + emojis.success + '</span>' +
-            '<span class="detail-name success-text">' + escapeHtml(name) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
-            '</div>'
-          );
-        }
-      }
-      if (node.failed) {
-        for (const f of node.failed) {
-          const name = f.fnName || 'anonymous';
-          const reason = (f.detail && f.detail.options && f.detail.options.reason) || (f.kind || '');
-          const line = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.line : undefined;
-          const col = f.fnLoc && f.fnLoc.start ? f.fnLoc.start.column : 0;
-          const locText = line !== undefined ? ':' + line : '';
+      if (!node.entries || node.entries.length === 0) return '';
+      var items = [];
+      for (var i = 0; i < node.entries.length; i++) {
+        var e = node.entries[i];
+        var name = e.fnName;
+        var line = e.line;
+        var col = e.column || 0;
+        var locText = line !== undefined ? ':' + line : '';
+        var isSuccess = e.kind === 'success';
 
-          if (filterState.errorTypeFilter && reason !== filterState.errorTypeFilter) continue;
+        if (!isSuccess && filterState.errorTypeFilter && e.reason !== filterState.errorTypeFilter) continue;
 
-          items.push(
-            '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
-            '<span class="detail-icon">' + emojis.error + '</span>' +
-            '<span class="detail-name failed-text">' + escapeHtml(name) + '</span>' +
-            '<span class="detail-reason">' + escapeHtml(reason) + '</span>' +
-            '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
-            '</div>'
-          );
-        }
+        var emoji = isSuccess ? emojis.success : emojis.error;
+        var textClass = isSuccess ? 'success-text' : 'failed-text';
+        var nameHtml = name ? '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' : '';
+        var reasonHtml = !isSuccess && e.reason ? '<span class="detail-reason">' + escapeHtml(e.reason) + '</span>' : '';
+
+        items.push(
+          '<div class="detail-row" data-path="' + escapeAttr(node.path) + '" data-line="' + (line !== undefined ? line - 1 : '') + '" data-col="' + col + '">' +
+          '<span class="detail-icon">' + emoji + '</span>' +
+          nameHtml +
+          reasonHtml +
+          '<span class="detail-loc">' + escapeHtml(locText) + '</span>' +
+          '</div>'
+        );
       }
       if (items.length === 0) return '';
       return '<div class="file-details collapsed">' + items.join('') + '</div>';
@@ -400,12 +415,12 @@ export function getWebviewHtml(
       if (!hasVisibleDescendant(node) && node.type === 'folder') return '';
       if (node.type === 'file' && !matchesFilter(node)) return '';
 
-      const isFolder = node.type === 'folder';
-      const toggleIcon = isFolder ? '\\u25B6' : '';
-      const nodeIcon = isFolder ? '\\uD83D\\uDCC1' : '\\uD83D\\uDCC4';
-      const nameClass = isFolder ? 'folder-name' : 'file-name';
+      var isFolder = node.type === 'folder';
+      var toggleIcon = isFolder ? '\\u25B6' : '';
+      var nodeIcon = isFolder ? '\\uD83D\\uDCC1' : '\\uD83D\\uDCC4';
+      var nameClass = isFolder ? 'folder-name' : 'file-name';
 
-      let html = '<div class="tree-node" data-type="' + node.type + '">';
+      var html = '<div class="tree-node" data-type="' + node.type + '">';
       html += '<div class="node-row">';
       html += '<span class="toggle">' + toggleIcon + '</span>';
       html += '<span class="icon">' + nodeIcon + '</span>';
@@ -419,8 +434,8 @@ export function getWebviewHtml(
 
       if (isFolder && node.children) {
         html += '<div class="children collapsed">';
-        for (const child of node.children) {
-          html += renderNode(child, depth + 1);
+        for (var i = 0; i < node.children.length; i++) {
+          html += renderNode(node.children[i], depth + 1);
         }
         html += '</div>';
       } else if (!isFolder) {
@@ -432,11 +447,11 @@ export function getWebviewHtml(
     }
 
     function renderTree() {
-      const treeEl = document.getElementById('tree');
-      let html = '';
+      var treeEl = document.getElementById('tree');
+      var html = '';
       if (reportData.root.children) {
-        for (const child of reportData.root.children) {
-          html += renderNode(child, 0);
+        for (var i = 0; i < reportData.root.children.length; i++) {
+          html += renderNode(reportData.root.children[i], 0);
         }
       }
       treeEl.innerHTML = html || '<div style="opacity:0.6;padding:8px;">No matching files found.</div>';
@@ -444,13 +459,14 @@ export function getWebviewHtml(
     }
 
     function renderErrors() {
-      const section = document.getElementById('errorsSection');
+      var section = document.getElementById('errorsSection');
       if (!reportData.errors || reportData.errors.length === 0) {
         section.style.display = 'none';
         return;
       }
-      let html = '<h2>Errors (' + reportData.errors.length + ')</h2>';
-      for (const err of reportData.errors) {
+      var html = '<h2>Errors (' + reportData.errors.length + ')</h2>';
+      for (var i = 0; i < reportData.errors.length; i++) {
+        var err = reportData.errors[i];
         html += '<div class="error-item" data-path="' + escapeAttr(err.path) + '">' +
           '<span class="error-path">' + escapeHtml(err.path) + '</span>' +
           '<span class="error-message">' + escapeHtml(err.message) + '</span>' +
@@ -467,26 +483,26 @@ export function getWebviewHtml(
     function attachTreeListeners() {
       document.querySelectorAll('.node-row').forEach(function(row) {
         row.addEventListener('click', function(e) {
-          const treeNode = row.parentElement;
-          const type = treeNode.dataset.type;
+          var treeNode = row.parentElement;
+          var type = treeNode.dataset.type;
 
           if (type === 'folder') {
-            const children = treeNode.querySelector(':scope > .children');
-            const toggle = row.querySelector('.toggle');
+            var children = treeNode.querySelector(':scope > .children');
+            var toggle = row.querySelector('.toggle');
             if (children) {
-              const isCollapsed = children.classList.toggle('collapsed');
+              var isCollapsed = children.classList.toggle('collapsed');
               toggle.textContent = isCollapsed ? '\\u25B6' : '\\u25BC';
             }
             updateCollapseCount();
           } else {
-            const details = treeNode.querySelector(':scope > .file-details');
+            var details = treeNode.querySelector(':scope > .file-details');
             if (details) {
-              const detailRows = details.querySelectorAll('.detail-row');
+              var detailRows = details.querySelectorAll('.detail-row');
               if (detailRows.length === 1) {
-                const dr = detailRows[0];
-                const path = dr.dataset.path;
-                const line = dr.dataset.line !== '' ? parseInt(dr.dataset.line, 10) : undefined;
-                const col = dr.dataset.col ? parseInt(dr.dataset.col, 10) : 0;
+                var dr = detailRows[0];
+                var path = dr.dataset.path;
+                var line = dr.dataset.line !== '' ? parseInt(dr.dataset.line, 10) : undefined;
+                var col = dr.dataset.col ? parseInt(dr.dataset.col, 10) : 0;
                 postOpenFile(path, line, col);
               } else {
                 details.classList.toggle('collapsed');
@@ -500,9 +516,9 @@ export function getWebviewHtml(
       document.querySelectorAll('.detail-row').forEach(function(row) {
         row.addEventListener('click', function(e) {
           e.stopPropagation();
-          const path = row.dataset.path;
-          const line = row.dataset.line !== '' ? parseInt(row.dataset.line, 10) : undefined;
-          const col = row.dataset.col ? parseInt(row.dataset.col, 10) : 0;
+          var path = row.dataset.path;
+          var line = row.dataset.line !== '' ? parseInt(row.dataset.line, 10) : undefined;
+          var col = row.dataset.col ? parseInt(row.dataset.col, 10) : 0;
           postOpenFile(path, line, col);
         });
       });
@@ -511,17 +527,17 @@ export function getWebviewHtml(
     }
 
     function updateCollapseCount() {
-      const expandedFolders = document.querySelectorAll('.children:not(.collapsed)').length;
-      const expandedDetails = document.querySelectorAll('.file-details:not(.collapsed)').length;
-      const total = expandedFolders + expandedDetails;
-      const btn = document.getElementById('collapseAll');
+      var expandedFolders = document.querySelectorAll('.children:not(.collapsed)').length;
+      var expandedDetails = document.querySelectorAll('.file-details:not(.collapsed)').length;
+      var total = expandedFolders + expandedDetails;
+      var btn = document.getElementById('collapseAll');
       btn.textContent = total > 0 ? 'Collapse All (' + total + ')' : 'Collapse All';
     }
 
     function setAllFolders(expand) {
       document.querySelectorAll('.tree-node[data-type="folder"]').forEach(function(node) {
-        const children = node.querySelector(':scope > .children');
-        const toggle = node.querySelector('.toggle');
+        var children = node.querySelector(':scope > .children');
+        var toggle = node.querySelector('.toggle');
         if (children) {
           if (expand) {
             children.classList.remove('collapsed');
@@ -542,9 +558,73 @@ export function getWebviewHtml(
       updateCollapseCount();
     }
 
+    function collectFailures(node) {
+      var results = [];
+      if (node.type === 'file' && node.entries) {
+        var failures = node.entries.filter(function(e) { return e.kind === 'failure'; });
+        if (failures.length > 0) {
+          results.push({ path: node.path, entries: failures });
+        }
+      }
+      if (node.children) {
+        for (var i = 0; i < node.children.length; i++) {
+          results = results.concat(collectFailures(node.children[i]));
+        }
+      }
+      return results;
+    }
+
+    function generateFailuresMarkdown() {
+      var failures = collectFailures(reportData.root);
+      if (failures.length === 0) return '# React Compiler Report\\n\\nNo failures found.';
+
+      var lines = ['# React Compiler Report - Failures', ''];
+      lines.push('## Instructions');
+      lines.push('');
+      lines.push('The following components failed to be optimized by the React Compiler. Fix each function one by one so the compiler can successfully memoize them.');
+      lines.push('');
+      lines.push('**Rules:**');
+      lines.push('- Do not change the underlying logic or behavior of any component.');
+      lines.push('- Preserve the existing API (props, return values, side effects).');
+      lines.push('- If a fix requires restructuring, extract helper functions rather than rewriting the component.');
+      lines.push('- If a failure reason is ambiguous or the fix is unclear, ask for clarification before making changes.');
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+      lines.push('> Generated: ' + new Date(reportData.generatedAt).toLocaleString());
+      lines.push('> Total failed components: ' + reportData.totals.failedCount);
+      lines.push('');
+
+      for (var i = 0; i < failures.length; i++) {
+        var file = failures[i];
+        lines.push('## ' + file.path);
+        lines.push('');
+        // Derive a component name from the file path
+        var segments = file.path.replace(/\\\\/g, '/').split('/');
+        var baseName = segments[segments.length - 1].replace(/\\.[^.]+$/, '');
+        if (baseName === 'index' && segments.length > 1) baseName = segments[segments.length - 2];
+
+        for (var j = 0; j < file.entries.length; j++) {
+          var e = file.entries[j];
+          var name = e.fnName || baseName;
+          var loc = e.line != null ? ' (line ' + e.line + ')' : '';
+          var msg = e.description || e.reason;
+          lines.push('- **' + name + '**' + loc + ': ' + msg);
+        }
+        lines.push('');
+      }
+
+      return lines.join('\\n');
+    }
+
     // Event listeners
     document.getElementById('expandAll').addEventListener('click', function() { setAllFolders(true); });
     document.getElementById('collapseAll').addEventListener('click', function() { setAllFolders(false); });
+
+    document.getElementById('fixWithAI').addEventListener('click', function() {
+      var markdown = generateFailuresMarkdown();
+      ideBridge.postMessage({ type: 'fixWithAI', markdown: markdown });
+    });
 
     document.getElementById('statusFilter').addEventListener('change', function(e) {
       filterState.statusFilter = e.target.value;
@@ -558,7 +638,7 @@ export function getWebviewHtml(
       renderTree();
     });
 
-    let searchTimeout;
+    var searchTimeout;
     document.getElementById('searchInput').addEventListener('input', function(e) {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(function() {

@@ -2,6 +2,8 @@
 
 **Universal IDE extension that shows which React components are optimized by the [React Compiler](https://react.dev/learn/react-compiler)**. See at a glance which components get automatically memoized ✨ and which ones have issues preventing optimization 🚫
 
+![Showcase](images/showcase.png)
+
 ## Features
 
 - Visual emoji markers next to React components (customizable)
@@ -19,8 +21,6 @@
 | WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
 | Neovim | [Setup instructions](packages/nvim-client/README.md) |
 | Zed | [Setup instructions](packages/zed-client/README.md) |
-
-![Showcase](images/showcase.png)
 
 ## Project Structure
 

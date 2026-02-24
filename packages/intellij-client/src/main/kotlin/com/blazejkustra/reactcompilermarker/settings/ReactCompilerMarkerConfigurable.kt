@@ -16,6 +16,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
     private var successEmojiField: JBTextField? = null
     private var errorEmojiField: JBTextField? = null
     private var babelPluginPathField: JBTextField? = null
+    private var excludedDirectoriesField: JBTextField? = null
+    private var supportedExtensionsField: JBTextField? = null
 
     override fun getDisplayName(): String = "React Compiler Marker"
 
@@ -24,6 +26,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         successEmojiField = JBTextField()
         errorEmojiField = JBTextField()
         babelPluginPathField = JBTextField()
+        excludedDirectoriesField = JBTextField()
+        supportedExtensionsField = JBTextField()
 
         return FormBuilder.createFormBuilder()
             .addComponent(enabledCheckbox!!)
@@ -32,6 +36,9 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
             .addLabeledComponent(JBLabel("Error emoji:"), errorEmojiField!!, 1, false)
             .addSeparator()
             .addLabeledComponent(JBLabel("Babel plugin path:"), babelPluginPathField!!, 1, false)
+            .addSeparator()
+            .addLabeledComponent(JBLabel("Excluded directories (comma-separated):"), excludedDirectoriesField!!, 1, false)
+            .addLabeledComponent(JBLabel("Supported extensions (comma-separated):"), supportedExtensionsField!!, 1, false)
             .addComponentFillVertically(JPanel(), 0)
             .panel
     }
@@ -41,7 +48,9 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         return enabledCheckbox?.isSelected != settings.isEnabled ||
                successEmojiField?.text != settings.successEmoji ||
                errorEmojiField?.text != settings.errorEmoji ||
-               babelPluginPathField?.text != settings.babelPluginPath
+               babelPluginPathField?.text != settings.babelPluginPath ||
+               excludedDirectoriesField?.text != settings.excludedDirectories ||
+               supportedExtensionsField?.text != settings.supportedExtensions
     }
 
     override fun apply() {
@@ -50,6 +59,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         settings.successEmoji = successEmojiField?.text ?: "\u2728"
         settings.errorEmoji = errorEmojiField?.text ?: "\uD83D\uDEAB"
         settings.babelPluginPath = babelPluginPathField?.text ?: "node_modules/babel-plugin-react-compiler"
+        settings.excludedDirectories = excludedDirectoriesField?.text ?: ""
+        settings.supportedExtensions = supportedExtensionsField?.text ?: ""
 
         // Update LSP server configuration
         val lspManager = ReactCompilerLspServerManager.getInstance(project)
@@ -62,6 +73,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         successEmojiField?.text = settings.successEmoji
         errorEmojiField?.text = settings.errorEmoji
         babelPluginPathField?.text = settings.babelPluginPath
+        excludedDirectoriesField?.text = settings.excludedDirectories
+        supportedExtensionsField?.text = settings.supportedExtensions
     }
 
     override fun disposeUIResources() {
@@ -69,5 +82,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         successEmojiField = null
         errorEmojiField = null
         babelPluginPathField = null
+        excludedDirectoriesField = null
+        supportedExtensionsField = null
     }
 }

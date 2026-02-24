@@ -18,6 +18,8 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
         var successEmoji: String = "\u2728" // ✨
         var errorEmoji: String = "\uD83D\uDEAB" // 🚫
         var babelPluginPath: String = "node_modules/babel-plugin-react-compiler"
+        var excludedDirectories: String = "node_modules, .git, dist, build, out, coverage, .next, .turbo"
+        var supportedExtensions: String = ".js, .jsx, .ts, .tsx, .mjs, .cjs"
     }
 
     override fun getState(): State = myState
@@ -50,10 +52,30 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
             myState.babelPluginPath = value
         }
 
+    var excludedDirectories: String
+        get() = myState.excludedDirectories
+        set(value) {
+            myState.excludedDirectories = value
+        }
+
+    var supportedExtensions: String
+        get() = myState.supportedExtensions
+        set(value) {
+            myState.supportedExtensions = value
+        }
+
+    val excludedDirectoriesList: List<String>
+        get() = excludedDirectories.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+    val supportedExtensionsList: List<String>
+        get() = supportedExtensions.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
     fun toMap(): Map<String, Any?> = mapOf(
         "successEmoji" to successEmoji,
         "errorEmoji" to errorEmoji,
-        "babelPluginPath" to babelPluginPath
+        "babelPluginPath" to babelPluginPath,
+        "excludedDirectories" to excludedDirectoriesList,
+        "supportedExtensions" to supportedExtensionsList
     )
 
     companion object {

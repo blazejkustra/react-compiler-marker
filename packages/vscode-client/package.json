@@ -2,7 +2,7 @@
   "name": "react-compiler-marker",
   "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": "Blazej Kustra <kustrablazej@gmail.com>",
   "publisher": "blazejkustra",
   "license": "MIT",
@@ -55,6 +55,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "react-compiler-marker.reportsView",
+        "contents": "No reports generated yet.\n\nScan your project to see which components are optimized by the React Compiler.\n[$(add) Generate Report](command:react-compiler-marker.generateReport)"
+      }
+    ],
     "commands": [
       {
         "command": "react-compiler-marker.activate",
