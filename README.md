@@ -9,7 +9,7 @@
 - Visual emoji markers next to React components (customizable)
 - Hover tooltips with optimization details and error messages
 - Preview compiled output to see what the React Compiler generates
-- Generate JSON reports for a full-project compilation snapshot
+- Generate reports for a full-project compilation snapshot
 - Commands to activate/deactivate markers or check individual files
 - Configurable babel plugin path for custom setups
 
@@ -50,7 +50,7 @@ Each client has its own version and release cycle. See individual READMEs for cl
 1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) or search "React Compiler Marker" in Extensions
 3. Open a React component file - markers appear automatically
 
-### WebStorm / IntelliJ IDEA (beta)
+### WebStorm / IntelliJ IDEA
 
 1. Build the plugin: `cd packages/intellij-client && ./gradlew buildPlugin`
 2. Install from disk: Settings > Plugins > Install Plugin from Disk
@@ -81,29 +81,12 @@ See the [Neovim Client README](packages/nvim-client/README.md) for configuration
 
 See the [Zed Client README](packages/zed-client/README.md) for installation and configuration options.
 
-## Configuration
-
-All clients support these settings:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Success Emoji | `✨` | Marker for optimized components |
-| Error Emoji | `🚫` | Marker for failed components |
-| Babel Plugin Path | `node_modules/babel-plugin-react-compiler` | Path to the compiler plugin |
-
-## Commands
-
-- **Activate Extension** - Enable markers
-- **Deactivate Extension** - Disable markers
-- **Check Current File** - Refresh markers in the active file
-- **Preview Compiled Output** - View the compiled code
-- **Generate Report** - Save a JSON report for the current workspace
-
 ## Links
 
 - [GitHub Repository](https://github.com/blazejkustra/react-compiler-marker)
 - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker)
 - [Open VSX Registry](https://open-vsx.org/extension/blazejkustra/react-compiler-marker)
+- [Jetbrains Marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker)
 - [React Compiler Documentation](https://react.dev/learn/react-compiler)
 
 ## Contributing
