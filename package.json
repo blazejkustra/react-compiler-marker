@@ -9,7 +9,9 @@
     "url": "https://github.com/blazejkustra/react-compiler-marker"
   },
   "workspaces": [
-    "packages/*"
+    "packages/server",
+    "packages/cli",
+    "packages/nvim-client"
   ],
   "scripts": {
     "typecheck": "tsc -b",
@@ -24,6 +26,7 @@
     "@types/react": "^19.1.11",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.7.0",
+    "esbuild": "0.27.3",
     "eslint": "^9.13.0",
     "prettier": "3.7.4",
     "typescript": "^5.6.3"

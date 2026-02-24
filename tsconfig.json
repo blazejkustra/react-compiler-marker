@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/server" },
-    { "path": "./packages/vscode-client" }
+    { "path": "./packages/vscode-client" },
+    { "path": "./packages/cli" }
   ]
 }
