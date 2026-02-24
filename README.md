@@ -20,6 +20,7 @@
 | VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
 | WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
 | Neovim | [Setup instructions](packages/nvim-client/README.md) |
+| Zed (alpha) | [Setup instructions](packages/zed-client/README.md) |
 
 ## Project Structure
 
@@ -31,6 +32,7 @@ packages/
   vscode-client/    # VS Code extension
   intellij-client/  # WebStorm/IntelliJ plugin
   nvim-client/      # Neovim plugin
+  zed-client/       # Zed extension
 ```
 
 Each client has its own version and release cycle. See individual READMEs for client-specific documentation:
@@ -38,6 +40,7 @@ Each client has its own version and release cycle. See individual READMEs for cl
 - [VS Code Client](packages/vscode-client/README.md)
 - [IntelliJ Client](packages/intellij-client/README.md)
 - [Neovim Client](packages/nvim-client/README.md)
+- [Zed Client](packages/zed-client/README.md)
 - [LSP Server](packages/server/README.md)
 
 ## Quick Start
@@ -71,6 +74,12 @@ Open a React component file - markers appear automatically.
 **Requirements:** Neovim 0.9+ (0.10+ recommended for native inlay hints), Node.js, `babel-plugin-react-compiler` in your project.
 
 See the [Neovim Client README](packages/nvim-client/README.md) for configuration options and other package managers.
+
+### Zed
+
+> **Note:** The Zed extension is not yet available in the Zed extension registry. For now, you need to download and install it manually.
+
+See the [Zed Client README](packages/zed-client/README.md) for installation and configuration options.
 
 ## Configuration
 

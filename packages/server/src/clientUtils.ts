@@ -18,8 +18,12 @@ export function isNVimClient(clientName?: string): boolean {
   return clientName?.toLowerCase().includes("neovim") ?? false;
 }
 
+export function isZedClient(clientName?: string): boolean {
+  return clientName?.toLowerCase().includes("zed") ?? false;
+}
+
 export function supportsCommandLinks(clientName?: string): boolean {
-  return !isNVimClient(clientName);
+  return !isNVimClient(clientName) && !isZedClient(clientName);
 }
 
 export function shouldEnableHover(clientName?: string): boolean {

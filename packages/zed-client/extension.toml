@@ -1,0 +1,17 @@
+id = "react-compiler-marker"
+name = "React Compiler Marker"
+version = "0.1.0"
+schema_version = 1
+description = "Visual markers for React Compiler optimized components"
+repository = "https://github.com/blazejkustra/react-compiler-marker"
+authors = ["Błażej Kustra <kustrablazej@gmail.com>"]
+
+[language_servers.react-compiler-marker]
+name = "React Compiler Marker"
+languages = ["JavaScript", "TypeScript", "JSX", "TSX"]
+
+[language_servers.react-compiler-marker.language_ids]
+"JavaScript" = "javascript"
+"TypeScript" = "typescript"
+"JSX" = "javascriptreact"
+"TSX" = "typescriptreact"
