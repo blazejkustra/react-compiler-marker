@@ -20,7 +20,7 @@
 | VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
 | WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
 | Neovim | [Setup instructions](packages/nvim-client/README.md) |
-| Zed | [Setup instructions](packages/zed-client/README.md) |
+| Zed (alpha) | [Setup instructions](packages/zed-client/README.md) |
 
 ## Project Structure
 
@@ -77,10 +77,9 @@ See the [Neovim Client README](packages/nvim-client/README.md) for configuration
 
 ### Zed
 
-1. Open **Extensions** (`cmd+shift+x`) and search for **"React Compiler Marker"**
-2. Open a React component file - markers appear automatically
+> **Note:** The Zed extension is not yet available in the Zed extension registry. For now, you need to download and install it manually.
 
-See the [Zed Client README](packages/zed-client/README.md) for configuration options.
+See the [Zed Client README](packages/zed-client/README.md) for installation and configuration options.
 
 ## Configuration
 
