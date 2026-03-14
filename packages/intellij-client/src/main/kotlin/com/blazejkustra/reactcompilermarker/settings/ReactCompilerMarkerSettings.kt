@@ -20,6 +20,7 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
         var babelPluginPath: String = "node_modules/babel-plugin-react-compiler"
         var excludedDirectories: String = "node_modules, .git, dist, build, out, coverage, .next, .turbo"
         var supportedExtensions: String = ".js, .jsx, .ts, .tsx, .mjs, .cjs"
+        var respectGitignore: Boolean = true
     }
 
     override fun getState(): State = myState
@@ -64,6 +65,12 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
             myState.supportedExtensions = value
         }
 
+    var respectGitignore: Boolean
+        get() = myState.respectGitignore
+        set(value) {
+            myState.respectGitignore = value
+        }
+
     val excludedDirectoriesList: List<String>
         get() = excludedDirectories.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
@@ -75,7 +82,8 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
         "errorEmoji" to errorEmoji,
         "babelPluginPath" to babelPluginPath,
         "excludedDirectories" to excludedDirectoriesList,
-        "supportedExtensions" to supportedExtensionsList
+        "supportedExtensions" to supportedExtensionsList,
+        "respectGitignore" to respectGitignore
     )
 
     companion object {

@@ -19,6 +19,7 @@ Highlights components optimized by the React Compiler with visual indicators dir
 | `reactCompilerMarker.babelPluginPath` | `node_modules/babel-plugin-react-compiler` | Path to babel-plugin-react-compiler in your project |
 | `reactCompilerMarker.successEmoji` | `✨` | Marker for successfully optimized components |
 | `reactCompilerMarker.errorEmoji` | `🚫` | Marker for components that failed to compile |
+| `reactCompilerMarker.respectGitignore` | `true` | Respect .gitignore rules when scanning files for report generation |
 | `reactCompilerMarker.excludedDirectories` | `["node_modules", ".git", "dist", "build", "out", "coverage", ".next", ".turbo"]` | Directories to exclude when generating reports |
 | `reactCompilerMarker.supportedExtensions` | `[".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]` | File extensions to include when generating reports |
 

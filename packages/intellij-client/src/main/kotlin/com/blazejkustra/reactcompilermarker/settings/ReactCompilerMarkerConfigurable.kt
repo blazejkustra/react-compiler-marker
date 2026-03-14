@@ -18,6 +18,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
     private var babelPluginPathField: JBTextField? = null
     private var excludedDirectoriesField: JBTextField? = null
     private var supportedExtensionsField: JBTextField? = null
+    private var respectGitignoreCheckbox: JBCheckBox? = null
 
     override fun getDisplayName(): String = "React Compiler Marker"
 
@@ -28,6 +29,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         babelPluginPathField = JBTextField()
         excludedDirectoriesField = JBTextField()
         supportedExtensionsField = JBTextField()
+        respectGitignoreCheckbox = JBCheckBox("Respect .gitignore rules when scanning")
 
         return FormBuilder.createFormBuilder()
             .addComponent(enabledCheckbox!!)
@@ -39,6 +41,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
             .addSeparator()
             .addLabeledComponent(JBLabel("Excluded directories (comma-separated):"), excludedDirectoriesField!!, 1, false)
             .addLabeledComponent(JBLabel("Supported extensions (comma-separated):"), supportedExtensionsField!!, 1, false)
+            .addSeparator()
+            .addComponent(respectGitignoreCheckbox!!)
             .addComponentFillVertically(JPanel(), 0)
             .panel
     }
@@ -50,7 +54,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
                errorEmojiField?.text != settings.errorEmoji ||
                babelPluginPathField?.text != settings.babelPluginPath ||
                excludedDirectoriesField?.text != settings.excludedDirectories ||
-               supportedExtensionsField?.text != settings.supportedExtensions
+               supportedExtensionsField?.text != settings.supportedExtensions ||
+               respectGitignoreCheckbox?.isSelected != settings.respectGitignore
     }
 
     override fun apply() {
@@ -61,6 +66,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         settings.babelPluginPath = babelPluginPathField?.text ?: "node_modules/babel-plugin-react-compiler"
         settings.excludedDirectories = excludedDirectoriesField?.text ?: ""
         settings.supportedExtensions = supportedExtensionsField?.text ?: ""
+        settings.respectGitignore = respectGitignoreCheckbox?.isSelected ?: true
 
         // Update LSP server configuration
         val lspManager = ReactCompilerLspServerManager.getInstance(project)
@@ -75,6 +81,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         babelPluginPathField?.text = settings.babelPluginPath
         excludedDirectoriesField?.text = settings.excludedDirectories
         supportedExtensionsField?.text = settings.supportedExtensions
+        respectGitignoreCheckbox?.isSelected = settings.respectGitignore
     }
 
     override fun disposeUIResources() {
@@ -84,5 +91,6 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         babelPluginPathField = null
         excludedDirectoriesField = null
         supportedExtensionsField = null
+        respectGitignoreCheckbox = null
     }
 }

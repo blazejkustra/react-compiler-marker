@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import type { Dirent } from "fs";
 import os from "os";
 import path from "path";
+import ignore, { type Ignore } from "ignore";
 import { checkReactCompiler, LoggerEvent } from "../checkReactCompiler";
 
 /**
@@ -42,6 +43,8 @@ export interface ReportOptions {
   includeExtensions?: string[];
   /** Directory names to skip at any depth (e.g. ["node_modules"]). */
   excludeDirs?: string[];
+  /** Whether to respect .gitignore rules when scanning (default: true). */
+  respectGitignore?: boolean;
   /** Optional progress callback for reporting processed file counts. */
   onProgress?: (progress: ReportProgress) => void;
 }
@@ -78,20 +81,51 @@ function shouldSkipDir(dirName: string, excludeDirs: Set<string>): boolean {
 }
 
 /**
- * Recursively list source files under a root, honoring extension and exclude filters.
+ * Read .gitignore patterns from a directory, returning an empty array if none exists.
+ */
+async function loadGitignorePatterns(dir: string): Promise<string[]> {
+  try {
+    const content = await fs.readFile(path.join(dir, ".gitignore"), "utf8");
+    return content.split("\n");
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Recursively list source files under a root, honoring extension, exclude, and .gitignore filters.
  */
 async function listSourceFiles(
   root: string,
   includeExtensions: Set<string>,
-  excludeDirs: Set<string>
+  excludeDirs: Set<string>,
+  respectGitignore: boolean
 ): Promise<string[]> {
   const files: string[] = [];
   const queue: string[] = [root];
+
+  let ig: Ignore | undefined;
+  if (respectGitignore) {
+    ig = ignore();
+    const rootPatterns = await loadGitignorePatterns(root);
+    if (rootPatterns.length > 0) {
+      ig.add(rootPatterns);
+    }
+  }
 
   while (queue.length > 0) {
     const current = queue.pop();
     if (!current) {
       continue;
+    }
+
+    // Load nested .gitignore rules
+    if (ig && current !== root) {
+      const nestedPatterns = await loadGitignorePatterns(current);
+      if (nestedPatterns.length > 0) {
+        const relDir = path.relative(root, current);
+        ig.add(nestedPatterns.map((p) => (p.trim() ? path.posix.join(relDir, p) : p)));
+      }
     }
 
     let entries: Dirent[];
@@ -103,13 +137,23 @@ async function listSourceFiles(
 
     for (const entry of entries) {
       const fullPath = path.join(current, entry.name);
+      const relativePath = path.relative(root, fullPath).split(path.sep).join("/");
+
       if (entry.isDirectory()) {
-        if (!shouldSkipDir(entry.name, excludeDirs)) {
-          queue.push(fullPath);
+        if (shouldSkipDir(entry.name, excludeDirs)) {
+          continue;
         }
+        // For directories, ignore expects a trailing slash
+        if (ig && ig.ignores(relativePath + "/")) {
+          continue;
+        }
+        queue.push(fullPath);
         continue;
       }
       if (!entry.isFile()) {
+        continue;
+      }
+      if (ig && ig.ignores(relativePath)) {
         continue;
       }
       if (isSourceFile(fullPath, includeExtensions)) {
@@ -152,8 +196,9 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
   const includeExtensions = new Set(options.includeExtensions ?? Array.from(DEFAULT_EXTENSIONS));
   const excludeDirs = new Set(options.excludeDirs ?? Array.from(DEFAULT_EXCLUDES));
   const maxConcurrency = options.maxConcurrency ?? Math.max(1, os.cpus().length - 1);
+  const respectGitignore = options.respectGitignore ?? true;
 
-  const files = await listSourceFiles(root, includeExtensions, excludeDirs);
+  const files = await listSourceFiles(root, includeExtensions, excludeDirs, respectGitignore);
   const totalFiles = files.length;
   let processed = 0;
   let lastProgressAt = 0;

@@ -65,6 +65,7 @@ Go to **Settings/Preferences** → **Languages & Frameworks** → **React Compil
 - **Success Emoji**: Emoji shown for optimized components (default: ✨)
 - **Error Emoji**: Emoji shown for failed components (default: 🚫)
 - **Babel Plugin Path**: Path to babel-plugin-react-compiler (default: `node_modules/babel-plugin-react-compiler`)
+- **Respect .gitignore**: Honor .gitignore rules when scanning files for report generation (default: enabled)
 
 ## How It Works
 
@@ -119,5 +120,6 @@ See at a glance which components are automatically memoized with ✨ markers, id
 - **Success Emoji**: Customize the marker for optimized components (default: ✨)
 - **Error Emoji**: Customize the marker for failed components (default: 🚫)
 - **Babel Plugin Path**: Set custom path to babel-plugin-react-compiler
+- **Respect .gitignore**: Honor .gitignore rules when scanning files for reports (default: enabled)
 
 <!-- Plugin description end -->

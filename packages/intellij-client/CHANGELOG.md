@@ -4,8 +4,7 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ## [Unreleased]
 ### Added
-- **Report generation and visualization**: Generate a project-wide report of React Compiler optimization results, displayed in an interactive webview with a tree view of files and components
-- **"Fix with AI" button in report webview**: Generates a markdown file listing all failed components with their error locations and reasons, including AI instructions for fixing them
+- **Respect .gitignore**: New setting to honor .gitignore rules when scanning files for report generation (enabled by default)
 
 ---
 
