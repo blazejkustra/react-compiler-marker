@@ -4,12 +4,16 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ## [Unreleased]
 ### Added
-- **Respect .gitignore**: New `respectGitignore` setting to honor .gitignore rules when scanning files for report generation (enabled by default)
+-
 
 ### Changed
 - 
 
 ---
+
+## [2.1.2] - 2026-03-15
+
+- **Respect .gitignore**: New `respectGitignore` setting to honor .gitignore rules when scanning files for report generation (enabled by default)
 
 ## [2.1.1] - 2026-02-23
 ### Added
