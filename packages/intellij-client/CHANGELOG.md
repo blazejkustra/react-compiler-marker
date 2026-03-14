@@ -8,6 +8,10 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ---
 
+## [1.0.1] - 2026-03-14
+### Added
+- **Respect .gitignore**: New setting to honor .gitignore rules when scanning files for report generation (enabled by default)
+
 ## [1.0.0] - 2026-02-23
 Stable release! 🎉 
 
