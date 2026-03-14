@@ -316,6 +316,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
           maxConcurrency: options?.maxConcurrency,
           includeExtensions: options?.includeExtensions,
           excludeDirs: options?.excludeDirs,
+          respectGitignore: options?.respectGitignore,
           onProgress: reportId
             ? (progress) => {
                 connection.sendNotification("react-compiler-marker/reportProgress", {
@@ -350,6 +351,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
           maxConcurrency: htmlOptions?.maxConcurrency,
           includeExtensions: htmlOptions?.includeExtensions,
           excludeDirs: htmlOptions?.excludeDirs,
+          respectGitignore: htmlOptions?.respectGitignore,
           onProgress: htmlReportId
             ? (progress) => {
                 connection.sendNotification("react-compiler-marker/reportProgress", {

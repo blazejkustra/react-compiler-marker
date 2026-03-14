@@ -19,6 +19,7 @@
     "@babel/parser": "^7.26.2",
     "@babel/preset-typescript": "^7.26.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "ignore": "^7.0.3",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
   },

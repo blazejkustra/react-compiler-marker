@@ -387,6 +387,7 @@ function registerCommands(
                     reportId,
                     excludeDirs: config.get<string[]>("excludedDirectories"),
                     includeExtensions: config.get<string[]>("supportedExtensions"),
+                    respectGitignore: config.get<boolean>("respectGitignore"),
                   },
                 ],
               })) as { success: boolean; report?: ReactCompilerReport; error?: string };
