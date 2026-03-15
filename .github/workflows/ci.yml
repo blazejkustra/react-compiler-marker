@@ -39,6 +39,10 @@ jobs:
         working-directory: packages/server
         run: npm run build
 
+      - name: Build CLI
+        working-directory: packages/cli
+        run: npm run build
+
       - name: Build VS Code extension
         working-directory: packages/vscode-client
         run: npm run compile
