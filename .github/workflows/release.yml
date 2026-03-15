@@ -103,6 +103,83 @@ jobs:
           git commit -m "chore(vscode): bump version to ${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
 
+  # CLI release (triggered by cli-v* tags)
+  publish-cli:
+    if: startsWith(github.event.release.tag_name, 'cli-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          FULL_VERSION="${GITHUB_REF_NAME#cli-v}"
+          VERSION="${FULL_VERSION%%-*}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update package.json version
+        working-directory: packages/cli
+        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --allow-same-version
+
+      - name: Build CLI
+        working-directory: packages/cli
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: packages/cli
+        run: node scripts/publish.js --provenance
+
+      - name: Update CHANGELOG.md
+        if: success()
+        working-directory: packages/cli
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Insert new version entry after the --- separator
+          awk -v ver="$VERSION" -v date="$DATE" '
+            /^---$/ && !inserted {
+              print "---"
+              print ""
+              print "## [" ver "] - " date
+              print ENVIRON["RELEASE_BODY"]
+              inserted=1
+              next
+            }
+            {print}
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Commit version changes
+        if: success()
+        run: |
+          if git diff --quiet packages/cli/package.json packages/cli/CHANGELOG.md; then
+            echo "No changes to commit, version already up to date"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/cli/package.json packages/cli/CHANGELOG.md
+          git commit -m "chore(cli): bump version to ${{ steps.version.outputs.VERSION }}"
+          git push origin HEAD:main
+
   # IntelliJ plugin release (triggered by intellij-v* tags)
   build-intellij:
     if: startsWith(github.event.release.tag_name, 'intellij-v')

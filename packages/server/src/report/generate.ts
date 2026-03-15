@@ -64,6 +64,7 @@ const DEFAULT_EXCLUDES = new Set([
   "coverage",
   ".next",
   ".turbo",
+  ".vscode-test",
 ]);
 
 /**

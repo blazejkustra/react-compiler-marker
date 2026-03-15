@@ -61,18 +61,31 @@ async function main() {
 
   const contexts = [];
 
-  // Build the LSP server
-  const serverCtx = await esbuild.context({
-    ...sharedOptions,
-    entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
-    outfile: buildTarget === "zed"
-      ? path.join(rootDir, "packages/zed-client/server/server.bundle.js")
-      : buildTarget === "nvim"
-        ? path.join(rootDir, "packages/nvim-client/server/server.bundle.js")
-        : path.join(rootDir, "packages/vscode-client/dist/server.js"),
-    external: [],
-  });
-  contexts.push(serverCtx);
+  // Build CLI
+  if (buildTarget === "cli") {
+    const cliCtx = await esbuild.context({
+      ...sharedOptions,
+      entryPoints: [path.join(rootDir, "packages/cli/src/main.ts")],
+      outfile: path.join(rootDir, "packages/cli/out/main.js"),
+      external: [],
+    });
+    contexts.push(cliCtx);
+  }
+
+  // Build the LSP server (all targets except cli)
+  if (buildTarget !== "cli") {
+    const serverCtx = await esbuild.context({
+      ...sharedOptions,
+      entryPoints: [path.join(rootDir, "packages/server/src/server.ts")],
+      outfile: buildTarget === "zed"
+        ? path.join(rootDir, "packages/zed-client/server/server.bundle.js")
+        : buildTarget === "nvim"
+          ? path.join(rootDir, "packages/nvim-client/server/server.bundle.js")
+          : path.join(rootDir, "packages/vscode-client/dist/server.js"),
+      external: [],
+    });
+    contexts.push(serverCtx);
+  }
 
   // Build VS Code client extension only for vscode target
   if (buildTarget === "vscode") {

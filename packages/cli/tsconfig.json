@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./out",
+    "rootDir": "./src",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "composite": true,
+    "declaration": true
+  },
+  "include": ["src/**/*.ts"],
+  "references": [{ "path": "../server" }]
+}

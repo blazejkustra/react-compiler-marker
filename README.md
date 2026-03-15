@@ -28,6 +28,7 @@ This is a monorepo containing:
 
 ```
 packages/
+  cli/              # CLI for generating reports
   server/           # LSP server (shared by all clients)
   vscode-client/    # VS Code extension
   intellij-client/  # WebStorm/IntelliJ plugin
@@ -37,6 +38,7 @@ packages/
 
 Each client has its own version and release cycle. See individual READMEs for client-specific documentation:
 
+- [CLI](packages/cli/README.md)
 - [VS Code Client](packages/vscode-client/README.md)
 - [IntelliJ Client](packages/intellij-client/README.md)
 - [Neovim Client](packages/nvim-client/README.md)
@@ -44,6 +46,27 @@ Each client has its own version and release cycle. See individual READMEs for cl
 - [LSP Server](packages/server/README.md)
 
 ## Quick Start
+
+### CLI
+
+```bash
+npx react-compiler-marker
+```
+
+Generate a full-project report from the command line. Supports text, HTML, and JSON output formats.
+
+```bash
+# Text summary (default)
+npx react-compiler-marker .
+
+# Interactive HTML report
+npx react-compiler-marker --format html .
+
+# JSON for CI pipelines
+npx react-compiler-marker --format json . > report.json
+```
+
+See the [CLI README](packages/cli/README.md) for all options.
 
 ### VS Code / Cursor
 
