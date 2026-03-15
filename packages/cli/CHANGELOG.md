@@ -11,6 +11,10 @@ All notable changes to the React Compiler Marker CLI will be documented in this 
 
 ---
 
+## [0.1.0] - 2026-03-15
+### Added
+- Fix publishing to npm 
+
 ## [0.0.1] - 2026-03-15
 ### Added
 - Initial release of **React Compiler Marker CLI**
