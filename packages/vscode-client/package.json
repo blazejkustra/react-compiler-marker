@@ -2,7 +2,7 @@
   "name": "react-compiler-marker",
   "displayName": "React Compiler Marker ✨",
   "description": "Highlights components optimized by the React Compiler, providing visual cues to make the optimization process more transparent during development.",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": "Blazej Kustra <kustrablazej@gmail.com>",
   "publisher": "blazejkustra",
   "license": "MIT",
@@ -144,6 +144,11 @@
           "type": "string",
           "default": "node_modules/babel-plugin-react-compiler",
           "description": "Path to the babel-plugin-react-compiler in your project. By default it's 'node_modules/babel-plugin-react-compiler'"
+        },
+        "reactCompilerMarker.respectGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Respect .gitignore rules when scanning files for report generation"
         },
         "reactCompilerMarker.excludedDirectories": {
           "type": "array",

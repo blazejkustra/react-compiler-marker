@@ -51,7 +51,7 @@ export function formatText(report: ReactCompilerReport): string {
     lines.push("Failures:");
     lines.push("----------------------------------------");
     for (const f of failures) {
-      const loc = f.line != null ? `:${f.line}` : "";
+      const loc = f.line ? `:${f.line}` : "";
       const name = f.fnName ?? "(anonymous)";
       lines.push(`  ${f.filePath}${loc} - ${name}: ${f.reason}`);
     }

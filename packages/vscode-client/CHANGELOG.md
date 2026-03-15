@@ -4,15 +4,16 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ## [Unreleased]
 ### Added
-- **Reports sidebar**: Dedicated activity bar tab with reports list and a welcome view for generating reports
-- **"Fix with AI" button in report webview**: Generates a markdown file listing all failed components with their error locations and reasons, including AI instructions for fixing them
-- **Native theme integration**: Report webview uses VS Code theme colors for a seamless look
+-
 
 ### Changed
-- **Normalized report data**: Report webview now receives pre-processed entries instead of raw compiler events, eliminating duplicated parsing logic in the webview
-- **Improved component name display**: Entries without a function name no longer show "anonymous" — only the reason and location are shown
+- 
 
 ---
+
+## [2.1.2] - 2026-03-15
+
+- **Respect .gitignore**: New `respectGitignore` setting to honor .gitignore rules when scanning files for report generation (enabled by default)
 
 ## [2.1.1] - 2026-02-23
 ### Added

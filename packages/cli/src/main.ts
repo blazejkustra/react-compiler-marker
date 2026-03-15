@@ -2,7 +2,10 @@
 process.env.BABEL_DISABLE_CACHE = "1";
 const originalStderrWrite = process.stderr.write.bind(process.stderr);
 process.stderr.write = ((chunk: any, ...args: any[]) => {
-  if (typeof chunk === "string" && chunk.includes("[BABEL] Note: The code generator has deoptimised")) {
+  if (
+    typeof chunk === "string" &&
+    chunk.includes("[BABEL] Note: The code generator has deoptimised")
+  ) {
     return true;
   }
   return originalStderrWrite(chunk, ...args);
@@ -102,12 +105,7 @@ function resolveBabelPluginPath(root: string, userPath?: string): string {
 
 function openInBrowser(filePath: string): void {
   const platform = os.platform();
-  const cmd =
-    platform === "darwin"
-      ? "open"
-      : platform === "win32"
-        ? "start"
-        : "xdg-open";
+  const cmd = platform === "darwin" ? "open" : platform === "win32" ? "start" : "xdg-open";
   exec(`${cmd} ${JSON.stringify(filePath)}`);
 }
 
