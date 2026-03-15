@@ -11,7 +11,8 @@
   "workspaces": [
     "packages/server",
     "packages/cli",
-    "packages/nvim-client"
+    "packages/nvim-client",
+    "packages/vscode-client"
   ],
   "scripts": {
     "typecheck": "tsc -b",

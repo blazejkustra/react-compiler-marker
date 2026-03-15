@@ -1,5 +1,5 @@
 {
-  "name": "react-compiler-marker",
+  "name": "cli",
   "version": "0.0.1",
   "description": "CLI for generating React Compiler reports",
   "main": "./out/main.js",
@@ -12,6 +12,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "BUILD_TARGET=cli node ../../esbuild.js --production"
+    "build": "BUILD_TARGET=cli node ../../esbuild.js --production",
+    "publish:npm": "node scripts/publish.js"
   }
 }
