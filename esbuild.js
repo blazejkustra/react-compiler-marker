@@ -68,6 +68,9 @@ async function main() {
       entryPoints: [path.join(rootDir, "packages/cli/src/main.ts")],
       outfile: path.join(rootDir, "packages/cli/out/main.js"),
       external: [],
+      alias: {
+        "@react-compiler-marker/server": path.join(rootDir, "packages/server"),
+      },
     });
     contexts.push(cliCtx);
   }
