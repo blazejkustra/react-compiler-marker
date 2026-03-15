@@ -144,17 +144,39 @@ jobs:
         working-directory: packages/cli
         run: node scripts/publish.js --provenance
 
+      - name: Update CHANGELOG.md
+        if: success()
+        working-directory: packages/cli
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Insert new version entry after the --- separator
+          awk -v ver="$VERSION" -v date="$DATE" '
+            /^---$/ && !inserted {
+              print "---"
+              print ""
+              print "## [" ver "] - " date
+              print ENVIRON["RELEASE_BODY"]
+              inserted=1
+              next
+            }
+            {print}
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
       - name: Commit version changes
         if: success()
         run: |
-          if git diff --quiet packages/cli/package.json; then
+          if git diff --quiet packages/cli/package.json packages/cli/CHANGELOG.md; then
             echo "No changes to commit, version already up to date"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/cli/package.json
+          git add packages/cli/package.json packages/cli/CHANGELOG.md
           git commit -m "chore(cli): bump version to ${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
 
