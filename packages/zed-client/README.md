@@ -54,6 +54,7 @@ Add settings to your Zed `settings.json` (`cmd+,`):
       "settings": {
         "successEmoji": "✨",
         "errorEmoji": "🚫",
+        "skippedEmoji": "⏭️",
         "babelPluginPath": "node_modules/babel-plugin-react-compiler"
       }
     }
@@ -67,6 +68,7 @@ Add settings to your Zed `settings.json` (`cmd+,`):
 |---------|---------|-------------|
 | `successEmoji` | `✨` | Emoji shown for successfully optimized components |
 | `errorEmoji` | `🚫` | Emoji shown for components with optimization errors |
+| `skippedEmoji` | `⏭️` | Emoji shown for components that opted out via `"use no memo"` |
 | `babelPluginPath` | `node_modules/babel-plugin-react-compiler` | Path to the babel-plugin-react-compiler package |
 
 ## Limitations

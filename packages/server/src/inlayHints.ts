@@ -79,8 +79,10 @@ export function generateInlayHints(
   document: TextDocument,
   successfulCompilations: LoggerEvent[],
   failedCompilations: LoggerEvent[],
+  skippedCompilations: LoggerEvent[],
   successEmoji: string | null,
   errorEmoji: string | null,
+  skippedEmoji: string | null,
   documentUri: string,
   tooltipFormat: TooltipFormat = "markdown",
   clientName?: string
@@ -111,6 +113,28 @@ export function generateInlayHints(
       const hint: InlayHint = {
         position: positionInfo.position,
         label: `${successEmoji} `,
+        kind: InlayHintKind.Type,
+        tooltip: { kind: "markdown", value: tooltipValue },
+      };
+
+      hints.push(hint);
+    }
+  }
+
+  // Generate hints for skipped compilations (opt-out via "use no memo")
+  if (skippedEmoji) {
+    for (const log of skippedCompilations) {
+      const positionInfo = getInlayHintPosition(document, log);
+      if (!positionInfo) {
+        continue;
+      }
+
+      const f = fmt[tooltipFormat];
+      const tooltipValue = `${skippedEmoji} ${f.bold(positionInfo.functionName)} has been skipped by React Compiler due to a \`"use no memo"\` directive.`;
+
+      const hint: InlayHint = {
+        position: positionInfo.position,
+        label: `${skippedEmoji} `,
         kind: InlayHintKind.Type,
         tooltip: { kind: "markdown", value: tooltipValue },
       };

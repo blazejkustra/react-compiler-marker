@@ -169,6 +169,7 @@ export function activate(context: vscode.ExtensionContext): void {
           const emojis = {
             success: config.get<string>("successEmoji") ?? "\u2728",
             error: config.get<string>("errorEmoji") ?? "\uD83D\uDEAB",
+            skipped: config.get<string>("skippedEmoji") ?? "\u23ED\uFE0F",
           };
           const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
           if (!workspaceFolder) {
@@ -414,6 +415,7 @@ function registerCommands(
               const emojis = {
                 success: config.get<string>("successEmoji") ?? "✨",
                 error: config.get<string>("errorEmoji") ?? "🚫",
+                skipped: config.get<string>("skippedEmoji") ?? "⏭️",
               };
               ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
             } finally {
