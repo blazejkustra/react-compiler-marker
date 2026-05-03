@@ -13,6 +13,7 @@ import {
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { fileURLToPath } from "node:url";
 import {
   checkReactCompiler,
   getCompiledOutput,
@@ -78,9 +79,11 @@ function logError(error: string): void {
 }
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
-  workspaceFolder = params.workspaceFolders?.[0]?.uri;
-  if (workspaceFolder?.startsWith("file://")) {
-    workspaceFolder = workspaceFolder.slice(7);
+  const workspaceFolderUri = params.workspaceFolders?.[0]?.uri;
+  if (workspaceFolderUri?.startsWith("file://")) {
+    workspaceFolder = fileURLToPath(workspaceFolderUri);
+  } else {
+    workspaceFolder = workspaceFolderUri;
   }
 
   // Store client name for feature detection
