@@ -190,7 +190,7 @@ function formatOutput(report: ReactCompilerReport, format: string): string {
       const tree = buildReportTree(report);
       return getReportHtml({
         data: tree,
-        emojis: { success: "\u2705", error: "\u274C" },
+        emojis: { success: "\u2705", error: "\u274C", skipped: "\u23ED\uFE0F" },
         theme: "auto",
         headExtra: `<style>${STANDALONE_CSS}</style>`,
       });

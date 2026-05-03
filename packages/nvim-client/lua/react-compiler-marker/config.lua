@@ -18,6 +18,8 @@ M.defaults = {
     success = "✨",
     -- Marker for components that failed to optimize
     error = "🚫",
+    -- Marker for components that opted out via "use no memo"
+    skipped = "⏭️",
   },
 
   -- Path to babel-plugin-react-compiler (relative to workspace root)
@@ -122,6 +124,7 @@ function M.get_server_settings()
     reactCompilerMarker = {
       successEmoji = M.config.emojis.success,
       errorEmoji = M.config.emojis.error,
+      skippedEmoji = M.config.emojis.skipped,
       babelPluginPath = M.config.babel_plugin_path,
     },
   }

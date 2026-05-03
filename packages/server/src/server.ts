@@ -46,12 +46,14 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 interface Settings {
   successEmoji: string | null;
   errorEmoji: string | null;
+  skippedEmoji: string | null;
   babelPluginPath: string;
 }
 
 let globalSettings: Settings = {
   successEmoji: "✨",
   errorEmoji: "🚫",
+  skippedEmoji: "⏭️",
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
 };
 
@@ -136,6 +138,7 @@ connection.onDidChangeConfiguration((change) => {
     globalSettings = {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
+      skippedEmoji: settings.skippedEmoji ?? "⏭️",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
     };
 
@@ -175,19 +178,22 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     try {
       const sourceCode = document.getText();
 
-      const { successfulCompilations, failedCompilations } = checkReactCompiler(
-        sourceCode,
-        fileNameForCompiler,
-        workspaceFolder,
-        globalSettings.babelPluginPath
-      );
+      const { successfulCompilations, failedCompilations, skippedCompilations } =
+        checkReactCompiler(
+          sourceCode,
+          fileNameForCompiler,
+          workspaceFolder,
+          globalSettings.babelPluginPath
+        );
 
       return generateInlayHints(
         document,
         successfulCompilations,
         failedCompilations,
+        skippedCompilations,
         globalSettings.successEmoji,
         globalSettings.errorEmoji,
+        globalSettings.skippedEmoji,
         params.textDocument.uri,
         tooltipFormat,
         clientName
@@ -223,20 +229,23 @@ connection.onHover((params: HoverParams): Hover | null => {
   try {
     const sourceCode = document.getText();
 
-    const { successfulCompilations, failedCompilations } = checkReactCompiler(
-      sourceCode,
-      fileNameForCompiler,
-      workspaceFolder,
-      globalSettings.babelPluginPath
-    );
+    const { successfulCompilations, failedCompilations, skippedCompilations } =
+      checkReactCompiler(
+        sourceCode,
+        fileNameForCompiler,
+        workspaceFolder,
+        globalSettings.babelPluginPath
+      );
 
     // Generate hints to find which components have hints on which lines
     const hints = generateInlayHints(
       document,
       successfulCompilations,
       failedCompilations,
+      skippedCompilations,
       globalSettings.successEmoji,
       globalSettings.errorEmoji,
+      globalSettings.skippedEmoji,
       params.textDocument.uri,
       tooltipFormat,
       clientName
@@ -330,7 +339,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
             : undefined,
         });
         logMessage(
-          `Report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount}`
+          `Report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount} skipped=${report.totals.skippedCount}`
         );
         return { success: true, report };
       } catch (error: any) {
@@ -368,6 +377,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
         const emojis = {
           success: htmlOptions?.emojis?.success ?? globalSettings.successEmoji ?? "✨",
           error: htmlOptions?.emojis?.error ?? globalSettings.errorEmoji ?? "🚫",
+          skipped: htmlOptions?.emojis?.skipped ?? globalSettings.skippedEmoji ?? "⏭️",
         };
         const html = getReportHtml({
           data: treeData,
@@ -377,7 +387,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
           scriptExtra: htmlOptions?.scriptExtra,
         });
         logMessage(
-          `HTML report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount}`
+          `HTML report generated: scanned=${report.totals.filesScanned} files=${report.totals.filesWithResults} success=${report.totals.successCount} failed=${report.totals.failedCount} skipped=${report.totals.skippedCount}`
         );
         return { success: true, html, report };
       } catch (error: any) {

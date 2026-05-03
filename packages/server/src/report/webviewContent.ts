@@ -219,6 +219,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
     }
     .success-text { color: var(--rcm-success); }
     .failed-text { color: var(--rcm-failed); }
+    .skipped-text { color: var(--rcm-skipped, var(--rcm-foreground)); opacity: 0.85; }
 
     .errors-section {
       margin-top: 16px;
@@ -259,6 +260,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       <option value="all">All files</option>
       <option value="compiled">Compiled only</option>
       <option value="failed">Failed only</option>
+      <option value="skipped">Skipped only</option>
     </select>
     <select id="errorTypeFilter" title="Filter by error type">
       <option value="">All error types</option>
@@ -317,10 +319,12 @@ export function getReportHtml(options: ReportHtmlOptions): string {
 
     function renderSummary() {
       var t = reportData.totals;
+      var skippedCount = t.skippedCount || 0;
       document.getElementById('summary').innerHTML =
         '<div class="stat"><span class="stat-value">' + t.filesScanned + '</span><span class="stat-label">scanned</span></div>' +
         '<div class="stat"><span class="stat-value success-text">' + t.successCount + ' ' + emojis.success + '</span><span class="stat-label">compiled</span></div>' +
         '<div class="stat"><span class="stat-value failed-text">' + t.failedCount + ' ' + emojis.error + '</span><span class="stat-label">failed</span></div>' +
+        '<div class="stat"><span class="stat-value skipped-text">' + skippedCount + ' ' + emojis.skipped + '</span><span class="stat-label">skipped</span></div>' +
         '<div class="stat"><span class="stat-value">' + t.filesWithResults + '</span><span class="stat-label">files with results</span></div>';
       document.getElementById('generatedAt').textContent = 'Generated: ' + new Date(reportData.generatedAt).toLocaleString();
     }
@@ -362,6 +366,7 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       if (node.type === 'file') {
         if (sf === 'compiled' && node.successCount === 0) return false;
         if (sf === 'failed' && node.failedCount === 0) return false;
+        if (sf === 'skipped' && (node.skippedCount || 0) === 0) return false;
         if (sq && !node.path.toLowerCase().includes(sq)) return false;
         if (ef) {
           var hasMatchingError = node.entries && node.entries.some(function(e) {
@@ -390,11 +395,16 @@ export function getReportHtml(options: ReportHtmlOptions): string {
         var col = e.column || 0;
         var locText = line !== undefined ? ':' + line : '';
         var isSuccess = e.kind === 'success';
+        var isSkip = e.kind === 'skip';
+        var isFailure = e.kind === 'failure';
 
-        if (!isSuccess && filterState.errorTypeFilter && e.reason !== filterState.errorTypeFilter) continue;
+        if (isFailure && filterState.errorTypeFilter && e.reason !== filterState.errorTypeFilter) continue;
+        if (filterState.statusFilter === 'compiled' && !isSuccess) continue;
+        if (filterState.statusFilter === 'failed' && !isFailure) continue;
+        if (filterState.statusFilter === 'skipped' && !isSkip) continue;
 
-        var emoji = isSuccess ? emojis.success : emojis.error;
-        var textClass = isSuccess ? 'success-text' : 'failed-text';
+        var emoji = isSuccess ? emojis.success : isSkip ? emojis.skipped : emojis.error;
+        var textClass = isSuccess ? 'success-text' : isSkip ? 'skipped-text' : 'failed-text';
         var nameHtml = name ? '<span class="detail-name ' + textClass + '">' + escapeHtml(name) + '</span>' : '';
         var reasonHtml = !isSuccess && e.reason ? '<span class="detail-reason">' + escapeHtml(e.reason) + '</span>' : '';
 
@@ -426,9 +436,16 @@ export function getReportHtml(options: ReportHtmlOptions): string {
       html += '<span class="icon">' + nodeIcon + '</span>';
       html += '<span class="node-name ' + nameClass + '" data-path="' + escapeAttr(node.path) + '">' + escapeHtml(node.name) + '</span>';
       var countsHtml = '';
+      var skippedCount = node.skippedCount || 0;
       if (node.successCount > 0) countsHtml += node.successCount + emojis.success;
-      if (node.successCount > 0 && node.failedCount > 0) countsHtml += ' ';
-      if (node.failedCount > 0) countsHtml += node.failedCount + emojis.error;
+      if (node.failedCount > 0) {
+        if (countsHtml) countsHtml += ' ';
+        countsHtml += node.failedCount + emojis.error;
+      }
+      if (skippedCount > 0) {
+        if (countsHtml) countsHtml += ' ';
+        countsHtml += skippedCount + emojis.skipped;
+      }
       if (countsHtml) html += '<span class="counts">' + countsHtml + '</span>';
       html += '</div>';
 

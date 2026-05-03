@@ -15,8 +15,9 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
 
     class State {
         var isEnabled: Boolean = true
-        var successEmoji: String = "\u2728" // ✨
-        var errorEmoji: String = "\uD83D\uDEAB" // 🚫
+        var successEmoji: String = "✨" // ✨
+        var errorEmoji: String = "🚫" // 🚫
+        var skippedEmoji: String = "⏭️" // ⏭️
         var babelPluginPath: String = "node_modules/babel-plugin-react-compiler"
         var excludedDirectories: String = "node_modules, .git, dist, build, out, coverage, .next, .turbo"
         var supportedExtensions: String = ".js, .jsx, .ts, .tsx, .mjs, .cjs"
@@ -45,6 +46,12 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
         get() = myState.errorEmoji
         set(value) {
             myState.errorEmoji = value
+        }
+
+    var skippedEmoji: String
+        get() = myState.skippedEmoji
+        set(value) {
+            myState.skippedEmoji = value
         }
 
     var babelPluginPath: String
@@ -80,6 +87,7 @@ class ReactCompilerMarkerSettings : PersistentStateComponent<ReactCompilerMarker
     fun toMap(): Map<String, Any?> = mapOf(
         "successEmoji" to successEmoji,
         "errorEmoji" to errorEmoji,
+        "skippedEmoji" to skippedEmoji,
         "babelPluginPath" to babelPluginPath,
         "excludedDirectories" to excludedDirectoriesList,
         "supportedExtensions" to supportedExtensionsList,

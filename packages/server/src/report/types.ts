@@ -2,7 +2,7 @@ import type { ReactCompilerReport } from "./generate";
 
 export interface NormalizedEntry {
   fnName: string | undefined;
-  kind: "success" | "failure";
+  kind: "success" | "failure" | "skip";
   reason: string;
   description: string;
   line: number | undefined;
@@ -16,6 +16,7 @@ export interface TreeNode {
   children?: TreeNode[];
   successCount: number;
   failedCount: number;
+  skippedCount: number;
   entries?: NormalizedEntry[];
 }
 
@@ -27,7 +28,7 @@ export interface ReportTreeData {
 }
 
 export interface FilterState {
-  statusFilter: "all" | "compiled" | "failed";
+  statusFilter: "all" | "compiled" | "failed" | "skipped";
   searchQuery: string;
   errorTypeFilter: string;
 }
@@ -35,6 +36,7 @@ export interface FilterState {
 export interface EmojiConfig {
   success: string;
   error: string;
+  skipped: string;
 }
 
 export type WebviewMessage =
