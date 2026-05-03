@@ -199,6 +199,17 @@
           "nullable": true,
           "default": "⏭️",
           "description": "Emoji marker to display next to components that opted out via the \"use no memo\" directive"
+        },
+        "reactCompilerMarker.compilationMode": {
+          "type": "string",
+          "enum": [
+            "infer",
+            "annotation",
+            "syntax",
+            "all"
+          ],
+          "default": "infer",
+          "markdownDescription": "Controls which functions React Compiler attempts to compile. Match this to your project's babel-plugin-react-compiler configuration. See [compilationMode docs](https://react.dev/reference/react-compiler/compilationMode)."
         }
       }
     }

@@ -64,7 +64,9 @@ Go to **Settings/Preferences** → **Languages & Frameworks** → **React Compil
 
 - **Success Emoji**: Emoji shown for optimized components (default: ✨)
 - **Error Emoji**: Emoji shown for failed components (default: 🚫)
+- **Skipped Emoji**: Emoji shown for components opted out via `"use no memo"` (default: ⏭️)
 - **Babel Plugin Path**: Path to babel-plugin-react-compiler (default: `node_modules/babel-plugin-react-compiler`)
+- **Compilation Mode**: React Compiler [`compilationMode`](https://react.dev/reference/react-compiler/compilationMode) — `infer`, `annotation`, `syntax`, or `all` (default: `infer`)
 - **Respect .gitignore**: Honor .gitignore rules when scanning files for report generation (default: enabled)
 
 ## How It Works

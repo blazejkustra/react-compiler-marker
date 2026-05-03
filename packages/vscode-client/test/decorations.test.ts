@@ -22,12 +22,13 @@ function readFixture(name: string): string {
 }
 
 // Helper to call checkReactCompiler with test defaults
-function compileFixture(text: string, filename: string) {
+function compileFixture(text: string, filename: string, compilationMode?: string) {
   return checkReactCompiler(
     text,
     filename,
     undefined, // workspaceFolder
-    "node_modules/babel-plugin-react-compiler" // babelPluginPath
+    "node_modules/babel-plugin-react-compiler", // babelPluginPath
+    compilationMode
   );
 }
 
@@ -163,6 +164,31 @@ suite("Critical error handling", () => {
         `Failure at line ${failStart} overlaps the opted-out component (lines ${skipStart}-${skipEnd}); opt-outs must not be reported as failures.`
       );
     }
+  });
+
+  test('annotation-mode.tsx: only "use memo" components compile under compilationMode: "annotation"', () => {
+    const text = readFixture("annotation-mode.tsx").trim();
+    const filename = "/mock/annotation-mode.tsx";
+
+    const inferred = compileFixture(text, filename, "infer");
+    assert.strictEqual(
+      inferred.successfulCompilations.length,
+      2,
+      `Expected 2 compiled components under "infer", got ${inferred.successfulCompilations.length}`
+    );
+
+    // Cache is keyed by source+filename; vary filename so we get a fresh run for "annotation".
+    const annotated = compileFixture(text, "/mock/annotation-mode-annotation.tsx", "annotation");
+    assert.strictEqual(
+      annotated.successfulCompilations.length,
+      1,
+      `Expected only the "use memo" component to compile under "annotation", got ${annotated.successfulCompilations.length}`
+    );
+    const compiled = annotated.successfulCompilations[0];
+    assert.ok(
+      compiled.fnName?.includes("OptedIn") || /OptedInComponent/.test(JSON.stringify(compiled)),
+      `Expected OptedInComponent to be the compiled function, got ${compiled.fnName}`
+    );
   });
 
   test("error-without-ranges.tsx: handles errors without location ranges gracefully", () => {
