@@ -17,7 +17,7 @@
 
 | IDE  | Installation |
 |------|--------------|
-| VS Code / Cursor | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
+| VS Code / Cursor / Antigravity | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) \| [Open VSX](https://open-vsx.org/extension/blazejkustra/react-compiler-marker) |
 | WebStorm / IntelliJ IDEA | [IntelliJ marketplace](https://plugins.jetbrains.com/plugin/29540-react-compiler-marker) |
 | Neovim | [Setup instructions](packages/nvim-client/README.md) |
 | Zed (alpha) | [Setup instructions](packages/zed-client/README.md) |
@@ -68,7 +68,7 @@ npx react-compiler-marker --format json . > report.json
 
 See the [CLI README](packages/cli/README.md) for all options.
 
-### VS Code / Cursor
+### VS Code / Cursor / Antigravity
 
 1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=blazejkustra.react-compiler-marker) or search "React Compiler Marker" in Extensions
 3. Open a React component file - markers appear automatically
