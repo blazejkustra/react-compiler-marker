@@ -11,6 +11,11 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ---
 
+## [2.2.0] - 2026-05-03
+## What's Changed
+* fix(server): correctly resolve workspace folder URI on Windows by @blazejkustra in https://github.com/blazejkustra/react-compiler-marker/pull/76
+
+
 ## [2.1.2] - 2026-03-15
 
 - **Respect .gitignore**: New `respectGitignore` setting to honor .gitignore rules when scanning files for report generation (enabled by default)
