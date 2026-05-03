@@ -40,6 +40,7 @@ Options:
   --exclude-dirs <dirs>        Comma-separated directories to exclude
   --include-extensions <exts>  Comma-separated file extensions to include
   --babel-plugin-path <path>   Path to babel-plugin-react-compiler
+  --compilation-mode <mode>    React Compiler compilationMode: infer, annotation, syntax, all (default: infer)
   --help                       Show this help message
   --version                    Show version number
 `.trim();
@@ -118,6 +119,7 @@ async function main(): Promise<void> {
       "exclude-dirs": { type: "string" },
       "include-extensions": { type: "string" },
       "babel-plugin-path": { type: "string" },
+      "compilation-mode": { type: "string" },
       help: { type: "boolean", default: false },
       version: { type: "boolean", default: false },
     },
@@ -146,12 +148,24 @@ async function main(): Promise<void> {
     ?.split(",")
     .map((s) => (s.trim().startsWith(".") ? s.trim() : `.${s.trim()}`));
 
+  const compilationModeArg = values["compilation-mode"];
+  const validModes = ["infer", "annotation", "syntax", "all"] as const;
+  type Mode = (typeof validModes)[number];
+  if (compilationModeArg && !validModes.includes(compilationModeArg as Mode)) {
+    process.stderr.write(
+      `Error: Unknown compilation-mode "${compilationModeArg}". Use ${validModes.join(", ")}.\n`
+    );
+    process.exit(1);
+  }
+  const compilationMode = (compilationModeArg as Mode | undefined) ?? "infer";
+
   process.stderr.write(`Scanning ${root}...\n`);
 
   const startTime = performance.now();
   const report = await generateReport({
     root,
     babelPluginPath,
+    compilationMode,
     excludeDirs,
     includeExtensions,
     onProgress({ processed, total }) {
