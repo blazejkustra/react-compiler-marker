@@ -193,6 +193,12 @@
           "nullable": true,
           "default": "✨",
           "description": "Emoji marker to display next to components that were successfully memoized"
+        },
+        "reactCompilerMarker.skippedEmoji": {
+          "type": "string",
+          "nullable": true,
+          "default": "⏭️",
+          "description": "Emoji marker to display next to components that opted out via the \"use no memo\" directive"
         }
       }
     }

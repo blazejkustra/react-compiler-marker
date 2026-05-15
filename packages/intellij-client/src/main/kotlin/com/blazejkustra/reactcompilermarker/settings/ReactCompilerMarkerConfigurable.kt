@@ -15,6 +15,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
     private var enabledCheckbox: JBCheckBox? = null
     private var successEmojiField: JBTextField? = null
     private var errorEmojiField: JBTextField? = null
+    private var skippedEmojiField: JBTextField? = null
     private var babelPluginPathField: JBTextField? = null
     private var excludedDirectoriesField: JBTextField? = null
     private var supportedExtensionsField: JBTextField? = null
@@ -26,6 +27,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         enabledCheckbox = JBCheckBox("Enable React Compiler Marker")
         successEmojiField = JBTextField()
         errorEmojiField = JBTextField()
+        skippedEmojiField = JBTextField()
         babelPluginPathField = JBTextField()
         excludedDirectoriesField = JBTextField()
         supportedExtensionsField = JBTextField()
@@ -36,6 +38,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
             .addSeparator()
             .addLabeledComponent(JBLabel("Success emoji:"), successEmojiField!!, 1, false)
             .addLabeledComponent(JBLabel("Error emoji:"), errorEmojiField!!, 1, false)
+            .addLabeledComponent(JBLabel("Skipped emoji:"), skippedEmojiField!!, 1, false)
             .addSeparator()
             .addLabeledComponent(JBLabel("Babel plugin path:"), babelPluginPathField!!, 1, false)
             .addSeparator()
@@ -52,6 +55,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         return enabledCheckbox?.isSelected != settings.isEnabled ||
                successEmojiField?.text != settings.successEmoji ||
                errorEmojiField?.text != settings.errorEmoji ||
+               skippedEmojiField?.text != settings.skippedEmoji ||
                babelPluginPathField?.text != settings.babelPluginPath ||
                excludedDirectoriesField?.text != settings.excludedDirectories ||
                supportedExtensionsField?.text != settings.supportedExtensions ||
@@ -63,6 +67,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         settings.isEnabled = enabledCheckbox?.isSelected ?: true
         settings.successEmoji = successEmojiField?.text ?: "\u2728"
         settings.errorEmoji = errorEmojiField?.text ?: "\uD83D\uDEAB"
+        settings.skippedEmoji = skippedEmojiField?.text ?: "\u23ED\uFE0F"
         settings.babelPluginPath = babelPluginPathField?.text ?: "node_modules/babel-plugin-react-compiler"
         settings.excludedDirectories = excludedDirectoriesField?.text ?: ""
         settings.supportedExtensions = supportedExtensionsField?.text ?: ""
@@ -78,6 +83,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         enabledCheckbox?.isSelected = settings.isEnabled
         successEmojiField?.text = settings.successEmoji
         errorEmojiField?.text = settings.errorEmoji
+        skippedEmojiField?.text = settings.skippedEmoji
         babelPluginPathField?.text = settings.babelPluginPath
         excludedDirectoriesField?.text = settings.excludedDirectories
         supportedExtensionsField?.text = settings.supportedExtensions
@@ -88,6 +94,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         enabledCheckbox = null
         successEmojiField = null
         errorEmojiField = null
+        skippedEmojiField = null
         babelPluginPathField = null
         excludedDirectoriesField = null
         supportedExtensionsField = null

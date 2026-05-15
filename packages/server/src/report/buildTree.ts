@@ -10,6 +10,7 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
     children: [],
     successCount: 0,
     failedCount: 0,
+    skippedCount: 0,
   };
 
   for (const file of report.files) {
@@ -34,6 +35,7 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
           children: isFile ? undefined : [],
           successCount: 0,
           failedCount: 0,
+          skippedCount: 0,
         };
         current.children.push(child);
       }
@@ -41,7 +43,7 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
       if (isFile) {
         const toEntry = (
           event: (typeof file.success)[number],
-          kind: "success" | "failure"
+          kind: NormalizedEntry["kind"]
         ): NormalizedEntry => {
           const parsed = parseLog(event);
           return {
@@ -53,13 +55,16 @@ export function buildReportTree(report: ReactCompilerReport): ReportTreeData {
             column: parsed.startChar,
           };
         };
+        const skipped = file.skipped ?? [];
         const entries: NormalizedEntry[] = [
           ...file.success.map((event) => toEntry(event, "success")),
           ...file.failed.map((event) => toEntry(event, "failure")),
+          ...skipped.map((event) => toEntry(event, "skip")),
         ];
         child.entries = entries;
         child.successCount = entries.filter((e) => e.kind === "success").length;
         child.failedCount = entries.filter((e) => e.kind === "failure").length;
+        child.skippedCount = entries.filter((e) => e.kind === "skip").length;
       }
 
       current = child;
@@ -85,11 +90,13 @@ function aggregateCounts(node: TreeNode): void {
 
   node.successCount = 0;
   node.failedCount = 0;
+  node.skippedCount = 0;
 
   for (const child of node.children) {
     aggregateCounts(child);
     node.successCount += child.successCount;
     node.failedCount += child.failedCount;
+    node.skippedCount += child.skippedCount;
   }
 }
 

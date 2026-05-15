@@ -81,6 +81,7 @@ export class ReportPanel {
         --rcm-list-hover-bg: var(--vscode-list-hoverBackground);
         --rcm-success: var(--vscode-testing-iconPassed, #4caf50);
         --rcm-failed: var(--vscode-testing-iconFailed, #f44336);
+        --rcm-skipped: var(--vscode-testing-iconSkipped, var(--vscode-descriptionForeground));
         --rcm-font-family: var(--vscode-font-family);
         --rcm-font-size: var(--vscode-font-size);
         --rcm-editor-font-family: var(--vscode-editor-font-family, monospace);

@@ -21,6 +21,9 @@ export function parseLog(log: LoggerEvent): ParsedLog {
       log.detail?.options?.details?.at(0)?.loc?.[property]?.[field] ??
       log.detail?.options?.loc?.[property]?.[field] ??
       log.detail?.loc?.[property]?.[field] ??
+      // CompileSkip events expose the directive location at the top level
+      log.loc?.[property]?.[field] ??
+      log.fnLoc?.[property]?.[field] ??
       defaultValue
     );
   };
@@ -30,7 +33,7 @@ export function parseLog(log: LoggerEvent): ParsedLog {
   const startChar = getLocValue("start", "column", 0);
   const endChar = getLocValue("end", "column", 0);
 
-  const reason = log?.detail?.options?.reason || "Unknown reason";
+  const reason = log?.detail?.options?.reason || log.reason || "Unknown reason";
   const description = log?.detail?.options?.description || "";
 
   return {
