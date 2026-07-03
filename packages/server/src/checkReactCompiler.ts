@@ -108,9 +108,6 @@ function runBabelPluginReactCompiler(
     filename: file,
     highlightCode: false,
     retainLines: true,
-    // BabelPluginSyntaxHermesParser swaps in Hermes as the parser for Flow
-    // files. It's a no-op for `.ts` / `.tsx`, so TypeScript falls back to
-    // Babel's own parser (configured via `parserOpts.plugins` below).
     plugins: [BabelPluginSyntaxHermesParser, [BabelPluginReactCompiler, COMPILER_OPTIONS]],
     parserOpts: {
       plugins: language === "typescript" ? ["typescript", "jsx"] : [],
@@ -224,7 +221,10 @@ export async function getCompiledOutput(
       filename,
       highlightCode: false,
       retainLines: true,
-      plugins: [BabelPluginSyntaxHermesParser, [BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS]],
+      plugins: [
+        BabelPluginSyntaxHermesParser,
+        [BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS],
+      ],
       parserOpts: {
         plugins: language === "typescript" ? ["typescript", "jsx"] : [],
       },
