@@ -1,5 +1,6 @@
-import { PluginObj, transformFromAstSync } from "@babel/core";
-import * as BabelParser from "@babel/parser";
+import { PluginObj, transformSync } from "@babel/core";
+// @ts-expect-error - no types
+import BabelPluginSyntaxHermesParser from "babel-plugin-syntax-hermes-parser";
 import * as path from "path";
 import { LRUCache } from "./cache";
 
@@ -103,16 +104,17 @@ function runBabelPluginReactCompiler(
     noEmit: true,
   };
 
-  const ast = BabelParser.parse(text, {
-    sourceFilename: file,
-    plugins: [language, "jsx"],
-    sourceType: "module",
-  });
-  const result = transformFromAstSync(ast, text, {
+  const result = transformSync(text, {
     filename: file,
     highlightCode: false,
     retainLines: true,
-    plugins: [[BabelPluginReactCompiler, COMPILER_OPTIONS]],
+    // BabelPluginSyntaxHermesParser swaps in Hermes as the parser for Flow
+    // files. It's a no-op for `.ts` / `.tsx`, so TypeScript falls back to
+    // Babel's own parser (configured via `parserOpts.plugins` below).
+    plugins: [BabelPluginSyntaxHermesParser, [BabelPluginReactCompiler, COMPILER_OPTIONS]],
+    parserOpts: {
+      plugins: language === "typescript" ? ["typescript", "jsx"] : [],
+    },
     sourceType: "module",
     configFile: false,
     babelrc: false,
@@ -218,16 +220,14 @@ export async function getCompiledOutput(
 
   try {
     const language = getLanguageFromFilename(filename);
-    const ast = BabelParser.parse(sourceCode, {
-      sourceFilename: filename,
-      plugins: [language, "jsx"],
-      sourceType: "module",
-    });
-    const result = transformFromAstSync(ast, sourceCode, {
+    const result = transformSync(sourceCode, {
       filename,
       highlightCode: false,
       retainLines: true,
-      plugins: [[BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS]],
+      plugins: [BabelPluginSyntaxHermesParser, [BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS]],
+      parserOpts: {
+        plugins: language === "typescript" ? ["typescript", "jsx"] : [],
+      },
       sourceType: "module",
       configFile: false,
       babelrc: false,
