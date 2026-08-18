@@ -31,5 +31,6 @@ Overview of features supported by each editor client.
 | Error Emoji | ✅ | ✅ | ✅ | ✅ |
 | Skipped Emoji (`"use no memo"`) | ✅ | ✅ | ✅ | ✅ |
 | Babel Plugin Path | ✅ | ✅ | ✅ | ✅ |
+| Compilation Mode | ✅ | ✅ | ✅ | ✅ |
 | Excluded Directories | ✅ | ✅ | ❌ | ❌ |
 | Supported Extensions | ✅ | ✅ | ❌ | ❌ |

@@ -19,6 +19,9 @@ import {
   getCompiledOutput,
   clearPluginCache,
   clearCompilationCache,
+  normalizeCompilationMode,
+  DEFAULT_COMPILATION_MODE,
+  type CompilationMode,
 } from "./checkReactCompiler";
 import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
@@ -48,6 +51,7 @@ interface Settings {
   errorEmoji: string | null;
   skippedEmoji: string | null;
   babelPluginPath: string;
+  compilationMode: CompilationMode;
 }
 
 let globalSettings: Settings = {
@@ -55,6 +59,7 @@ let globalSettings: Settings = {
   errorEmoji: "🚫",
   skippedEmoji: "⏭️",
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
+  compilationMode: DEFAULT_COMPILATION_MODE,
 };
 
 // Tooltip format preference from client (markdown or html)
@@ -140,6 +145,7 @@ connection.onDidChangeConfiguration((change) => {
       errorEmoji: settings.errorEmoji ?? "🚫",
       skippedEmoji: settings.skippedEmoji ?? "⏭️",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
+      compilationMode: normalizeCompilationMode(settings.compilationMode),
     };
 
     // Clear caches if babel plugin path changed
@@ -183,7 +189,8 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
           sourceCode,
           fileNameForCompiler,
           workspaceFolder,
-          globalSettings.babelPluginPath
+          globalSettings.babelPluginPath,
+          globalSettings.compilationMode
         );
 
       return generateInlayHints(
@@ -233,7 +240,8 @@ connection.onHover((params: HoverParams): Hover | null => {
       sourceCode,
       fileNameForCompiler,
       workspaceFolder,
-      globalSettings.babelPluginPath
+      globalSettings.babelPluginPath,
+      globalSettings.compilationMode
     );
 
     // Generate hints to find which components have hints on which lines
@@ -297,7 +305,8 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
           document.getText(),
           fileUri,
           workspaceFolder,
-          globalSettings.babelPluginPath
+          globalSettings.babelPluginPath,
+          globalSettings.compilationMode
         );
         return { success: true, code: compiled };
       } catch (error: any) {
@@ -324,6 +333,9 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
         const report = await generateReport({
           root: reportRoot,
           babelPluginPath: globalSettings.babelPluginPath,
+          compilationMode: normalizeCompilationMode(
+            options?.compilationMode ?? globalSettings.compilationMode
+          ),
           maxConcurrency: options?.maxConcurrency,
           includeExtensions: options?.includeExtensions,
           excludeDirs: options?.excludeDirs,
@@ -359,6 +371,9 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
         const report = await generateReport({
           root: htmlReportRoot,
           babelPluginPath: globalSettings.babelPluginPath,
+          compilationMode: normalizeCompilationMode(
+            htmlOptions?.compilationMode ?? globalSettings.compilationMode
+          ),
           maxConcurrency: htmlOptions?.maxConcurrency,
           includeExtensions: htmlOptions?.includeExtensions,
           excludeDirs: htmlOptions?.excludeDirs,

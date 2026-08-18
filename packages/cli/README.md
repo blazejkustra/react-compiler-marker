@@ -38,6 +38,7 @@ npx react-compiler-marker --include-extensions .tsx,.ts --exclude-dirs node_modu
 | `--exclude-dirs <dirs>` | Comma-separated directories to exclude | `node_modules,.git,dist,build,out,coverage,.next,.turbo` |
 | `--include-extensions <exts>` | Comma-separated file extensions to include | `.js,.jsx,.ts,.tsx,.mjs,.cjs` |
 | `--babel-plugin-path <path>` | Path to babel-plugin-react-compiler | Auto-detected from `node_modules` |
+| `--compilation-mode <mode>` | React Compiler [`compilationMode`](https://react.dev/reference/react-compiler/compilationMode): `infer`, `annotation`, `syntax`, or `all` | `infer` |
 | `--help` | Show help message | |
 | `--version` | Show version number | |
 

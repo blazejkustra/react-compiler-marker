@@ -50,6 +50,7 @@ class GenerateReportAction : AnAction() {
             "excludeDirs" to settings.excludedDirectoriesList,
             "includeExtensions" to settings.supportedExtensionsList,
             "respectGitignore" to settings.respectGitignore,
+            "compilationMode" to settings.compilationMode,
             "emojis" to mapOf(
                 "success" to settings.successEmoji,
                 "error" to settings.errorEmoji,

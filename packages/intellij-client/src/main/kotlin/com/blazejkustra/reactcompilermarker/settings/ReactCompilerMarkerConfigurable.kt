@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -20,6 +21,9 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
     private var excludedDirectoriesField: JBTextField? = null
     private var supportedExtensionsField: JBTextField? = null
     private var respectGitignoreCheckbox: JBCheckBox? = null
+    private var compilationModeComboBox: JComboBox<String>? = null
+
+    private val compilationModeOptions = arrayOf("infer", "annotation", "syntax", "all")
 
     override fun getDisplayName(): String = "React Compiler Marker"
 
@@ -32,6 +36,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         excludedDirectoriesField = JBTextField()
         supportedExtensionsField = JBTextField()
         respectGitignoreCheckbox = JBCheckBox("Respect .gitignore rules when scanning")
+        compilationModeComboBox = JComboBox(compilationModeOptions)
 
         return FormBuilder.createFormBuilder()
             .addComponent(enabledCheckbox!!)
@@ -41,6 +46,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
             .addLabeledComponent(JBLabel("Skipped emoji:"), skippedEmojiField!!, 1, false)
             .addSeparator()
             .addLabeledComponent(JBLabel("Babel plugin path:"), babelPluginPathField!!, 1, false)
+            .addLabeledComponent(JBLabel("Compilation mode:"), compilationModeComboBox!!, 1, false)
             .addSeparator()
             .addLabeledComponent(JBLabel("Excluded directories (comma-separated):"), excludedDirectoriesField!!, 1, false)
             .addLabeledComponent(JBLabel("Supported extensions (comma-separated):"), supportedExtensionsField!!, 1, false)
@@ -59,7 +65,8 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
                babelPluginPathField?.text != settings.babelPluginPath ||
                excludedDirectoriesField?.text != settings.excludedDirectories ||
                supportedExtensionsField?.text != settings.supportedExtensions ||
-               respectGitignoreCheckbox?.isSelected != settings.respectGitignore
+               respectGitignoreCheckbox?.isSelected != settings.respectGitignore ||
+               compilationModeComboBox?.selectedItem != settings.compilationMode
     }
 
     override fun apply() {
@@ -72,6 +79,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         settings.excludedDirectories = excludedDirectoriesField?.text ?: ""
         settings.supportedExtensions = supportedExtensionsField?.text ?: ""
         settings.respectGitignore = respectGitignoreCheckbox?.isSelected ?: true
+        settings.compilationMode = (compilationModeComboBox?.selectedItem as? String) ?: "infer"
 
         // Update LSP server configuration
         val lspManager = ReactCompilerLspServerManager.getInstance(project)
@@ -88,6 +96,7 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         excludedDirectoriesField?.text = settings.excludedDirectories
         supportedExtensionsField?.text = settings.supportedExtensions
         respectGitignoreCheckbox?.isSelected = settings.respectGitignore
+        compilationModeComboBox?.selectedItem = settings.compilationMode
     }
 
     override fun disposeUIResources() {
@@ -99,5 +108,6 @@ class ReactCompilerMarkerConfigurable(private val project: Project) : Configurab
         excludedDirectoriesField = null
         supportedExtensionsField = null
         respectGitignoreCheckbox = null
+        compilationModeComboBox = null
     }
 }

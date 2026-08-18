@@ -13,6 +13,7 @@
 - Generate reports for a full-project compilation snapshot
 - Commands to activate/deactivate markers or check individual files
 - Configurable babel plugin path for custom setups
+- Configurable [`compilationMode`](https://react.dev/reference/react-compiler/compilationMode) (`infer`, `annotation`, `syntax`, `all`) to match your project's React Compiler setup
 
 ## Supported IDEs
 

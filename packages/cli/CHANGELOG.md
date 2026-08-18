@@ -4,7 +4,8 @@ All notable changes to the React Compiler Marker CLI will be documented in this 
 
 ## [Unreleased]
 ### Added
--
+- `"use no memo"` opt-outs are now counted and reported as skipped (⏭️) instead of being dropped
+- `--compilation-mode <mode>` flag to set the React Compiler `compilationMode` (`infer`, `annotation`, `syntax`, `all`; default `infer`)
 
 ### Changed
 -

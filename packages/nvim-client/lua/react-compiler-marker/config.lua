@@ -25,6 +25,10 @@ M.defaults = {
   -- Path to babel-plugin-react-compiler (relative to workspace root)
   babel_plugin_path = "node_modules/babel-plugin-react-compiler",
 
+  -- React Compiler `compilationMode` ("infer" | "annotation" | "syntax" | "all")
+  -- See https://react.dev/reference/react-compiler/compilationMode
+  compilation_mode = "infer",
+
   -- Enable/disable on startup
   enabled = true,
 
@@ -126,6 +130,7 @@ function M.get_server_settings()
       errorEmoji = M.config.emojis.error,
       skippedEmoji = M.config.emojis.skipped,
       babelPluginPath = M.config.babel_plugin_path,
+      compilationMode = M.config.compilation_mode,
     },
   }
 end

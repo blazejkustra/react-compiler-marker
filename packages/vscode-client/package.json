@@ -199,6 +199,17 @@
           "nullable": true,
           "default": "⏭️",
           "description": "Emoji marker to display next to components that opted out via the \"use no memo\" directive"
+        },
+        "reactCompilerMarker.compilationMode": {
+          "type": "string",
+          "enum": [
+            "infer",
+            "annotation",
+            "syntax",
+            "all"
+          ],
+          "default": "infer",
+          "markdownDescription": "Controls which functions React Compiler attempts to compile. Match this to your project's babel-plugin-react-compiler configuration. See [compilationMode docs](https://react.dev/reference/react-compiler/compilationMode)."
         }
       }
     }
@@ -227,7 +238,7 @@
     "@types/vscode": "^1.95.0",
     "@types/node": "20.x",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.1",
     "esbuild": "^0.24.0",
     "npm-run-all2": "^8.0.4"

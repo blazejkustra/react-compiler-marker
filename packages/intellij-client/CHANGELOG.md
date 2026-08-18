@@ -4,7 +4,9 @@ All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will b
 
 ## [Unreleased]
 ### Added
+- **`"use no memo"` opt-outs**: Functions opted out of the compiler are now reported as skipped (configurable Skipped Emoji, default ⏭️) instead of being dropped from markers and reports
 - **Respect .gitignore**: New setting to honor .gitignore rules when scanning files for report generation (enabled by default)
+- **Compilation Mode**: New setting to choose the React Compiler `compilationMode` (`infer`, `annotation`, `syntax`, `all`) so markers match your project's configuration
 
 ---
 

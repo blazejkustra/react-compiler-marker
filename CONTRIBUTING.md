@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+ (required by `@vscode/test-electron` v3, used by the VS Code test suite)
 - npm 9+
 - JDK 21 (for IntelliJ plugin development)
 
