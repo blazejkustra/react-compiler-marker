@@ -1,5 +1,6 @@
-import { PluginObj, transformFromAstSync } from "@babel/core";
-import * as BabelParser from "@babel/parser";
+import { PluginObj, transformSync } from "@babel/core";
+// @ts-expect-error - no types
+import BabelPluginSyntaxHermesParser from "babel-plugin-syntax-hermes-parser";
 import * as path from "path";
 import { LRUCache } from "./cache";
 
@@ -64,6 +65,11 @@ const DEFAULT_COMPILER_OPTIONS = {
     enableTreatRefLikeIdentifiersAsRefs: true,
   },
 };
+
+// Only hand parsing to hermes-parser for files with an @flow pragma; everything
+// else stays on @babel/parser, which supports syntax hermes-parser lacks (e.g.
+// top-level await).
+const HERMES_PARSER_OPTIONS = { parseLangTypes: "flow" };
 
 // Module-level cache for the Babel plugin
 let cachedPlugin: PluginObj | undefined;
@@ -134,16 +140,17 @@ function runBabelPluginReactCompiler(
     noEmit: true,
   };
 
-  const ast = BabelParser.parse(text, {
-    sourceFilename: file,
-    plugins: [language, "jsx"],
-    sourceType: "module",
-  });
-  const result = transformFromAstSync(ast, text, {
+  const result = transformSync(text, {
     filename: file,
     highlightCode: false,
     retainLines: true,
-    plugins: [[BabelPluginReactCompiler, COMPILER_OPTIONS]],
+    plugins: [
+      [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+      [BabelPluginReactCompiler, COMPILER_OPTIONS],
+    ],
+    parserOpts: {
+      plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
+    },
     sourceType: "module",
     configFile: false,
     babelrc: false,
@@ -257,16 +264,17 @@ export async function getCompiledOutput(
 
   try {
     const language = getLanguageFromFilename(filename);
-    const ast = BabelParser.parse(sourceCode, {
-      sourceFilename: filename,
-      plugins: [language, "jsx"],
-      sourceType: "module",
-    });
-    const result = transformFromAstSync(ast, sourceCode, {
+    const result = transformSync(sourceCode, {
       filename,
       highlightCode: false,
       retainLines: true,
-      plugins: [[BabelPluginReactCompiler, { ...DEFAULT_COMPILER_OPTIONS, compilationMode }]],
+      plugins: [
+        [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+        [BabelPluginReactCompiler, { ...DEFAULT_COMPILER_OPTIONS, compilationMode }],
+      ],
+      parserOpts: {
+        plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
+      },
       sourceType: "module",
       configFile: false,
       babelrc: false,

@@ -240,3 +240,41 @@ suite("Critical error handling", () => {
     );
   });
 });
+
+suite("Parser selection", () => {
+  test("flow-modern-syntax.js: modern Flow syntax is parsed via hermes-parser", () => {
+    const text = readFixture("flow-modern-syntax.js").trim();
+    const filename = "/mock/flow-modern-syntax.js";
+
+    const { successfulCompilations, failedCompilations } = compileFixture(
+      text,
+      filename
+    );
+
+    // @babel/parser's flow plugin rejects `readonly` in object types, which
+    // leaves every bucket empty. hermes-parser accepts it.
+    assert.strictEqual(
+      successfulCompilations.length,
+      1,
+      `Expected 1 successful compilation, got ${successfulCompilations.length} (${failedCompilations.length} failed). Modern Flow syntax was not parsed.`
+    );
+  });
+
+  test("top-level-await.mjs: files without a Flow pragma keep top-level await", () => {
+    const text = readFixture("top-level-await.mjs").trim();
+    const filename = "/mock/top-level-await.mjs";
+
+    const { successfulCompilations, failedCompilations } = compileFixture(
+      text,
+      filename
+    );
+
+    // hermes-parser has no top-level await support, so routing every .mjs file
+    // to it would drop this component silently.
+    assert.strictEqual(
+      successfulCompilations.length,
+      1,
+      `Expected 1 successful compilation, got ${successfulCompilations.length} (${failedCompilations.length} failed). Top-level await was not parsed.`
+    );
+  });
+});
