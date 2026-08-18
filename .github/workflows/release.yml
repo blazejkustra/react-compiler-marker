@@ -75,16 +75,25 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           DATE=$(date +%Y-%m-%d)
 
-          # Insert new version entry after the --- separator
+          # Clear the [Unreleased] section and insert the new version entry after the --- separator
+          grep -q '^---$' CHANGELOG.md || { echo "CHANGELOG.md is missing the --- separator"; exit 1; }
           awk -v ver="$VERSION" -v date="$DATE" '
+            /^## \[Unreleased\]/ {
+              print
+              print ""
+              skip=1
+              next
+            }
             /^---$/ && !inserted {
+              skip=0
+              inserted=1
               print "---"
               print ""
               print "## [" ver "] - " date
               print ENVIRON["RELEASE_BODY"]
-              inserted=1
               next
             }
+            skip {next}
             {print}
           ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
@@ -153,16 +162,25 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           DATE=$(date +%Y-%m-%d)
 
-          # Insert new version entry after the --- separator
+          # Clear the [Unreleased] section and insert the new version entry after the --- separator
+          grep -q '^---$' CHANGELOG.md || { echo "CHANGELOG.md is missing the --- separator"; exit 1; }
           awk -v ver="$VERSION" -v date="$DATE" '
+            /^## \[Unreleased\]/ {
+              print
+              print ""
+              skip=1
+              next
+            }
             /^---$/ && !inserted {
+              skip=0
+              inserted=1
               print "---"
               print ""
               print "## [" ver "] - " date
               print ENVIRON["RELEASE_BODY"]
-              inserted=1
               next
             }
+            skip {next}
             {print}
           ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
@@ -205,16 +223,25 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           DATE=$(date +%Y-%m-%d)
 
-          # Insert new version entry after the --- separator
+          # Clear the [Unreleased] section and insert the new version entry after the --- separator
+          grep -q '^---$' CHANGELOG.md || { echo "CHANGELOG.md is missing the --- separator"; exit 1; }
           awk -v ver="$VERSION" -v date="$DATE" '
+            /^## \[Unreleased\]/ {
+              print
+              print ""
+              skip=1
+              next
+            }
             /^---$/ && !inserted {
+              skip=0
+              inserted=1
               print "---"
               print ""
               print "## [" ver "] - " date
               print ENVIRON["RELEASE_BODY"]
-              inserted=1
               next
             }
+            skip {next}
             {print}
           ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
