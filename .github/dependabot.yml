@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # babel-plugin-react-compiler is pinned exactly (not a range) because the
+  # server depends on its logger option and event shapes, so a bump needs a
+  # look rather than a silent range resolution. Scoped to that one package to
+  # keep the PR volume useful.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: babel-plugin-react-compiler
+    commit-message:
+      prefix: chore
