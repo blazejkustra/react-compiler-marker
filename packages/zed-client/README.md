@@ -20,16 +20,16 @@ Zed extension that shows which React components are optimized by the [React Comp
 
 ## Installation
 
-1. Open Zed
-2. Go to **Extensions** (`cmd+shift+x`)
-3. Search for **"React Compiler Marker"**
-4. Click **Install**
+React Compiler Marker is not yet available on the extensions marketplace, but you can use it by building the project locally and adding it as a Dev Extension in Zed.
 
 ### Dev Installation
 
-1. Install the WASM target: `rustup target add wasm32-wasip1`
-2. Build: `cd packages/zed-client && cargo build --target wasm32-wasip1 --release`
-3. In Zed: **Extensions** → **Install Dev Extension** → select the `packages/zed-client/` directory
+Make sure you have rust setup on your machine https://rust-lang.org/tools/install/
+
+1. clone the project
+2. Install the WASM target: `rustup target add wasm32-wasip1`
+3. Build: `cd packages/zed-client && cargo build --target wasm32-wasip1 --release`
+4. In Zed: **Extensions** → **Install Dev Extension** → select the `packages/zed-client/` directory
 
 ## Setup
 
@@ -49,6 +49,7 @@ Add settings to your Zed `settings.json` (`cmd+,`):
 
 ```json
 {
+  "language_servers": ["react-compiler-marker"],
   "lsp": {
     "react-compiler-marker": {
       "settings": {

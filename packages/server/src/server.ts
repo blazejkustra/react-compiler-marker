@@ -236,14 +236,13 @@ connection.onHover((params: HoverParams): Hover | null => {
   try {
     const sourceCode = document.getText();
 
-    const { successfulCompilations, failedCompilations, skippedCompilations } =
-      checkReactCompiler(
-        sourceCode,
-        fileNameForCompiler,
-        workspaceFolder,
-        globalSettings.babelPluginPath,
-        globalSettings.compilationMode
-      );
+    const { successfulCompilations, failedCompilations, skippedCompilations } = checkReactCompiler(
+      sourceCode,
+      fileNameForCompiler,
+      workspaceFolder,
+      globalSettings.babelPluginPath,
+      globalSettings.compilationMode
+    );
 
     // Generate hints to find which components have hints on which lines
     const hints = generateInlayHints(
