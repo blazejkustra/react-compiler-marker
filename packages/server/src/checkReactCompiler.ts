@@ -71,11 +71,14 @@ const DEFAULT_COMPILER_OPTIONS = {
 // top-level await).
 const HERMES_PARSER_OPTIONS = { parseLangTypes: "flow" };
 
-// Module-level cache for the Babel plugin
-let cachedPlugin: PluginObj | undefined;
+// Cache for the Babel plugin, keyed by the workspace root it was loaded from.
+// A multi-root workspace can have a different (or differently versioned)
+// babel-plugin-react-compiler per root, so a single cached plugin would make
+// every root after the first analyze its files with the wrong compiler.
+const pluginCache = new Map<string, PluginObj>();
 
 export function clearPluginCache(): void {
-  cachedPlugin = undefined;
+  pluginCache.clear();
 }
 
 // Compilation result cache (50 entries max)
@@ -168,35 +171,60 @@ function runBabelPluginReactCompiler(
   };
 }
 
+const BUNDLED_PLUGIN_CACHE_KEY = "\0bundled";
+
+/**
+ * Identifies which compiler a result came from. Both the plugin cache and the
+ * compilation cache key on this, so they can never disagree about which root's
+ * plugin produced a given result.
+ */
+function pluginScope(workspaceFolder: string | undefined, babelPluginPath: string): string {
+  return workspaceFolder ? `${workspaceFolder}\0${babelPluginPath}` : BUNDLED_PLUGIN_CACHE_KEY;
+}
+
 function importBabelPluginReactCompiler(
   workspaceFolder: string | undefined,
   babelPluginPath: string
 ): PluginObj | undefined {
-  // Return cached plugin if available
-  if (cachedPlugin) {
-    return cachedPlugin;
+  const cacheKey = pluginScope(workspaceFolder, babelPluginPath);
+
+  // Return the plugin cached for this workspace root, if any
+  const cached = pluginCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   if (workspaceFolder) {
     try {
-      cachedPlugin = require(path.join(workspaceFolder, babelPluginPath));
-      return cachedPlugin;
+      const plugin: PluginObj = require(path.join(workspaceFolder, babelPluginPath));
+      pluginCache.set(cacheKey, plugin);
+      return plugin;
     } catch (error: any) {
       throttledError(
-        `Failed to load babel-plugin-react-compiler from workspace: ${error?.message}`
+        `Failed to load babel-plugin-react-compiler from ${workspaceFolder}: ${error?.message}`
       );
     }
   }
 
-  // Fallback to bundled version
+  // Fallback to the bundled version. Cache it under the root's key too, so a
+  // root without a local plugin does not retry the failing require() for every
+  // file it scans.
+  const bundled = pluginCache.get(BUNDLED_PLUGIN_CACHE_KEY) ?? loadBundledPlugin();
+  if (bundled) {
+    pluginCache.set(cacheKey, bundled);
+  }
+  return bundled;
+}
+
+function loadBundledPlugin(): PluginObj | undefined {
   try {
-    cachedPlugin = require("babel-plugin-react-compiler");
+    const plugin: PluginObj = require("babel-plugin-react-compiler");
+    pluginCache.set(BUNDLED_PLUGIN_CACHE_KEY, plugin);
+    return plugin;
   } catch (error: any) {
     throttledError(`Failed to load babel-plugin-react-compiler: ${error?.message}`);
     return undefined;
   }
-
-  return cachedPlugin;
 }
 
 function getLanguageFromFilename(filename: string): "flow" | "typescript" {
@@ -211,8 +239,10 @@ export function checkReactCompiler(
   babelPluginPath: string,
   compilationMode: CompilationMode
 ): CompilationResult {
-  // Check cache first (keyed by content, filename and compilation mode)
-  const cached = compilationCache.get(sourceCode, filename, compilationMode);
+  // Check cache first (keyed by content, filename, compilation mode and the
+  // root/plugin the result would come from)
+  const scope = pluginScope(workspaceFolder, babelPluginPath);
+  const cached = compilationCache.get(sourceCode, filename, compilationMode, scope);
   if (cached) {
     return cached;
   }
@@ -234,7 +264,7 @@ export function checkReactCompiler(
     );
 
     // Cache the result
-    compilationCache.set(sourceCode, filename, compilationMode, result);
+    compilationCache.set(sourceCode, filename, compilationMode, scope, result);
 
     return result;
   } catch (error: any) {
@@ -244,7 +274,7 @@ export function checkReactCompiler(
       failedCompilations: [],
       skippedCompilations: [],
     };
-    compilationCache.set(sourceCode, filename, compilationMode, emptyResult);
+    compilationCache.set(sourceCode, filename, compilationMode, scope, emptyResult);
     return emptyResult;
   }
 }

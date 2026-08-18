@@ -12,8 +12,11 @@ export class ReportPanel {
 
   private readonly panel: vscode.WebviewPanel;
   private data: ReportTreeData;
-  private readonly workspaceUri: vscode.Uri;
-  private readonly emojis: EmojiConfig;
+  // Reassigned when an existing panel is reused for a different report — in a
+  // multi-root workspace the next report may belong to another root, and file
+  // links are resolved against this URI.
+  private workspaceUri: vscode.Uri;
+  private emojis: EmojiConfig;
   private disposables: vscode.Disposable[] = [];
 
   private constructor(
@@ -43,6 +46,8 @@ export class ReportPanel {
   ): void {
     if (ReportPanel.instance) {
       ReportPanel.instance.data = data;
+      ReportPanel.instance.workspaceUri = workspaceUri;
+      ReportPanel.instance.emojis = emojis;
       ReportPanel.instance.panel.webview.html = ReportPanel.instance.getHtml();
       ReportPanel.instance.panel.reveal(vscode.ViewColumn.Beside);
       return;

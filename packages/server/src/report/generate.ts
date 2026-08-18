@@ -15,6 +15,12 @@ import {
  */
 export interface ReactCompilerReport {
   generatedAt: string;
+  /**
+   * Absolute path of the root this report was generated from. File paths below
+   * are relative to it, so a multi-root workspace can tell which folder a saved
+   * report belongs to. Optional for reports written by older versions.
+   */
+  root?: string;
   totals: {
     filesScanned: number;
     filesWithResults: number;
@@ -284,6 +290,7 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
 
   return {
     generatedAt: new Date().toISOString(),
+    root,
     totals: {
       filesScanned: files.length,
       filesWithResults: filesWithResults.length,
