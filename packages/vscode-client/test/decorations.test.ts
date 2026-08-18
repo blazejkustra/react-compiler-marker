@@ -132,6 +132,39 @@ suite("Critical error handling", () => {
     );
   });
 
+  test('use-no-memo.tsx: opted-out functions are reported as skipped, not failed', () => {
+    const text = readFixture("use-no-memo.tsx").trim();
+    const filename = "/mock/use-no-memo.tsx";
+
+    const { successfulCompilations, failedCompilations, skippedCompilations } =
+      compileFixture(text, filename);
+
+    assert.ok(Array.isArray(skippedCompilations), "skippedCompilations should be an array");
+    assert.strictEqual(
+      skippedCompilations.length,
+      1,
+      `Expected 1 skipped compilation, got ${skippedCompilations.length}`
+    );
+    assert.strictEqual(
+      successfulCompilations.length,
+      1,
+      `Expected 1 successful compilation, got ${successfulCompilations.length}`
+    );
+
+    // No remaining failure should overlap the opted-out component's range.
+    const skipStart = skippedCompilations[0].fnLoc?.start?.line ?? 0;
+    const skipEnd = skippedCompilations[0].fnLoc?.end?.line ?? skipStart;
+    for (const failed of failedCompilations) {
+      const failStart = failed.fnLoc?.start?.line ?? 0;
+      const failEnd = failed.fnLoc?.end?.line ?? failStart;
+      const overlaps = failStart <= skipEnd && skipStart <= failEnd;
+      assert.ok(
+        !overlaps,
+        `Failure at line ${failStart} overlaps the opted-out component (lines ${skipStart}-${skipEnd}); opt-outs must not be reported as failures.`
+      );
+    }
+  });
+
   test("error-without-ranges.tsx: handles errors without location ranges gracefully", () => {
     const text = readFixture("error-without-ranges.tsx").trim();
     const filename = "/mock/error-without-ranges.tsx";

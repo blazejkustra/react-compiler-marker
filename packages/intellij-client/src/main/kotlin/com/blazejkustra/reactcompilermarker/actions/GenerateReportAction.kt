@@ -52,7 +52,8 @@ class GenerateReportAction : AnAction() {
             "respectGitignore" to settings.respectGitignore,
             "emojis" to mapOf(
                 "success" to settings.successEmoji,
-                "error" to settings.errorEmoji
+                "error" to settings.errorEmoji,
+                "skipped" to settings.skippedEmoji
             )
         )
 
@@ -136,6 +137,7 @@ class GenerateReportAction : AnAction() {
         val listHoverBg = shiftColor(bg, shift)
         val success = if (isDark) Color(0x73, 0xC9, 0x91) else Color(0x2E, 0x7D, 0x32)
         val failed = if (isDark) Color(0xF4, 0x87, 0x71) else Color(0xC6, 0x28, 0x28)
+        val skipped = if (isDark) Color(0xB0, 0xB7, 0xC2) else Color(0x5F, 0x66, 0x73)
         val fontFamily = UIManager.getFont("Label.font")?.family ?: "sans-serif"
         val fontSize = UIManager.getFont("Label.font")?.size ?: 13
         val editorFont = UIManager.getFont("EditorPane.font")?.family ?: "monospace"
@@ -157,6 +159,7 @@ class GenerateReportAction : AnAction() {
                 --rcm-list-hover-bg: ${colorToCssAlpha(listHoverBg, 0.5)};
                 --rcm-success: ${colorToCss(success)};
                 --rcm-failed: ${colorToCss(failed)};
+                --rcm-skipped: ${colorToCss(skipped)};
                 --rcm-font-family: '${fontFamily}', sans-serif;
                 --rcm-font-size: ${fontSize}px;
                 --rcm-editor-font-family: '${editorFont}', monospace;
