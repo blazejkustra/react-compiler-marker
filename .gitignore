@@ -13,6 +13,8 @@
 /server
 **/zed-client/target
 **/zed-client/extension.wasm
+# Built server bundle (generated during build, uploaded to the zed-v* release)
+**/zed-client/server/server.bundle.js
 
 # Plugin-discovery fixtures have to ship a real node_modules layout
 !packages/vscode-client/test/fixtures/**/node_modules/

@@ -198,6 +198,43 @@ jobs:
           git commit -m "chore(cli): bump version to ${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
 
+  # Zed extension server bundle (triggered by zed-v* tags)
+  # The extension downloads this asset at first launch instead of embedding it,
+  # so the release has to carry it before the tag is usable.
+  publish-zed:
+    if: startsWith(github.event.release.tag_name, 'zed-v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check the pinned release tag matches this release
+        run: |
+          PINNED=$(sed -n 's/^const SERVER_RELEASE_TAG: &str = "\(.*\)";$/\1/p' packages/zed-client/src/lib.rs)
+          if [[ "$PINNED" != "$GITHUB_REF_NAME" ]]; then
+            echo "lib.rs pins $PINNED, but this release is $GITHUB_REF_NAME."
+            echo "Bump SERVER_RELEASE_TAG before tagging, or the extension downloads the wrong bundle."
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build server bundle
+        run: BUILD_TARGET=zed node esbuild.js --production
+
+      - name: Upload server bundle to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/zed-client/server/server.bundle.js
+
   # IntelliJ plugin release (triggered by intellij-v* tags)
   build-intellij:
     if: startsWith(github.event.release.tag_name, 'intellij-v')
