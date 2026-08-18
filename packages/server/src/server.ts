@@ -13,7 +13,6 @@ import {
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { fileURLToPath } from "node:url";
 import {
   checkReactCompiler,
   getCompiledOutput,
@@ -26,6 +25,7 @@ import {
 import { generateInlayHints } from "./inlayHints";
 import { debounce } from "./debounce";
 import { shouldEnableHover } from "./clientUtils";
+import { resolveWorkspaceFolderForUri, workspaceFolderUriToPath } from "./workspaceFolders";
 
 import packageJson from "../package.json";
 import { generateReport, buildReportTree, getReportHtml } from "./report/index";
@@ -69,8 +69,19 @@ let tooltipFormat: TooltipFormat = "markdown";
 // Store activation state
 let isActivated = true;
 
-// Store workspace folder
-let workspaceFolder: string | undefined;
+// Store every open workspace folder, in the order the client reported them.
+// A multi-root workspace can have a different babel-plugin-react-compiler per
+// root, so each document must be analyzed against the root that contains it.
+let workspaceFolders: string[] = [];
+
+// The root used when a document belongs to no open folder, and the default
+// target for report commands that do not name one.
+function defaultWorkspaceFolder(): string | undefined {
+  return workspaceFolders[0];
+}
+
+// Whether the client can notify us when folders are added or removed
+let hasWorkspaceFolderCapability = false;
 
 // Store client name
 let clientName: string | undefined;
@@ -86,11 +97,13 @@ function logError(error: string): void {
 }
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
-  const workspaceFolderUri = params.workspaceFolders?.[0]?.uri;
-  if (workspaceFolderUri?.startsWith("file://")) {
-    workspaceFolder = fileURLToPath(workspaceFolderUri);
-  } else {
-    workspaceFolder = workspaceFolderUri;
+  workspaceFolders = (params.workspaceFolders ?? [])
+    .map((folder) => workspaceFolderUriToPath(folder.uri))
+    .filter((folder): folder is string => Boolean(folder));
+
+  // Clients that predate `workspaceFolders` still send the deprecated rootUri.
+  if (workspaceFolders.length === 0 && params.rootUri) {
+    workspaceFolders = [workspaceFolderUriToPath(params.rootUri)];
   }
 
   // Store client name for feature detection
@@ -101,6 +114,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
   if (initOptions?.tooltipFormat === "html" || initOptions?.tooltipFormat === "markdown") {
     tooltipFormat = initOptions.tooltipFormat;
   }
+
+  hasWorkspaceFolderCapability = Boolean(params.capabilities.workspace?.workspaceFolders);
 
   const hoverEnabled = shouldEnableHover(clientName);
 
@@ -127,12 +142,38 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
           "react-compiler-marker/generateReportHtml",
         ],
       },
+      workspace: {
+        workspaceFolders: {
+          supported: true,
+          changeNotifications: true,
+        },
+      },
     },
   };
 });
 
 connection.onInitialized(() => {
-  logMessage("React Compiler Marker LSP Server initialized");
+  logMessage(
+    `React Compiler Marker LSP Server initialized (workspace folders: ${
+      workspaceFolders.length > 0 ? workspaceFolders.join(", ") : "none"
+    })`
+  );
+
+  if (hasWorkspaceFolderCapability) {
+    connection.workspace.onDidChangeWorkspaceFolders((event) => {
+      const removed = new Set(event.removed.map((folder) => workspaceFolderUriToPath(folder.uri)));
+      workspaceFolders = workspaceFolders
+        .filter((folder) => !removed.has(folder))
+        .concat(event.added.map((folder) => workspaceFolderUriToPath(folder.uri)));
+
+      // A removed root's plugin must not keep serving files, and cached results
+      // may have been produced by it.
+      clearPluginCache();
+      clearCompilationCache();
+      connection.languages.inlayHint.refresh();
+      logMessage(`Workspace folders changed: ${workspaceFolders.join(", ") || "none"}`);
+    });
+  }
 });
 
 // Handle configuration changes
@@ -179,7 +220,8 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
   return debounce(params.textDocument.uri, () => {
     logMessage(`Process inlay hints for ${params.textDocument.uri}`);
     const fileName = params.textDocument.uri;
-    const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+    const fileNameForCompiler = workspaceFolderUriToPath(fileName);
+    const documentWorkspaceFolder = resolveWorkspaceFolderForUri(fileName, workspaceFolders);
 
     try {
       const sourceCode = document.getText();
@@ -188,7 +230,7 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
         checkReactCompiler(
           sourceCode,
           fileNameForCompiler,
-          workspaceFolder,
+          documentWorkspaceFolder,
           globalSettings.babelPluginPath,
           globalSettings.compilationMode
         );
@@ -230,7 +272,8 @@ connection.onHover((params: HoverParams): Hover | null => {
   }
 
   const fileName = params.textDocument.uri;
-  const fileNameForCompiler = fileName.startsWith("file://") ? fileName.slice(7) : fileName;
+  const fileNameForCompiler = workspaceFolderUriToPath(fileName);
+  const documentWorkspaceFolder = resolveWorkspaceFolderForUri(fileName, workspaceFolders);
   const hoveredLine = params.position.line;
 
   try {
@@ -239,7 +282,7 @@ connection.onHover((params: HoverParams): Hover | null => {
     const { successfulCompilations, failedCompilations, skippedCompilations } = checkReactCompiler(
       sourceCode,
       fileNameForCompiler,
-      workspaceFolder,
+      documentWorkspaceFolder,
       globalSettings.babelPluginPath,
       globalSettings.compilationMode
     );
@@ -299,12 +342,12 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
         return { success: false, error: "Document not found" };
       }
 
-      const fileUri = uri.startsWith("file://") ? uri.slice(7) : uri;
+      const fileUri = workspaceFolderUriToPath(uri);
       try {
         const compiled = await getCompiledOutput(
           document.getText(),
           fileUri,
-          workspaceFolder,
+          resolveWorkspaceFolderForUri(uri, workspaceFolders),
           globalSettings.babelPluginPath,
           globalSettings.compilationMode
         );
@@ -323,7 +366,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
     case "react-compiler-marker/generateReport": {
       // Generate JSON data report
       const [options] = params.arguments ?? [];
-      const reportRoot = options?.root ?? workspaceFolder;
+      const reportRoot = options?.root ?? defaultWorkspaceFolder();
       if (!reportRoot) {
         return { success: false, error: "No workspace folder available" };
       }
@@ -361,7 +404,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
     case "react-compiler-marker/generateReportHtml": {
       // Generate report and return self-contained HTML page
       const [htmlOptions] = params.arguments ?? [];
-      const htmlReportRoot = htmlOptions?.root ?? workspaceFolder;
+      const htmlReportRoot = htmlOptions?.root ?? defaultWorkspaceFolder();
       if (!htmlReportRoot) {
         return { success: false, error: "No workspace folder available" };
       }

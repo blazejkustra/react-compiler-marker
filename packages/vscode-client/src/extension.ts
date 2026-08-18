@@ -50,6 +50,36 @@ ${code}
 Please help me fix this code so that the React Compiler can optimize it. The React Compiler automatically memoizes components and their dependencies, but it needs the code to follow certain patterns. Please provide the corrected code and explain what changes you made and why they help the React Compiler optimize the component.`;
 }
 
+/**
+ * Pick the workspace folder to act on. With a single root it is used directly;
+ * in a multi-root workspace the user chooses, since each root can have its own
+ * babel-plugin-react-compiler and its own report.
+ */
+async function pickWorkspaceFolder(
+  placeHolder: string
+): Promise<vscode.WorkspaceFolder | undefined> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length === 0) {
+    return undefined;
+  }
+  if (folders.length === 1) {
+    return folders[0];
+  }
+  return vscode.window.showWorkspaceFolderPick({ placeHolder });
+}
+
+/**
+ * Locate the workspace folder a saved report was generated from. Reports record
+ * their own root; older ones fall back to the only open folder.
+ */
+function workspaceUriForReport(report: ReactCompilerReport): vscode.Uri | undefined {
+  if (report.root) {
+    return vscode.Uri.file(report.root);
+  }
+  const folders = vscode.workspace.workspaceFolders;
+  return folders && folders.length > 0 ? folders[0].uri : undefined;
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   logMessage("react-compiler-marker is being activated!");
 
@@ -171,12 +201,12 @@ export function activate(context: vscode.ExtensionContext): void {
             error: config.get<string>("errorEmoji") ?? "\uD83D\uDEAB",
             skipped: config.get<string>("skippedEmoji") ?? "\u23ED\uFE0F",
           };
-          const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-          if (!workspaceFolder) {
+          const workspaceUri = workspaceUriForReport(report);
+          if (!workspaceUri) {
             vscode.window.showErrorMessage("Open a workspace folder to view the report.");
             return;
           }
-          ReportPanel.createOrShow(workspaceFolder.uri, treeData, emojis);
+          ReportPanel.createOrShow(workspaceUri, treeData, emojis);
         } catch (error: any) {
           vscode.window.showErrorMessage(`Failed to open report: ${error?.message ?? error}`);
         }
@@ -333,9 +363,16 @@ function registerCommands(
   const generateReport = vscode.commands.registerCommand(
     "react-compiler-marker.generateReport",
     async () => {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
+      const folders = vscode.workspace.workspaceFolders;
+      if (!folders || folders.length === 0) {
         vscode.window.showErrorMessage("Open a workspace folder to generate a report.");
+        return;
+      }
+      const workspaceFolder = await pickWorkspaceFolder(
+        "Select the workspace folder to generate a React Compiler report for"
+      );
+      if (!workspaceFolder) {
+        // The user dismissed the folder picker.
         return;
       }
 

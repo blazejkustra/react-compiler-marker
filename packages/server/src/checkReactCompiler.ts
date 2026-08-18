@@ -71,11 +71,14 @@ const DEFAULT_COMPILER_OPTIONS = {
 // top-level await).
 const HERMES_PARSER_OPTIONS = { parseLangTypes: "flow" };
 
-// Module-level cache for the Babel plugin
-let cachedPlugin: PluginObj | undefined;
+// Cache for the Babel plugin, keyed by the workspace root it was loaded from.
+// A multi-root workspace can have a different (or differently versioned)
+// babel-plugin-react-compiler per root, so a single cached plugin would make
+// every root after the first analyze its files with the wrong compiler.
+const pluginCache = new Map<string, PluginObj>();
 
 export function clearPluginCache(): void {
-  cachedPlugin = undefined;
+  pluginCache.clear();
 }
 
 // Compilation result cache (50 entries max)
@@ -168,35 +171,48 @@ function runBabelPluginReactCompiler(
   };
 }
 
+const BUNDLED_PLUGIN_CACHE_KEY = "\0bundled";
+
 function importBabelPluginReactCompiler(
   workspaceFolder: string | undefined,
   babelPluginPath: string
 ): PluginObj | undefined {
-  // Return cached plugin if available
-  if (cachedPlugin) {
-    return cachedPlugin;
+  const cacheKey = workspaceFolder
+    ? `${workspaceFolder}\0${babelPluginPath}`
+    : BUNDLED_PLUGIN_CACHE_KEY;
+
+  // Return the plugin cached for this workspace root, if any
+  const cached = pluginCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   if (workspaceFolder) {
     try {
-      cachedPlugin = require(path.join(workspaceFolder, babelPluginPath));
-      return cachedPlugin;
+      const plugin: PluginObj = require(path.join(workspaceFolder, babelPluginPath));
+      pluginCache.set(cacheKey, plugin);
+      return plugin;
     } catch (error: any) {
       throttledError(
-        `Failed to load babel-plugin-react-compiler from workspace: ${error?.message}`
+        `Failed to load babel-plugin-react-compiler from ${workspaceFolder}: ${error?.message}`
       );
     }
   }
 
   // Fallback to bundled version
+  const bundled = pluginCache.get(BUNDLED_PLUGIN_CACHE_KEY);
+  if (bundled) {
+    return bundled;
+  }
+
   try {
-    cachedPlugin = require("babel-plugin-react-compiler");
+    const plugin: PluginObj = require("babel-plugin-react-compiler");
+    pluginCache.set(BUNDLED_PLUGIN_CACHE_KEY, plugin);
+    return plugin;
   } catch (error: any) {
     throttledError(`Failed to load babel-plugin-react-compiler: ${error?.message}`);
     return undefined;
   }
-
-  return cachedPlugin;
 }
 
 function getLanguageFromFilename(filename: string): "flow" | "typescript" {

@@ -12,7 +12,7 @@ export class ReportItem extends vscode.TreeItem {
     public readonly report: ReactCompilerReport
   ) {
     const date = new Date(report.generatedAt);
-    const label = date.toLocaleDateString("en-US", {
+    const timestamp = date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -20,19 +20,35 @@ export class ReportItem extends vscode.TreeItem {
       minute: "2-digit",
     });
 
+    // In a multi-root workspace each root gets its own reports, so name the
+    // folder a report covers — otherwise the list is a wall of timestamps.
+    const rootName = ReportItem.rootName(report);
+    const label = rootName ? `${rootName} · ${timestamp}` : timestamp;
+
     super(label, vscode.TreeItemCollapsibleState.None);
 
     const skippedCount = report.totals.skippedCount ?? 0;
     const skippedDesc = skippedCount > 0 ? `  \u23ED\uFE0F ${skippedCount}` : "";
     this.description = `\u2728 ${report.totals.successCount}  \uD83D\uDEAB ${report.totals.failedCount}${skippedDesc}`;
     this.iconPath = new vscode.ThemeIcon("graph");
-    this.tooltip = `Files scanned: ${report.totals.filesScanned}\nCompiled: ${report.totals.successCount}\nFailed: ${report.totals.failedCount}\nSkipped: ${skippedCount}`;
+    const rootLine = report.root ? `Root: ${report.root}\n` : "";
+    this.tooltip = `${rootLine}Files scanned: ${report.totals.filesScanned}\nCompiled: ${report.totals.successCount}\nFailed: ${report.totals.failedCount}\nSkipped: ${skippedCount}`;
     this.contextValue = "reportItem";
     this.command = {
       command: "react-compiler-marker.openReport",
       title: "Open Report",
       arguments: [reportUri],
     };
+  }
+
+  /** Name of the workspace folder a report covers, when several are open. */
+  private static rootName(report: ReactCompilerReport): string | undefined {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!report.root || !folders || folders.length < 2) {
+      return undefined;
+    }
+    const match = folders.find((folder) => folder.uri.fsPath === report.root);
+    return match?.name;
   }
 }
 
