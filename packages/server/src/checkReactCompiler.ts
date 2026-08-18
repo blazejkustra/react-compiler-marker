@@ -1,6 +1,7 @@
 import { PluginObj, transformSync } from "@babel/core";
 // @ts-expect-error - no types
 import BabelPluginSyntaxHermesParser from "babel-plugin-syntax-hermes-parser";
+import * as fs from "fs";
 import * as path from "path";
 import { LRUCache } from "./cache";
 import { createSkipEventRemapper } from "./remapSkipEvents";
@@ -186,6 +187,73 @@ function pluginScope(workspaceFolder: string | undefined, babelPluginPath: strin
   return workspaceFolder ? `${workspaceFolder}\0${babelPluginPath}` : BUNDLED_PLUGIN_CACHE_KEY;
 }
 
+// Directories that never hold the workspace's own installs. `node_modules` is
+// on the list because a plugin nested inside one belongs to a dependency, not
+// to a package of this workspace.
+const IGNORED_SEARCH_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage", "vendor"]);
+const MAX_SEARCH_DIRS = 5000;
+
+/**
+ * Look for `babelPluginPath` somewhere below `workspaceFolder`.
+ *
+ * A single root opened at the top of a monorepo usually has no plugin of its
+ * own: it is installed in the package that uses it (`apps/web/node_modules/…`).
+ * Without this search the root-level require misses and every file is analyzed
+ * with the compiler bundled into this server rather than the project's own.
+ *
+ * Breadth-first, so the shallowest install wins when several packages have one.
+ */
+function findPluginInWorkspace(
+  workspaceFolder: string,
+  babelPluginPath: string
+): string | undefined {
+  const queue = [workspaceFolder];
+  let scanned = 0;
+
+  while (queue.length > 0 && scanned < MAX_SEARCH_DIRS) {
+    const dir = queue.shift() as string;
+    scanned++;
+
+    // Probing follows symlinks on purpose: pnpm keeps the real package in its
+    // store and links it into each package's node_modules.
+    const candidate = path.join(dir, babelPluginPath);
+    if (fs.existsSync(path.join(candidate, "package.json"))) {
+      return candidate;
+    }
+
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      // Unreadable directory (permissions, a stale mount): skip it.
+      continue;
+    }
+    for (const entry of entries) {
+      // Descend into plain directories only, since symlinks can loop.
+      if (
+        entry.isDirectory() &&
+        !entry.name.startsWith(".") &&
+        !IGNORED_SEARCH_DIRS.has(entry.name)
+      ) {
+        queue.push(path.join(dir, entry.name));
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function requirePlugin(modulePath: string | undefined): PluginObj | undefined {
+  if (!modulePath) {
+    return undefined;
+  }
+  try {
+    return require(modulePath);
+  } catch {
+    return undefined;
+  }
+}
+
 function importBabelPluginReactCompiler(
   workspaceFolder: string | undefined,
   babelPluginPath: string
@@ -199,15 +267,19 @@ function importBabelPluginReactCompiler(
   }
 
   if (workspaceFolder) {
-    try {
-      const plugin: PluginObj = require(path.join(workspaceFolder, babelPluginPath));
+    // The workspace search only runs when the root itself has no plugin, and
+    // its outcome is cached under `cacheKey` either way, so it costs at most
+    // one scan per root.
+    const plugin =
+      requirePlugin(path.join(workspaceFolder, babelPluginPath)) ??
+      requirePlugin(findPluginInWorkspace(workspaceFolder, babelPluginPath));
+    if (plugin) {
       pluginCache.set(cacheKey, plugin);
       return plugin;
-    } catch (error: any) {
-      throttledError(
-        `Failed to load babel-plugin-react-compiler from ${workspaceFolder}: ${error?.message}`
-      );
     }
+    throttledError(
+      `Failed to load babel-plugin-react-compiler from ${workspaceFolder} or any package below it`
+    );
   }
 
   // Fallback to the bundled version. Cache it under the root's key too, so a
