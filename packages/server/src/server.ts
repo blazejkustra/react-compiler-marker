@@ -140,7 +140,6 @@ connection.onDidChangeConfiguration((change) => {
   const settings = change.settings?.reactCompilerMarker;
   if (settings) {
     const oldBabelPluginPath = globalSettings.babelPluginPath;
-    const oldCompilationMode = globalSettings.compilationMode;
     globalSettings = {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
@@ -152,11 +151,6 @@ connection.onDidChangeConfiguration((change) => {
     // Clear caches if babel plugin path changed
     if (oldBabelPluginPath !== globalSettings.babelPluginPath) {
       clearPluginCache();
-      clearCompilationCache();
-    }
-
-    // Compilation cache is keyed by source+filename only — invalidate on mode change
-    if (oldCompilationMode !== globalSettings.compilationMode) {
       clearCompilationCache();
     }
   }

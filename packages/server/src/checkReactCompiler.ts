@@ -202,10 +202,10 @@ export function checkReactCompiler(
   filename: string,
   workspaceFolder: string | undefined,
   babelPluginPath: string,
-  compilationMode: CompilationMode = DEFAULT_COMPILATION_MODE
+  compilationMode: CompilationMode
 ): CompilationResult {
-  // Check cache first
-  const cached = compilationCache.get(sourceCode, filename);
+  // Check cache first (keyed by content, filename and compilation mode)
+  const cached = compilationCache.get(sourceCode, filename, compilationMode);
   if (cached) {
     return cached;
   }
@@ -227,7 +227,7 @@ export function checkReactCompiler(
     );
 
     // Cache the result
-    compilationCache.set(sourceCode, filename, result);
+    compilationCache.set(sourceCode, filename, compilationMode, result);
 
     return result;
   } catch (error: any) {
@@ -237,7 +237,7 @@ export function checkReactCompiler(
       failedCompilations: [],
       skippedCompilations: [],
     };
-    compilationCache.set(sourceCode, filename, emptyResult);
+    compilationCache.set(sourceCode, filename, compilationMode, emptyResult);
     return emptyResult;
   }
 }
@@ -247,7 +247,7 @@ export async function getCompiledOutput(
   filename: string,
   workspaceFolder: string | undefined,
   babelPluginPath: string,
-  compilationMode: CompilationMode = DEFAULT_COMPILATION_MODE
+  compilationMode: CompilationMode
 ): Promise<string> {
   const BabelPluginReactCompiler = importBabelPluginReactCompiler(workspaceFolder, babelPluginPath);
 

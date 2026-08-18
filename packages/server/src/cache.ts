@@ -12,13 +12,13 @@ export class LRUCache<T> {
     this.maxSize = maxSize;
   }
 
-  private generateKey(content: string, filename: string): string {
+  private generateKey(content: string, filename: string, mode: string): string {
     const hash = crypto.createHash("md5").update(content).digest("hex");
-    return `${filename}:${hash}`;
+    return `${filename}:${mode}:${hash}`;
   }
 
-  get(content: string, filename: string): T | undefined {
-    const key = this.generateKey(content, filename);
+  get(content: string, filename: string, mode: string): T | undefined {
+    const key = this.generateKey(content, filename, mode);
     const entry = this.cache.get(key);
 
     if (!entry) {
@@ -32,8 +32,8 @@ export class LRUCache<T> {
     return entry.result;
   }
 
-  set(content: string, filename: string, result: T): void {
-    const key = this.generateKey(content, filename);
+  set(content: string, filename: string, mode: string, result: T): void {
+    const key = this.generateKey(content, filename, mode);
 
     // Remove oldest entries if at capacity
     if (this.cache.size >= this.maxSize) {
