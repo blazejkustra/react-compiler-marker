@@ -3,8 +3,9 @@ import { PluginObj, transformSync } from "@babel/core";
 import BabelPluginSyntaxHermesParser from "babel-plugin-syntax-hermes-parser";
 import * as path from "path";
 import { LRUCache } from "./cache";
+import { createSkipEventRemapper } from "./remapSkipEvents";
 
-type EventLocation = {
+export type EventLocation = {
   start?: { line?: number; column?: number; index?: number };
   end?: { line?: number; column?: number; index?: number };
 };
@@ -116,6 +117,8 @@ function runBabelPluginReactCompiler(
   const failedCompilations: Array<LoggerEvent> = [];
   const skippedCompilations: Array<LoggerEvent> = [];
 
+  const skipRemapper = createSkipEventRemapper();
+
   const logger = {
     logEvent(filename: string | null, rawEvent: LoggerEvent) {
       const event = { ...rawEvent, filename };
@@ -130,7 +133,7 @@ function runBabelPluginReactCompiler(
           failedCompilations.push(event);
           return;
         case "CompileSkip":
-          skippedCompilations.push(event);
+          skippedCompilations.push(skipRemapper.remapSkipEvent(event));
           return;
       }
     },
@@ -149,6 +152,7 @@ function runBabelPluginReactCompiler(
     retainLines: true,
     plugins: [
       [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+      skipRemapper.plugin,
       [BabelPluginReactCompiler, COMPILER_OPTIONS],
     ],
     parserOpts: {
