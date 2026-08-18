@@ -4,6 +4,7 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ## [Unreleased]
 ### Added
+- **`"use no memo"` opt-outs**: Functions opted out of the compiler are now reported as skipped (`reactCompilerMarker.skippedEmoji`, default ⏭️) instead of being dropped from markers and reports
 - **Compilation Mode**: New `reactCompilerMarker.compilationMode` setting (`infer`, `annotation`, `syntax`, `all`) to match your project's React Compiler configuration. Invalid values fall back to `infer` with a warning. Available in all clients and via the CLI's `--compilation-mode` flag.
 
 ### Changed
