@@ -3,15 +3,6 @@
 All notable changes to the React Compiler Marker WebStorm/IntelliJ plugin will be documented in this file.
 
 ## [Unreleased]
-### Added
-- **`"use no memo"` opt-outs**: Functions opted out of the compiler are now reported as skipped (configurable Skipped Emoji, default ⏭️) instead of being dropped from markers and reports
-- **Respect .gitignore**: New setting to honor .gitignore rules when scanning files for report generation (enabled by default)
-- **Compilation Mode**: New setting to choose the React Compiler `compilationMode` (`infer`, `annotation`, `syntax`, `all`) so markers match your project's configuration
-
-### Fixed
-- **Flow files**: `.js`/`.jsx`/`.mjs` files with a `@flow` pragma are now parsed with hermes-parser, so modern Flow syntax (`component`, `hook`, `renders`, `readonly`, `match`, `x is T`, …) no longer fails to parse and drop all markers — thanks @jonreading81
-- **Plugin and report resolution**: the React Compiler plugin and generated reports are now resolved relative to the project root
-- **Skipped marker position**: the skipped marker is now placed at the start of the function for multi-line signatures instead of drifting onto a later line
 
 ---
 
