@@ -4,7 +4,7 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ## [Unreleased]
 ### Added
--
+- **Compilation Mode**: New `reactCompilerMarker.compilationMode` setting (`infer`, `annotation`, `syntax`, `all`) to match your project's React Compiler configuration. Invalid values fall back to `infer` with a warning. Available in all clients and via the CLI's `--compilation-mode` flag.
 
 ### Changed
 - 
