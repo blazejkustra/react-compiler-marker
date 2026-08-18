@@ -42,6 +42,11 @@ const DEFAULT_COMPILER_OPTIONS = {
   },
 };
 
+// Only hand parsing to hermes-parser for files with an @flow pragma; everything
+// else stays on @babel/parser, which supports syntax hermes-parser lacks (e.g.
+// top-level await).
+const HERMES_PARSER_OPTIONS = { parseLangTypes: "flow" };
+
 // Module-level cache for the Babel plugin
 let cachedPlugin: PluginObj | undefined;
 
@@ -108,9 +113,12 @@ function runBabelPluginReactCompiler(
     filename: file,
     highlightCode: false,
     retainLines: true,
-    plugins: [BabelPluginSyntaxHermesParser, [BabelPluginReactCompiler, COMPILER_OPTIONS]],
+    plugins: [
+      [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+      [BabelPluginReactCompiler, COMPILER_OPTIONS],
+    ],
     parserOpts: {
-      plugins: language === "typescript" ? ["typescript", "jsx"] : [],
+      plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
     },
     sourceType: "module",
     configFile: false,
@@ -222,11 +230,11 @@ export async function getCompiledOutput(
       highlightCode: false,
       retainLines: true,
       plugins: [
-        BabelPluginSyntaxHermesParser,
+        [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
         [BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS],
       ],
       parserOpts: {
-        plugins: language === "typescript" ? ["typescript", "jsx"] : [],
+        plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
       },
       sourceType: "module",
       configFile: false,
