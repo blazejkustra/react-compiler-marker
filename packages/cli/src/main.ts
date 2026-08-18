@@ -24,7 +24,8 @@ import {
 } from "@react-compiler-marker/server/src/report";
 import { formatText } from "./formatText";
 
-const VERSION = "1.0.0";
+const VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"))
+  .version as string;
 
 const HELP = `
 Usage: react-compiler-marker [options] [directory]
