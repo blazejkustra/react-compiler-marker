@@ -199,12 +199,17 @@ function importBabelPluginReactCompiler(
     }
   }
 
-  // Fallback to bundled version
-  const bundled = pluginCache.get(BUNDLED_PLUGIN_CACHE_KEY);
+  // Fallback to the bundled version. Cache it under the root's key too, so a
+  // root without a local plugin does not retry the failing require() for every
+  // file it scans.
+  const bundled = pluginCache.get(BUNDLED_PLUGIN_CACHE_KEY) ?? loadBundledPlugin();
   if (bundled) {
-    return bundled;
+    pluginCache.set(cacheKey, bundled);
   }
+  return bundled;
+}
 
+function loadBundledPlugin(): PluginObj | undefined {
   try {
     const plugin: PluginObj = require("babel-plugin-react-compiler");
     pluginCache.set(BUNDLED_PLUGIN_CACHE_KEY, plugin);

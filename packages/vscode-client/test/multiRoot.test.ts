@@ -106,6 +106,35 @@ suite("Multi-root workspace: plugin resolution", () => {
     );
   });
 
+  test("a root without a local plugin falls back once, not per file", () => {
+    const rootA = fixtureDir("multi-root", "project-a");
+    const missing = path.join("plugins", "does-not-exist.js");
+    const source = fs.readFileSync(path.join(rootA, "App.tsx"), "utf8");
+
+    // The bundled plugin takes over; the point is that it is then cached under
+    // this root's key so the failing require() is not retried for every file.
+    checkReactCompiler(source, path.join(rootA, "one.tsx"), rootA, missing, "infer");
+    const cachedAfterFallback = checkReactCompiler(
+      source,
+      path.join(rootA, "two.tsx"),
+      rootA,
+      missing,
+      "infer"
+    );
+
+    assert.ok(
+      Array.isArray(cachedAfterFallback.successfulCompilations),
+      "the bundled plugin should still produce a result"
+    );
+    // The stub was never involved, so no stub event may appear.
+    assert.ok(
+      !cachedAfterFallback.successfulCompilations.some((event: { fnName?: string }) =>
+        event.fnName?.startsWith("stub-plugin-from-")
+      ),
+      "a missing local plugin must fall back to the bundled compiler, not a stub"
+    );
+  });
+
   test("clearPluginCache drops every cached root", () => {
     const rootA = fixtureDir("multi-root", "project-a");
     const rootB = fixtureDir("multi-root", "project-b");
