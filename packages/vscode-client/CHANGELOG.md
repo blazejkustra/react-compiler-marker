@@ -14,6 +14,18 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ---
 
+## [2.3.0] - 2026-08-18
+### Added
+- **`"use no memo"` opt-outs**: Functions opted out of the compiler are now reported as skipped (`reactCompilerMarker.skippedEmoji`, default ⏭️) instead of being dropped from markers and reports
+- **Compilation Mode**: New `reactCompilerMarker.compilationMode` setting (`infer`, `annotation`, `syntax`, `all`) to match your project's React Compiler configuration. Invalid values fall back to `infer` with a warning. Available in all clients and via the CLI's `--compilation-mode` flag.
+
+### Fixed
+- **Flow files**: `.js`/`.jsx`/`.mjs` files with a `@flow` pragma are now parsed with hermes-parser, so modern Flow syntax (`component`, `hook`, `renders`, `readonly`, `match`, `x is T`, …) no longer fails to parse and drop all markers — thanks @jonreading81
+- **Multi-root workspaces**: the React Compiler plugin and generated reports are now resolved per workspace root instead of always using the first folder
+- **Skipped marker position**: the skipped marker is now placed at the start of the function for multi-line signatures instead of drifting onto a later line
+
+
+
 ## [2.2.0] - 2026-05-03
 ## What's Changed
 * fix(server): correctly resolve workspace folder URI on Windows by @blazejkustra in https://github.com/blazejkustra/react-compiler-marker/pull/76
