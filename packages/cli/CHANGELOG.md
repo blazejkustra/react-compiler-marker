@@ -3,6 +3,9 @@
 All notable changes to the React Compiler Marker CLI will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- `--version` now reports the installed package version instead of a hardcoded `1.0.0`
+- Skipped entries in the `text` report are now shown at the start of the function instead of on the `"use no memo"` directive line
 
 ---
 

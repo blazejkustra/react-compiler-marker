@@ -9,14 +9,16 @@ interface ParsedFailure {
   line: number | undefined;
 }
 
-function parseFailure(filePath: string, log: LogEntry): ParsedFailure {
-  const line =
+function parseFailure(filePath: string, log: LogEntry, preferFnLoc = false): ParsedFailure {
+  const detailLine =
     log.detail?.options?.details?.at(0)?.loc?.start?.line ??
     log.detail?.options?.loc?.start?.line ??
     log.detail?.loc?.start?.line ??
-    log.loc?.start?.line ??
-    log.fnLoc?.start?.line ??
-    undefined;
+    log.loc?.start?.line;
+  const fnLine = log.fnLoc?.start?.line;
+  // Skip events point `loc` at the "use no memo" directive; `fnLoc` is remapped
+  // to the function start, which is where the marker belongs.
+  const line = (preferFnLoc ? (fnLine ?? detailLine) : (detailLine ?? fnLine)) ?? undefined;
   const reason = log?.detail?.options?.reason || log?.reason || "Unknown reason";
   return { filePath, fnName: log.fnName, reason, line };
 }
@@ -63,7 +65,7 @@ export function formatText(report: ReactCompilerReport): string {
   const skips: ParsedFailure[] = [];
   for (const file of report.files) {
     for (const log of file.skipped ?? []) {
-      skips.push(parseFailure(file.path, log));
+      skips.push(parseFailure(file.path, log, true));
     }
   }
 
