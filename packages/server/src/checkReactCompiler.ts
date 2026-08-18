@@ -173,13 +173,20 @@ function runBabelPluginReactCompiler(
 
 const BUNDLED_PLUGIN_CACHE_KEY = "\0bundled";
 
+/**
+ * Identifies which compiler a result came from. Both the plugin cache and the
+ * compilation cache key on this, so they can never disagree about which root's
+ * plugin produced a given result.
+ */
+function pluginScope(workspaceFolder: string | undefined, babelPluginPath: string): string {
+  return workspaceFolder ? `${workspaceFolder}\0${babelPluginPath}` : BUNDLED_PLUGIN_CACHE_KEY;
+}
+
 function importBabelPluginReactCompiler(
   workspaceFolder: string | undefined,
   babelPluginPath: string
 ): PluginObj | undefined {
-  const cacheKey = workspaceFolder
-    ? `${workspaceFolder}\0${babelPluginPath}`
-    : BUNDLED_PLUGIN_CACHE_KEY;
+  const cacheKey = pluginScope(workspaceFolder, babelPluginPath);
 
   // Return the plugin cached for this workspace root, if any
   const cached = pluginCache.get(cacheKey);
@@ -232,8 +239,10 @@ export function checkReactCompiler(
   babelPluginPath: string,
   compilationMode: CompilationMode
 ): CompilationResult {
-  // Check cache first (keyed by content, filename and compilation mode)
-  const cached = compilationCache.get(sourceCode, filename, compilationMode);
+  // Check cache first (keyed by content, filename, compilation mode and the
+  // root/plugin the result would come from)
+  const scope = pluginScope(workspaceFolder, babelPluginPath);
+  const cached = compilationCache.get(sourceCode, filename, compilationMode, scope);
   if (cached) {
     return cached;
   }
@@ -255,7 +264,7 @@ export function checkReactCompiler(
     );
 
     // Cache the result
-    compilationCache.set(sourceCode, filename, compilationMode, result);
+    compilationCache.set(sourceCode, filename, compilationMode, scope, result);
 
     return result;
   } catch (error: any) {
@@ -265,7 +274,7 @@ export function checkReactCompiler(
       failedCompilations: [],
       skippedCompilations: [],
     };
-    compilationCache.set(sourceCode, filename, compilationMode, emptyResult);
+    compilationCache.set(sourceCode, filename, compilationMode, scope, emptyResult);
     return emptyResult;
   }
 }

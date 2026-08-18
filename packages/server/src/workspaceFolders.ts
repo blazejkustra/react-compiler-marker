@@ -38,7 +38,7 @@ export function resolveWorkspaceFolder(
     return undefined;
   }
 
-  const target = path.resolve(documentPath);
+  const target = normalizeForComparison(documentPath);
   let match: string | undefined;
   let matchLength = -1;
 
@@ -46,7 +46,7 @@ export function resolveWorkspaceFolder(
     if (!folder) {
       continue;
     }
-    const root = path.resolve(folder);
+    const root = normalizeForComparison(folder);
     // Compare on path boundaries so `/ws/project-a` does not swallow
     // `/ws/project-a-extra`.
     const isInside =
@@ -58,6 +58,19 @@ export function resolveWorkspaceFolder(
   }
 
   return match;
+}
+
+/**
+ * Windows paths are case-insensitive, and the casing VS Code reports for a
+ * document URI need not match the casing of the workspace folder it came from
+ * (drive letters especially). Comparing those verbatim would drop the document
+ * to the fallback root and compile it with the wrong root's plugin — the very
+ * bug this module exists to prevent. Other platforms are left case-sensitive,
+ * since two roots differing only by case are then genuinely different folders.
+ */
+function normalizeForComparison(target: string): string {
+  const resolved = path.resolve(target);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
 /**

@@ -12,13 +12,20 @@ export class LRUCache<T> {
     this.maxSize = maxSize;
   }
 
-  private generateKey(content: string, filename: string, mode: string): string {
+  /**
+   * `scope` identifies the compiler that produced the result — the workspace
+   * root and plugin path it was loaded from. Without it the same absolute file
+   * analyzed against two different roots (nested roots, or a report scanning an
+   * outer root while inlay hints resolve the inner one) would share an entry,
+   * silently serving one root's plugin output to the other.
+   */
+  private generateKey(content: string, filename: string, mode: string, scope: string): string {
     const hash = crypto.createHash("md5").update(content).digest("hex");
-    return `${filename}:${mode}:${hash}`;
+    return `${scope}:${filename}:${mode}:${hash}`;
   }
 
-  get(content: string, filename: string, mode: string): T | undefined {
-    const key = this.generateKey(content, filename, mode);
+  get(content: string, filename: string, mode: string, scope: string): T | undefined {
+    const key = this.generateKey(content, filename, mode, scope);
     const entry = this.cache.get(key);
 
     if (!entry) {
@@ -32,8 +39,8 @@ export class LRUCache<T> {
     return entry.result;
   }
 
-  set(content: string, filename: string, mode: string, result: T): void {
-    const key = this.generateKey(content, filename, mode);
+  set(content: string, filename: string, mode: string, scope: string, result: T): void {
+    const key = this.generateKey(content, filename, mode, scope);
 
     // Remove oldest entries if at capacity
     if (this.cache.size >= this.maxSize) {

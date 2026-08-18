@@ -23,6 +23,10 @@ function workspaceFolderUriToPath(uri: string): string {
   return workspaceFolders().workspaceFolderUriToPath(uri);
 }
 
+function resolveWorkspaceFolderForUri(uri: string, roots: string[]): string | undefined {
+  return workspaceFolders().resolveWorkspaceFolderForUri(uri, roots);
+}
+
 // Fixtures live in `test/fixtures`, but compiled tests run from `out/test`.
 function fixtureDir(...segments: string[]): string {
   const candidates = [
@@ -103,6 +107,30 @@ suite("Multi-root workspace: plugin resolution", () => {
       require.cache[require.resolve(pluginModule)],
       loadedOnce,
       "repeated checks against one root must not reload the plugin"
+    );
+  });
+
+  test("the compilation cache does not serve one root's result to another", () => {
+    const rootA = fixtureDir("multi-root", "project-a");
+    const rootB = fixtureDir("multi-root", "project-b");
+    const source = fs.readFileSync(path.join(rootA, "App.tsx"), "utf8");
+
+    // Same absolute filename, same content, same mode — only the root differs.
+    // Reachable for real when nested roots are open: a report scanning the outer
+    // root sees the same file the inlay hints resolve to the inner root.
+    const shared = "/mock/shared/App.tsx";
+    const viaA = checkReactCompiler(source, shared, rootA, STUB_PLUGIN_PATH, "infer");
+    const viaB = checkReactCompiler(source, shared, rootB, STUB_PLUGIN_PATH, "infer");
+
+    assert.strictEqual(
+      viaA.successfulCompilations[0]?.fnName,
+      "stub-plugin-from-project-a",
+      "the first root's plugin should produce the first result"
+    );
+    assert.strictEqual(
+      viaB.successfulCompilations[0]?.fnName,
+      "stub-plugin-from-project-b",
+      "a cache keyed without the root would replay project-a's result here"
     );
   });
 
@@ -190,12 +218,39 @@ suite("Multi-root workspace: root resolution for a document", () => {
     assert.strictEqual(resolveWorkspaceFolder("/ws/project-a", roots), "/ws/project-a");
   });
 
-  test("falls back to the first root for a file outside every root", () => {
+  test("returns undefined for a file outside every root", () => {
     assert.strictEqual(resolveWorkspaceFolder("/elsewhere/App.tsx", roots), undefined);
   });
 
   test("handles an empty root list", () => {
     assert.strictEqual(resolveWorkspaceFolder("/ws/project-a/src/App.tsx", []), undefined);
+  });
+
+  // This is what all four server call sites actually use.
+  test("resolveWorkspaceFolderForUri picks the containing root for a file URI", () => {
+    assert.strictEqual(
+      resolveWorkspaceFolderForUri("file:///ws/project-b/src/App.tsx", roots),
+      "/ws/project-b"
+    );
+  });
+
+  test("resolveWorkspaceFolderForUri decodes escaped characters before matching", () => {
+    assert.strictEqual(
+      resolveWorkspaceFolderForUri("file:///ws/project-b/src/My%20App.tsx", roots),
+      "/ws/project-b",
+      "a path with a space must still resolve to its root, not the fallback"
+    );
+  });
+
+  test("resolveWorkspaceFolderForUri falls back to the first root when outside every root", () => {
+    assert.strictEqual(
+      resolveWorkspaceFolderForUri("file:///elsewhere/App.tsx", roots),
+      "/ws/project-a"
+    );
+  });
+
+  test("resolveWorkspaceFolderForUri returns undefined when no folders are open", () => {
+    assert.strictEqual(resolveWorkspaceFolderForUri("file:///elsewhere/App.tsx", []), undefined);
   });
 
   test("converts file:// URIs to paths", () => {

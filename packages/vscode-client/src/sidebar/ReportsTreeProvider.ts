@@ -47,7 +47,11 @@ export class ReportItem extends vscode.TreeItem {
     if (!report.root || !folders || folders.length < 2) {
       return undefined;
     }
-    const match = folders.find((folder) => folder.uri.fsPath === report.root);
+    // Windows paths are case-insensitive and VS Code's casing need not match
+    // the one recorded in the report, so compare the way the platform does.
+    const samePath = (left: string, right: string) =>
+      process.platform === "win32" ? left.toLowerCase() === right.toLowerCase() : left === right;
+    const match = folders.find((folder) => samePath(folder.uri.fsPath, report.root as string));
     return match?.name;
   }
 }
