@@ -53,7 +53,15 @@ require('react-compiler-marker').setup({
   emojis = {
     success = "✨",  -- Successfully optimized
     error = "🚫",    -- Failed to optimize
+    skipped = "⏭️",  -- Opted out via "use no memo"
   },
+
+  -- React Compiler `compilationMode`: "infer" | "annotation" | "syntax" | "all"
+  -- See https://react.dev/reference/react-compiler/compilationMode
+  compilation_mode = "infer",
+
+  -- Path to babel-plugin-react-compiler (relative to workspace root)
+  babel_plugin_path = "node_modules/babel-plugin-react-compiler",
 
   -- Inlay hint settings
   inlay_hints = {

@@ -35,9 +35,31 @@ export type LoggerEvent = {
   };
 };
 
+export type CompilationMode = "infer" | "annotation" | "syntax" | "all";
+
+export const DEFAULT_COMPILATION_MODE: CompilationMode = "infer";
+
+const VALID_COMPILATION_MODES: ReadonlySet<CompilationMode> = new Set([
+  "infer",
+  "annotation",
+  "syntax",
+  "all",
+]);
+
+export function normalizeCompilationMode(value: unknown): CompilationMode {
+  if (typeof value === "string" && VALID_COMPILATION_MODES.has(value as CompilationMode)) {
+    return value as CompilationMode;
+  }
+  if (value !== undefined && value !== null) {
+    throttledError(
+      `Invalid compilationMode "${String(value)}". Falling back to "${DEFAULT_COMPILATION_MODE}". Valid values: infer, annotation, syntax, all.`
+    );
+  }
+  return DEFAULT_COMPILATION_MODE;
+}
+
 const DEFAULT_COMPILER_OPTIONS = {
   noEmit: false,
-  compilationMode: "infer",
   panicThreshold: "none",
   environment: {
     enableTreatRefLikeIdentifiersAsRefs: true,
@@ -84,7 +106,8 @@ function runBabelPluginReactCompiler(
   BabelPluginReactCompiler: PluginObj | undefined,
   text: string,
   file: string,
-  language: "flow" | "typescript"
+  language: "flow" | "typescript",
+  compilationMode: CompilationMode
 ) {
   const successfulCompilations: Array<LoggerEvent> = [];
   const failedCompilations: Array<LoggerEvent> = [];
@@ -112,6 +135,7 @@ function runBabelPluginReactCompiler(
 
   const COMPILER_OPTIONS = {
     ...DEFAULT_COMPILER_OPTIONS,
+    compilationMode,
     logger,
     noEmit: true,
   };
@@ -184,10 +208,11 @@ export function checkReactCompiler(
   sourceCode: string,
   filename: string,
   workspaceFolder: string | undefined,
-  babelPluginPath: string
+  babelPluginPath: string,
+  compilationMode: CompilationMode
 ): CompilationResult {
-  // Check cache first
-  const cached = compilationCache.get(sourceCode, filename);
+  // Check cache first (keyed by content, filename and compilation mode)
+  const cached = compilationCache.get(sourceCode, filename, compilationMode);
   if (cached) {
     return cached;
   }
@@ -204,11 +229,12 @@ export function checkReactCompiler(
       BabelPluginReactCompiler,
       sourceCode,
       filename,
-      language
+      language,
+      compilationMode
     );
 
     // Cache the result
-    compilationCache.set(sourceCode, filename, result);
+    compilationCache.set(sourceCode, filename, compilationMode, result);
 
     return result;
   } catch (error: any) {
@@ -218,7 +244,7 @@ export function checkReactCompiler(
       failedCompilations: [],
       skippedCompilations: [],
     };
-    compilationCache.set(sourceCode, filename, emptyResult);
+    compilationCache.set(sourceCode, filename, compilationMode, emptyResult);
     return emptyResult;
   }
 }
@@ -227,7 +253,8 @@ export async function getCompiledOutput(
   sourceCode: string,
   filename: string,
   workspaceFolder: string | undefined,
-  babelPluginPath: string
+  babelPluginPath: string,
+  compilationMode: CompilationMode
 ): Promise<string> {
   const BabelPluginReactCompiler = importBabelPluginReactCompiler(workspaceFolder, babelPluginPath);
 
@@ -243,7 +270,7 @@ export async function getCompiledOutput(
       retainLines: true,
       plugins: [
         [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
-        [BabelPluginReactCompiler, DEFAULT_COMPILER_OPTIONS],
+        [BabelPluginReactCompiler, { ...DEFAULT_COMPILER_OPTIONS, compilationMode }],
       ],
       parserOpts: {
         plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],

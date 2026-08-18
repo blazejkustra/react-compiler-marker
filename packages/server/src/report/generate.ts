@@ -3,7 +3,12 @@ import type { Dirent } from "fs";
 import os from "os";
 import path from "path";
 import ignore, { type Ignore } from "ignore";
-import { checkReactCompiler, LoggerEvent } from "../checkReactCompiler";
+import {
+  checkReactCompiler,
+  LoggerEvent,
+  type CompilationMode,
+  DEFAULT_COMPILATION_MODE,
+} from "../checkReactCompiler";
 
 /**
  * Full report generated from scanning a project with the React Compiler.
@@ -40,6 +45,8 @@ export interface ReportOptions {
   root: string;
   /** Path to the babel-plugin-react-compiler entry. */
   babelPluginPath: string;
+  /** React Compiler `compilationMode` (default: "infer"). */
+  compilationMode?: CompilationMode;
   /** Maximum number of files processed in parallel. */
   maxConcurrency?: number;
   /** File extensions to include (e.g. [".js", ".tsx"]). */
@@ -201,6 +208,7 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
   const excludeDirs = new Set(options.excludeDirs ?? Array.from(DEFAULT_EXCLUDES));
   const maxConcurrency = options.maxConcurrency ?? Math.max(1, os.cpus().length - 1);
   const respectGitignore = options.respectGitignore ?? true;
+  const compilationMode = options.compilationMode ?? DEFAULT_COMPILATION_MODE;
 
   const files = await listSourceFiles(root, includeExtensions, excludeDirs, respectGitignore);
   const totalFiles = files.length;
@@ -224,7 +232,7 @@ export async function generateReport(options: ReportOptions): Promise<ReactCompi
     try {
       const sourceCode = await fs.readFile(filePath, "utf8");
       const { successfulCompilations, failedCompilations, skippedCompilations } =
-        checkReactCompiler(sourceCode, filePath, root, options.babelPluginPath);
+        checkReactCompiler(sourceCode, filePath, root, options.babelPluginPath, compilationMode);
       return {
         path: path.relative(root, filePath),
         success: successfulCompilations,
