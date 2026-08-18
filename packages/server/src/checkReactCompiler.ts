@@ -28,6 +28,8 @@ export type LoggerEvent = {
   kind?: string;
   fnLoc: EventLocation;
   fnName?: string;
+  reason?: string;
+  loc?: EventLocation;
   detail?: Details & {
     options: Details;
   };
@@ -58,6 +60,7 @@ export function clearPluginCache(): void {
 interface CompilationResult {
   successfulCompilations: Array<LoggerEvent>;
   failedCompilations: Array<LoggerEvent>;
+  skippedCompilations: Array<LoggerEvent>;
 }
 
 const compilationCache = new LRUCache<CompilationResult>(100);
@@ -85,6 +88,7 @@ function runBabelPluginReactCompiler(
 ) {
   const successfulCompilations: Array<LoggerEvent> = [];
   const failedCompilations: Array<LoggerEvent> = [];
+  const skippedCompilations: Array<LoggerEvent> = [];
 
   const logger = {
     logEvent(filename: string | null, rawEvent: LoggerEvent) {
@@ -98,6 +102,9 @@ function runBabelPluginReactCompiler(
         case "CompileDiagnostic":
         case "PipelineError":
           failedCompilations.push(event);
+          return;
+        case "CompileSkip":
+          skippedCompilations.push(event);
           return;
       }
     },
@@ -133,6 +140,7 @@ function runBabelPluginReactCompiler(
   return {
     successfulCompilations,
     failedCompilations,
+    skippedCompilations,
   };
 }
 
@@ -187,7 +195,7 @@ export function checkReactCompiler(
   const BabelPluginReactCompiler = importBabelPluginReactCompiler(workspaceFolder, babelPluginPath);
 
   if (!BabelPluginReactCompiler) {
-    return { successfulCompilations: [], failedCompilations: [] };
+    return { successfulCompilations: [], failedCompilations: [], skippedCompilations: [] };
   }
 
   try {
@@ -205,7 +213,11 @@ export function checkReactCompiler(
     return result;
   } catch (error: any) {
     throttledError(`Failed to compile the file. Please check the file content. ${error?.message}`);
-    const emptyResult: CompilationResult = { successfulCompilations: [], failedCompilations: [] };
+    const emptyResult: CompilationResult = {
+      successfulCompilations: [],
+      failedCompilations: [],
+      skippedCompilations: [],
+    };
     compilationCache.set(sourceCode, filename, emptyResult);
     return emptyResult;
   }

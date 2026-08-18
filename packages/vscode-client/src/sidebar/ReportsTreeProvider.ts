@@ -22,9 +22,11 @@ export class ReportItem extends vscode.TreeItem {
 
     super(label, vscode.TreeItemCollapsibleState.None);
 
-    this.description = `\u2728 ${report.totals.successCount}  \uD83D\uDEAB ${report.totals.failedCount}`;
+    const skippedCount = report.totals.skippedCount ?? 0;
+    const skippedDesc = skippedCount > 0 ? `  \u23ED\uFE0F ${skippedCount}` : "";
+    this.description = `\u2728 ${report.totals.successCount}  \uD83D\uDEAB ${report.totals.failedCount}${skippedDesc}`;
     this.iconPath = new vscode.ThemeIcon("graph");
-    this.tooltip = `Files scanned: ${report.totals.filesScanned}\nCompiled: ${report.totals.successCount}\nFailed: ${report.totals.failedCount}`;
+    this.tooltip = `Files scanned: ${report.totals.filesScanned}\nCompiled: ${report.totals.successCount}\nFailed: ${report.totals.failedCount}\nSkipped: ${skippedCount}`;
     this.contextValue = "reportItem";
     this.command = {
       command: "react-compiler-marker.openReport",

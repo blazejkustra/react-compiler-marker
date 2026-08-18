@@ -14,8 +14,10 @@ function parseFailure(filePath: string, log: LogEntry): ParsedFailure {
     log.detail?.options?.details?.at(0)?.loc?.start?.line ??
     log.detail?.options?.loc?.start?.line ??
     log.detail?.loc?.start?.line ??
+    log.loc?.start?.line ??
+    log.fnLoc?.start?.line ??
     undefined;
-  const reason = log?.detail?.options?.reason || "Unknown reason";
+  const reason = log?.detail?.options?.reason || log?.reason || "Unknown reason";
   return { filePath, fnName: log.fnName, reason, line };
 }
 
@@ -29,6 +31,7 @@ export function formatText(report: ReactCompilerReport): string {
   lines.push(`Files with results: ${totals.filesWithResults}`);
   lines.push(`Compiled (success): ${totals.successCount}`);
   lines.push(`Failed:             ${totals.failedCount}`);
+  lines.push(`Skipped:            ${totals.skippedCount}`);
 
   if (report.errors.length > 0) {
     lines.push("");
@@ -54,6 +57,24 @@ export function formatText(report: ReactCompilerReport): string {
       const loc = f.line ? `:${f.line}` : "";
       const name = f.fnName ?? "(anonymous)";
       lines.push(`  ${f.filePath}${loc} - ${name}: ${f.reason}`);
+    }
+  }
+
+  const skips: ParsedFailure[] = [];
+  for (const file of report.files) {
+    for (const log of file.skipped ?? []) {
+      skips.push(parseFailure(file.path, log));
+    }
+  }
+
+  if (skips.length > 0) {
+    lines.push("");
+    lines.push("Skipped components:");
+    lines.push("----------------------------------------");
+    for (const s of skips) {
+      const loc = s.line ? `:${s.line}` : "";
+      const name = s.fnName ?? "(anonymous)";
+      lines.push(`  ${s.filePath}${loc} - ${name}: ${s.reason}`);
     }
   }
 
