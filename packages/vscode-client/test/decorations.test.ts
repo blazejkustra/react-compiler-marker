@@ -166,6 +166,35 @@ suite("Critical error handling", () => {
     }
   });
 
+  test("use-no-memo-multiline-signature.tsx: skip events point at the function line, not the body line", () => {
+    const text = readFixture("use-no-memo-multiline-signature.tsx").trim();
+    const filename = "/mock/use-no-memo-multiline-signature.tsx";
+
+    const { skippedCompilations } = compileFixture(text, filename);
+
+    assert.strictEqual(
+      skippedCompilations.length,
+      2,
+      `Expected 2 skipped compilations, got ${skippedCompilations.length}`
+    );
+
+    // The compiler reports skips with the body location (`}: Props) {`); the
+    // remap in remapSkipEvents.ts must restore the function's own start line.
+    const [fnSkip, arrowSkip] = [...skippedCompilations].sort(
+      (a, b) => (a.fnLoc?.start?.line ?? 0) - (b.fnLoc?.start?.line ?? 0)
+    );
+    assert.strictEqual(
+      fnSkip.fnLoc?.start?.line,
+      11,
+      `Expected the skipped function declaration to start at its \`function\` line, got line ${fnSkip.fnLoc?.start?.line}`
+    );
+    assert.strictEqual(
+      arrowSkip.fnLoc?.start?.line,
+      21,
+      `Expected the skipped arrow function to start at its \`const\` line, got line ${arrowSkip.fnLoc?.start?.line}`
+    );
+  });
+
   test('annotation-mode.tsx: only "use memo" components compile under compilationMode: "annotation"', () => {
     const text = readFixture("annotation-mode.tsx").trim();
     const filename = "/mock/annotation-mode.tsx";
