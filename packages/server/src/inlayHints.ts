@@ -1,4 +1,4 @@
-import { InlayHint, InlayHintKind, Position } from "vscode-languageserver/node";
+import { InlayHint, InlayHintKind, Position, Range } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { LoggerEvent } from "./checkReactCompiler";
 import { parseLog } from "./parseLog";
@@ -73,6 +73,34 @@ function getInlayHintPosition(
     position: Position.create(functionLine, hintPosition),
     functionName,
   };
+}
+
+// LSP ranges are start-inclusive and end-exclusive, so a hint sitting exactly
+// on a boundary belongs to the next chunk only.
+function isPositionInRange(position: Position, range: Range): boolean {
+  const afterStart =
+    position.line > range.start.line ||
+    (position.line === range.start.line && position.character >= range.start.character);
+  const beforeEnd =
+    position.line < range.end.line ||
+    (position.line === range.end.line && position.character < range.end.character);
+  return afterStart && beforeEnd;
+}
+
+/**
+ * Restrict hints to the range a request asked for.
+ *
+ * Hints are always computed for the whole document — that work is shared across
+ * a burst of requests for the same file — but `textDocument/inlayHint` names a
+ * range, and a client that asks for one (Zed requests ~50 rows at a time)
+ * discards everything outside it. An unclipped response therefore leaves the
+ * file unmarked.
+ */
+export function clipHintsToRange(hints: InlayHint[], range: Range | undefined): InlayHint[] {
+  if (!range) {
+    return hints;
+  }
+  return hints.filter((hint) => isPositionInRange(hint.position, range));
 }
 
 export function generateInlayHints(
