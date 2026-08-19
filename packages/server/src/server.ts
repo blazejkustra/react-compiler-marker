@@ -19,6 +19,8 @@ import {
   clearPluginCache,
   clearCompilationCache,
   normalizeCompilationMode,
+  normalizeExtraBabelPlugins,
+  setExtraBabelPlugins,
   DEFAULT_COMPILATION_MODE,
   type CompilationMode,
 } from "./checkReactCompiler";
@@ -52,6 +54,7 @@ interface Settings {
   skippedEmoji: string | null;
   babelPluginPath: string;
   compilationMode: CompilationMode;
+  extraBabelPlugins: string[];
 }
 
 let globalSettings: Settings = {
@@ -60,6 +63,7 @@ let globalSettings: Settings = {
   skippedEmoji: "⏭️",
   babelPluginPath: "node_modules/babel-plugin-react-compiler",
   compilationMode: DEFAULT_COMPILATION_MODE,
+  extraBabelPlugins: [],
 };
 
 // Tooltip format preference from client (markdown or html)
@@ -181,16 +185,22 @@ connection.onDidChangeConfiguration((change) => {
   const settings = change.settings?.reactCompilerMarker;
   if (settings) {
     const oldBabelPluginPath = globalSettings.babelPluginPath;
+    const oldExtraBabelPlugins = globalSettings.extraBabelPlugins.join(",");
     globalSettings = {
       successEmoji: settings.successEmoji ?? "✨",
       errorEmoji: settings.errorEmoji ?? "🚫",
       skippedEmoji: settings.skippedEmoji ?? "⏭️",
       babelPluginPath: settings.babelPluginPath ?? "node_modules/babel-plugin-react-compiler",
       compilationMode: normalizeCompilationMode(settings.compilationMode),
+      extraBabelPlugins: normalizeExtraBabelPlugins(settings.extraBabelPlugins),
     };
+    setExtraBabelPlugins(globalSettings.extraBabelPlugins);
 
-    // Clear caches if babel plugin path changed
-    if (oldBabelPluginPath !== globalSettings.babelPluginPath) {
+    // Clear caches if the babel plugin path or the extra plugins changed
+    if (
+      oldBabelPluginPath !== globalSettings.babelPluginPath ||
+      oldExtraBabelPlugins !== globalSettings.extraBabelPlugins.join(",")
+    ) {
       clearPluginCache();
       clearCompilationCache();
     }
