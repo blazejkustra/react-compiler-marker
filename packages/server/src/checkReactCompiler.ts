@@ -1,6 +1,7 @@
 import { PluginObj, transformSync } from "@babel/core";
 // @ts-expect-error - no types
 import BabelPluginSyntaxHermesParser from "babel-plugin-syntax-hermes-parser";
+import { createRequire } from "module";
 import * as path from "path";
 import { LRUCache } from "./cache";
 import { createSkipEventRemapper } from "./remapSkipEvents";
@@ -78,8 +79,109 @@ const HERMES_PARSER_OPTIONS = { parseLangTypes: "flow" };
 // every root after the first analyze its files with the wrong compiler.
 const pluginCache = new Map<string, PluginObj>();
 
+// Babel plugins that must run *before* the React Compiler -- macro expanders
+// such as @lingui/babel-plugin-lingui-macro. The compiler only ever sees the
+// file as-written, so an unexpanded macro can make it bail on syntax the real
+// build never emits (a tagged template with interpolations is the common
+// case), reporting a component as un-memoized when the bundle memoizes it fine.
+let extraBabelPlugins: ReadonlyArray<string> = [];
+
+export function setExtraBabelPlugins(plugins: ReadonlyArray<string>): void {
+  extraBabelPlugins = plugins;
+}
+
+export function normalizeExtraBabelPlugins(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+    return value as string[];
+  }
+  // Some clients encode an empty list as an empty object; that is still "none".
+  if (typeof value === "object" && Object.keys(value as object).length === 0) {
+    return [];
+  }
+  throttledError(
+    `Invalid extraBabelPlugins "${JSON.stringify(value)}". Expected an array of module specifiers.`
+  );
+  return [];
+}
+
+// Resolved extra plugins, keyed by `${workspaceFolder}\0${specifier}`. `null`
+// marks a specifier that failed to load, so we do not retry it per file.
+const extraPluginCache = new Map<string, PluginObj | null>();
+
+/**
+ * Runs `run` with the process cwd set to `workspaceFolder`.
+ *
+ * Extra plugins are third-party macro expanders, and several of them (Lingui
+ * among others) find their own config by searching up from `process.cwd()` --
+ * which, for a language server, is wherever the editor was launched rather
+ * than the project being edited. Babel's own `cwd` option does not help: the
+ * plugin reads the real process cwd.
+ *
+ * Safe because the work inside is `transformSync` on a single-threaded
+ * runtime -- nothing else can run, and so nothing else can observe the
+ * swapped cwd, before it is restored. Only applied when extra plugins are
+ * configured, so the default path is untouched.
+ */
+function withWorkspaceCwd<T>(workspaceFolder: string | undefined, run: () => T): T {
+  if (!workspaceFolder || extraBabelPlugins.length === 0) {
+    return run();
+  }
+
+  const previousCwd = process.cwd();
+  if (previousCwd === workspaceFolder) {
+    return run();
+  }
+
+  process.chdir(workspaceFolder);
+  try {
+    return run();
+  } finally {
+    process.chdir(previousCwd);
+  }
+}
+
+function loadExtraBabelPlugins(workspaceFolder: string | undefined): Array<PluginObj> {
+  if (!workspaceFolder || extraBabelPlugins.length === 0) {
+    return [];
+  }
+
+  const workspaceRequire = createRequire(path.join(workspaceFolder, "package.json"));
+  const plugins: Array<PluginObj> = [];
+
+  for (const specifier of extraBabelPlugins) {
+    const cacheKey = `${workspaceFolder}\0${specifier}`;
+    let plugin = extraPluginCache.get(cacheKey);
+
+    if (plugin === undefined) {
+      try {
+        // resolve() honours the package's "exports" map; require()-ing the
+        // resolved file (rather than the specifier) is what lets ESM-only
+        // plugins load, via Node's require(esm) support.
+        const loaded = workspaceRequire(workspaceRequire.resolve(specifier));
+        plugin = (loaded?.default ?? loaded) as PluginObj;
+      } catch (error: any) {
+        throttledError(
+          `Failed to load extra babel plugin "${specifier}" from ${workspaceFolder}: ${error?.message}`
+        );
+        plugin = null;
+      }
+      extraPluginCache.set(cacheKey, plugin);
+    }
+
+    if (plugin) {
+      plugins.push(plugin);
+    }
+  }
+
+  return plugins;
+}
+
 export function clearPluginCache(): void {
   pluginCache.clear();
+  extraPluginCache.clear();
 }
 
 // Compilation result cache (50 entries max)
@@ -111,7 +213,8 @@ function runBabelPluginReactCompiler(
   text: string,
   file: string,
   language: "flow" | "typescript",
-  compilationMode: CompilationMode
+  compilationMode: CompilationMode,
+  extraPlugins: Array<PluginObj>
 ) {
   const successfulCompilations: Array<LoggerEvent> = [];
   const failedCompilations: Array<LoggerEvent> = [];
@@ -152,6 +255,11 @@ function runBabelPluginReactCompiler(
     retainLines: true,
     plugins: [
       [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+      // Macro expanders run first so the compiler sees the same tree the real
+      // build compiles. Babel merges every plugin into one traversal and
+      // visits a node in plugin order, so an expander with a Program visitor
+      // rewrites the tree before the compiler's Program visitor reads it.
+      ...extraPlugins,
       skipRemapper.plugin,
       [BabelPluginReactCompiler, COMPILER_OPTIONS],
     ],
@@ -183,7 +291,12 @@ const BUNDLED_PLUGIN_CACHE_KEY = "\0bundled";
  * plugin produced a given result.
  */
 function pluginScope(workspaceFolder: string | undefined, babelPluginPath: string): string {
-  return workspaceFolder ? `${workspaceFolder}\0${babelPluginPath}` : BUNDLED_PLUGIN_CACHE_KEY;
+  // The extra plugins change the tree the compiler sees, so results keyed
+  // without them would survive a settings change that invalidates them.
+  const extras = extraBabelPlugins.join(",");
+  return workspaceFolder
+    ? `${workspaceFolder}\0${babelPluginPath}\0${extras}`
+    : `${BUNDLED_PLUGIN_CACHE_KEY}\0${extras}`;
 }
 
 function importBabelPluginReactCompiler(
@@ -259,12 +372,15 @@ export function checkReactCompiler(
 
   try {
     const language = getLanguageFromFilename(filename);
-    const result = runBabelPluginReactCompiler(
-      BabelPluginReactCompiler,
-      sourceCode,
-      filename,
-      language,
-      compilationMode
+    const result = withWorkspaceCwd(workspaceFolder, () =>
+      runBabelPluginReactCompiler(
+        BabelPluginReactCompiler,
+        sourceCode,
+        filename,
+        language,
+        compilationMode,
+        loadExtraBabelPlugins(workspaceFolder)
+      )
     );
 
     // Cache the result
@@ -298,21 +414,24 @@ export async function getCompiledOutput(
 
   try {
     const language = getLanguageFromFilename(filename);
-    const result = transformSync(sourceCode, {
-      filename,
-      highlightCode: false,
-      retainLines: true,
-      plugins: [
-        [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
-        [BabelPluginReactCompiler, { ...DEFAULT_COMPILER_OPTIONS, compilationMode }],
-      ],
-      parserOpts: {
-        plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
-      },
-      sourceType: "module",
-      configFile: false,
-      babelrc: false,
-    });
+    const result = withWorkspaceCwd(workspaceFolder, () =>
+      transformSync(sourceCode, {
+        filename,
+        highlightCode: false,
+        retainLines: true,
+        plugins: [
+          [BabelPluginSyntaxHermesParser, HERMES_PARSER_OPTIONS],
+          ...loadExtraBabelPlugins(workspaceFolder),
+          [BabelPluginReactCompiler, { ...DEFAULT_COMPILER_OPTIONS, compilationMode }],
+        ],
+        parserOpts: {
+          plugins: language === "typescript" ? ["typescript", "jsx"] : ["flow", "jsx"],
+        },
+        sourceType: "module",
+        configFile: false,
+        babelrc: false,
+      })
+    );
 
     // eslint-disable-next-line eqeqeq
     if (result?.code == null) {

@@ -29,6 +29,13 @@ M.defaults = {
   -- See https://react.dev/reference/react-compiler/compilationMode
   compilation_mode = "infer",
 
+  -- Babel plugins to run *before* babel-plugin-react-compiler, resolved from
+  -- the workspace root. Use this for macro expanders -- without them the
+  -- marker analyses the file as-written and can report a bailout the real
+  -- build never hits.
+  -- e.g. { "@lingui/babel-plugin-lingui-macro" }
+  extra_babel_plugins = {},
+
   -- Enable/disable on startup
   enabled = true,
 
@@ -131,6 +138,11 @@ function M.get_server_settings()
       skippedEmoji = M.config.emojis.skipped,
       babelPluginPath = M.config.babel_plugin_path,
       compilationMode = M.config.compilation_mode,
+      -- Omitted when empty: an empty Lua table encodes as a JSON object,
+      -- which the server would reject as a malformed list.
+      extraBabelPlugins = #M.config.extra_babel_plugins > 0
+          and M.config.extra_babel_plugins
+        or nil,
     },
   }
 end
