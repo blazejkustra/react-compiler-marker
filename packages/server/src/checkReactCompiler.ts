@@ -161,6 +161,11 @@ function runBabelPluginReactCompiler(
     sourceType: "module",
     configFile: false,
     babelrc: false,
+    // Analysis needs no compile targets. Without this, Babel reads the project's
+    // browserslist config from the cwd (the workspace root under VS Code), and
+    // the bundled server cannot load the caniuse-lite data that queries such as
+    // "fully supports es6-module" need, so every file fails to compile.
+    browserslistConfigFile: false,
   });
 
   // eslint-disable-next-line eqeqeq
@@ -312,6 +317,7 @@ export async function getCompiledOutput(
       sourceType: "module",
       configFile: false,
       babelrc: false,
+      browserslistConfigFile: false,
     });
 
     // eslint-disable-next-line eqeqeq

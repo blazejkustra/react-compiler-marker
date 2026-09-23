@@ -3,7 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { checkReactCompiler } = require(path.join(__dirname, "..", "..", "..", "server", "out", "checkReactCompiler"));
+const { checkReactCompiler, clearCompilationCache, getCompiledOutput } = require(
+  path.join(__dirname, "..", "..", "..", "server", "out", "checkReactCompiler")
+);
 
 function readFixture(name: string): string {
   const candidates = [
@@ -305,5 +307,54 @@ suite("Parser selection", () => {
       1,
       `Expected 1 successful compilation, got ${successfulCompilations.length} (${failedCompilations.length} failed). Top-level await was not parsed.`
     );
+  });
+});
+
+suite("Project browserslist config", () => {
+  // VS Code starts the language server with the workspace root as its cwd, and
+  // Babel looks up browserslist config from the cwd. The bundled server cannot
+  // load caniuse-lite feature data (browserslist requires it dynamically), so a
+  // project query such as "fully supports es6-module" used to throw "Unknown
+  // feature name" on every file. The fixture names a feature caniuse-lite does
+  // not know, which fails the same way without depending on the bundle.
+  const projectDir = path.join(__dirname, "..", "..", "test", "fixtures", "browserslist-project");
+  const filename = path.join(projectDir, "App.tsx");
+  let originalCwd: string;
+
+  setup(() => {
+    originalCwd = process.cwd();
+    process.chdir(projectDir);
+    clearCompilationCache();
+  });
+
+  teardown(() => {
+    process.chdir(originalCwd);
+    clearCompilationCache();
+  });
+
+  test("checkReactCompiler ignores the project's browserslist config", () => {
+    const text = fs.readFileSync(filename, "utf8");
+
+    const { successfulCompilations, failedCompilations } = compileFixture(text, filename);
+
+    assert.strictEqual(
+      successfulCompilations.length,
+      1,
+      `Expected 1 successful compilation, got ${successfulCompilations.length} (${failedCompilations.length} failed). The project's browserslist config broke compilation.`
+    );
+  });
+
+  test("getCompiledOutput ignores the project's browserslist config", async () => {
+    const text = fs.readFileSync(filename, "utf8");
+
+    const code = await getCompiledOutput(
+      text,
+      filename,
+      undefined,
+      "node_modules/babel-plugin-react-compiler",
+      "infer"
+    );
+
+    assert.match(code, /react\/compiler-runtime/);
   });
 });
