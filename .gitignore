@@ -13,3 +13,6 @@
 /server
 **/zed-client/target
 **/zed-client/extension.wasm
+
+# Plugin-discovery fixtures have to ship a real node_modules layout
+!packages/vscode-client/test/fixtures/**/node_modules/
