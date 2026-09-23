@@ -1,0 +1,7 @@
+{
+  "name": "browserslist-project",
+  "private": true,
+  "browserslist": [
+    "defaults and fully supports rcm-feature-missing-from-bundle"
+  ]
+}
