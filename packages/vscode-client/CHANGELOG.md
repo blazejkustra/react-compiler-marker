@@ -6,6 +6,12 @@ All notable changes to the React Compiler Marker VS Code/Cursor plugin will be d
 
 ---
 
+## [2.3.1] - 2026-09-28
+### Fixed
+- **Browserslist config**: projects whose browserslist uses a `supports` query (e.g. `defaults and fully supports es6-module`) no longer fail with `Unknown feature name` and show no markers. The project's browserslist config is now ignored during analysis — thanks @creage (#94)
+
+
+
 ## [2.3.0] - 2026-08-18
 ### Added
 - **`"use no memo"` opt-outs**: Functions opted out of the compiler are now reported as skipped (`reactCompilerMarker.skippedEmoji`, default ⏭️) instead of being dropped from markers and reports
