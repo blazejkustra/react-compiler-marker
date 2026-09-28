@@ -190,6 +190,101 @@ suite("Multi-root workspace: plugin resolution", () => {
   });
 });
 
+// The common monorepo setup: one root at the top, the plugin installed only in
+// the sub-package that uses it. Diagnosed by Isaac Hinman
+// (isaachinman/zed-react-compiler-marker).
+suite("Single-root monorepo: plugin discovery below the root", () => {
+  const DEFAULT_PLUGIN_PATH = path.join("node_modules", "babel-plugin-react-compiler");
+
+  setup(() => {
+    clearPluginCache();
+    clearCompilationCache();
+  });
+
+  teardown(() => {
+    clearPluginCache();
+    clearCompilationCache();
+  });
+
+  test("finds a plugin a sub-package installed", () => {
+    const root = fixtureDir("single-root");
+    const source = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+
+    const result = checkReactCompiler(
+      source,
+      path.join(root, "App.tsx"),
+      root,
+      DEFAULT_PLUGIN_PATH,
+      "infer"
+    );
+
+    assert.strictEqual(
+      result.successfulCompilations[0]?.fnName,
+      "stub-plugin-from-apps-web",
+      "the root has no plugin of its own, so apps/web's must be used"
+    );
+  });
+
+  test("the shallowest install wins", () => {
+    const root = fixtureDir("single-root");
+    const source = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+
+    const result = checkReactCompiler(
+      source,
+      path.join(root, "App.tsx"),
+      root,
+      DEFAULT_PLUGIN_PATH,
+      "infer"
+    );
+
+    assert.notStrictEqual(
+      result.successfulCompilations[0]?.fnName,
+      "stub-plugin-from-inner",
+      "a deeper install must not beat the one nearer the root"
+    );
+  });
+
+  test("does not descend into node_modules", () => {
+    const root = fixtureDir("dependency-only");
+    const source = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+
+    // The only plugin here belongs to a dependency, so the bundled compiler
+    // takes over rather than a package this workspace never asked for.
+    const result = checkReactCompiler(
+      source,
+      path.join(root, "App.tsx"),
+      root,
+      DEFAULT_PLUGIN_PATH,
+      "infer"
+    );
+
+    assert.ok(
+      !result.successfulCompilations.some((event: { fnName?: string }) =>
+        event.fnName?.startsWith("stub-plugin-from-")
+      ),
+      "a plugin inside a dependency's node_modules must never be picked up"
+    );
+  });
+
+  test("the search runs once per root, not once per file", () => {
+    const root = fixtureDir("single-root");
+    const pluginModule = path.join(root, "apps", "web", DEFAULT_PLUGIN_PATH);
+    const source = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+
+    checkReactCompiler(source, path.join(root, "one.tsx"), root, DEFAULT_PLUGIN_PATH, "infer");
+    const loadedOnce = require.cache[require.resolve(pluginModule)];
+    assert.ok(loadedOnce, "the discovered plugin should be in the require cache");
+
+    checkReactCompiler(source, path.join(root, "two.tsx"), root, DEFAULT_PLUGIN_PATH, "infer");
+
+    assert.strictEqual(
+      require.cache[require.resolve(pluginModule)],
+      loadedOnce,
+      "a second file must reuse the cached plugin instead of rescanning"
+    );
+  });
+});
+
 suite("Multi-root workspace: root resolution for a document", () => {
   const roots = ["/ws/project-a", "/ws/project-b"];
 
@@ -254,7 +349,10 @@ suite("Multi-root workspace: root resolution for a document", () => {
   });
 
   test("converts file:// URIs to paths", () => {
-    assert.strictEqual(workspaceFolderUriToPath("file:///ws/project-a"), path.sep + path.join("ws", "project-a"));
+    assert.strictEqual(
+      workspaceFolderUriToPath("file:///ws/project-a"),
+      path.sep + path.join("ws", "project-a")
+    );
     assert.strictEqual(
       workspaceFolderUriToPath("file:///ws/with%20space"),
       path.sep + path.join("ws", "with space")

@@ -22,9 +22,9 @@ import {
   DEFAULT_COMPILATION_MODE,
   type CompilationMode,
 } from "./checkReactCompiler";
-import { generateInlayHints } from "./inlayHints";
+import { generateInlayHints, clipHintsToRange } from "./inlayHints";
 import { debounce } from "./debounce";
-import { shouldEnableHover } from "./clientUtils";
+import { shouldEnableHover, isZedClient } from "./clientUtils";
 import { resolveWorkspaceFolderForUri, workspaceFolderUriToPath } from "./workspaceFolders";
 
 import packageJson from "../package.json";
@@ -216,8 +216,10 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
     return null;
   }
 
-  // Use document URI as the debounce key
-  return debounce(params.textDocument.uri, () => {
+  // Use document URI as the debounce key. The debounced computation covers the
+  // whole document, so a burst of chunked requests for one file shares it; each
+  // request then keeps only the hints inside the range it asked for.
+  const hints = await debounce(params.textDocument.uri, () => {
     logMessage(`Process inlay hints for ${params.textDocument.uri}`);
     const fileName = params.textDocument.uri;
     const fileNameForCompiler = workspaceFolderUriToPath(fileName);
@@ -252,6 +254,20 @@ connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<Inlay
       return null;
     }
   });
+
+  return hints && clipHintsToRange(hints, params.range);
+});
+
+// Zed fetches hints for a newly started server through a refresh that does not
+// invalidate what it already has, so ranges another server (vtsls) filled while
+// this one was booting stay cached and this server is never asked about them
+// until the buffer is edited. Asking for a refresh once the document is open
+// invalidates just this server's hints and gets us queried.
+// Diagnosed by Isaac Hinman (isaachinman/zed-react-compiler-marker).
+documents.onDidOpen(() => {
+  if (isZedClient(clientName)) {
+    connection.languages.inlayHint.refresh();
+  }
 });
 
 // Handle hover request (only enabled for Neovim client, as VSCode/IntelliJ have native inlay hint hover)
