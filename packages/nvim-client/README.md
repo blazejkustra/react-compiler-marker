@@ -63,6 +63,11 @@ require('react-compiler-marker').setup({
   -- Path to babel-plugin-react-compiler (relative to workspace root)
   babel_plugin_path = "node_modules/babel-plugin-react-compiler",
 
+  -- Babel plugins to run before babel-plugin-react-compiler, resolved from the
+  -- workspace root. Needed for macro expanders -- without them the marker
+  -- analyses the file as written and can report a bailout your build never hits.
+  extra_babel_plugins = {},
+
   -- Inlay hint settings
   inlay_hints = {
     enabled = true,
